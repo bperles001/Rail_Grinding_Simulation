@@ -265,17 +265,46 @@ class SomePageCallbacks:
 
 ---
 
-## Fluxo de versões e commits (Git)
+## Fluxo de versões e commits (Git + GitHub)
 
-O projeto usa Git + CHANGELOG.md para rastrear todas as mudanças.
-Detalhes completos de cada versão estão em `CHANGELOG.md`.
+O projeto usa **Git** (controle de versão local) + **GitHub** (cópia na nuvem) + **CHANGELOG.md** (registro humano do que mudou).
 
-### O que fazer em cada situação
+- Repositório: https://github.com/bperles001/Rail_Grinding_Simulation
+- Branch principal: `master`
+- Versão atual: ver `pyproject.toml` → campo `version`
 
-**Durante uma sessão de trabalho — commitar com frequência:**
+---
+
+### Referência rápida — cartão de bolso
+
+```
+DURANTE O TRABALHO          git add <arquivo>  →  git commit -m "..."
+SALVAR NA NUVEM             git push
+VER O QUE MUDOU             git status  /  git log --oneline
+AO TERMINAR UMA FASE        atualizar CHANGELOG.md  →  commit  →  push
+AO LANÇAR VERSÃO            CHANGELOG + pyproject.toml  →  commit  →  tag  →  push tag
+```
+
+---
+
+### Situação 1 — Trabalho do dia a dia
+
+A cada mudança significativa (não precisa ser perfeita — só coerente):
+
 ```bash
-git add <arquivos específicos>
-git commit -m "prefix: descrição curta do que e por quê"
+# 1. Ver o que mudou
+git status
+
+# 2. Escolher os arquivos a incluir
+git add src/simulator/core.py
+git add src/railroad_backend/services/auto_planner.py
+# (nunca "git add ." sem checar git status antes)
+
+# 3. Salvar o snapshot local
+git commit -m "fix: corrige cálculo de urgência quando threshold é zero"
+
+# 4. Enviar para o GitHub
+git push
 ```
 
 **Prefixos de commit:**
@@ -289,28 +318,99 @@ git commit -m "prefix: descrição curta do que e por quê"
 | `test:` | Adicionar ou corrigir testes |
 | `chore:` | Atualizar dependências, configs |
 
-**Ao terminar uma feature/fase:**
-1. Adicionar entrada em `## [Unreleased]` no `CHANGELOG.md`
-2. Rodar `nox -s tests` — confirmar que todos os testes passam
-3. `git commit -m "docs: update changelog for <feature>"`
+---
 
-**Ao lançar uma versão nova:**
-1. Em `CHANGELOG.md`: renomear `[Unreleased]` → `[X.Y.Z] — YYYY-MM-DD`, adicionar novo `[Unreleased]` vazio no topo
-2. Em `pyproject.toml`: atualizar `version = "X.Y.Z"`
-3. `git commit -m "chore: release vX.Y.Z"`
-4. `git tag vX.Y.Z`
+### Situação 2 — Ao terminar uma feature ou fase de trabalho
 
-**Guia de versão (SemVer):**
+```bash
+# 1. Rodar os testes — todos devem passar
+.venv\Scripts\python.exe -m pytest tests/ -q
+
+# 2. Abrir CHANGELOG.md e adicionar entrada em [Unreleased]
+#    Exemplo:
+#    ## [Unreleased]
+#    ### Added
+#    - Novo algoritmo de priorização por tonelagem acumulada
+
+# 3. Commitar e enviar
+git add CHANGELOG.md
+git commit -m "docs: update changelog — priorização por tonelagem"
+git push
+```
+
+---
+
+### Situação 3 — Ao lançar uma versão nova (release)
+
+Fazer isso quando um conjunto de features está completo e estável.
+
+```bash
+# 1. Em CHANGELOG.md:
+#    - Renomear [Unreleased] → [0.6.0] — 2026-MM-DD
+#    - Adicionar novo [Unreleased] vazio no topo
+
+# 2. Em pyproject.toml:
+#    version = "0.6.0"
+
+# 3. Commitar as mudanças de release
+git add CHANGELOG.md pyproject.toml
+git commit -m "chore: release v0.6.0"
+
+# 4. Criar a tag local
+git tag v0.6.0
+
+# 5. Enviar commit e tag para o GitHub
+git push
+git push origin v0.6.0
+```
+
+A tag aparece em: https://github.com/bperles001/Rail_Grinding_Simulation/tags
+
+---
+
+### Situação 4 — Trabalhar em algo experimental (branch)
+
+Quando a mudança é grande ou incerta, isole em um branch para não afetar o `master`.
+
+```bash
+# Criar e entrar no branch
+git checkout -b feature/otimizador-v2
+
+# Trabalhar normalmente (add + commit)
+git add src/railroad_backend/services/optimizer.py
+git commit -m "feat: otimizador com busca em largura"
+
+# Enviar o branch para o GitHub (para backup)
+git push -u origin feature/otimizador-v2
+
+# Quando estiver pronto: voltar ao master e juntar
+git checkout master
+git merge feature/otimizador-v2
+
+# Apagar o branch (o trabalho já está no master)
+git branch -d feature/otimizador-v2
+git push origin --delete feature/otimizador-v2
+```
+
+---
+
+### Guia de versão (SemVer: MAJOR.MINOR.PATCH)
 
 | Tipo de mudança | Bump | Exemplo |
 |-----------------|------|---------|
-| Nova feature, sem quebra | MINOR (0.x.0) | Adicionar otimizador → 0.6.0 |
-| Correção ou melhoria pequena | PATCH (0.5.x) | Fix de display → 0.5.1 |
-| Marco v1 (modelo 4 componentes) | MAJOR (1.0.0) | — |
+| Correção de bug, melhoria pequena | PATCH (0.5.**x**) | Fix display → 0.5.1 |
+| Nova feature, sem quebra | MINOR (0.**x**.0) | Otimizador → 0.6.0 |
+| Marco v1 (modelo 4 componentes) | MAJOR (**x**.0.0) | v1.0.0 |
 
-**Regras:**
-- Não criar arquivos `PHASE_X_SUMMARY.md` ou `*_SUMMARY.md` — usar CHANGELOG.md
-- Não commitar `*.png` (imagens de timeline geradas) — já no `.gitignore`
+---
+
+### Regras — o que nunca fazer
+
+- Não criar arquivos `PHASE_X_SUMMARY.md` ou `*_SUMMARY.md` → usar CHANGELOG.md
+- Não commitar `*.png` (imagens de timeline) → já excluído no `.gitignore`
+- Não commitar `*.log` → já excluído no `.gitignore`
+- Não usar `git add .` sem antes checar `git status`
+- Não fazer `git push --force` no branch `master`
 
 ---
 
