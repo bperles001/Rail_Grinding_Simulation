@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path as _Path
+
+_ROOT = _Path(__file__).parent.resolve()
+for _p in (str(_ROOT), str(_ROOT / "src")):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 import base64
 import copy
 import hashlib
