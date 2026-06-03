@@ -180,7 +180,62 @@ def render_manual_route_page(
             action_text="💡 Tip: Start by adding a segment move or turn based on available options."
         )
     else:
-        st.dataframe(plan_df, use_container_width=True, hide_index=True)
+        from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
+        _ACTION_OPTIONS = ["Move", "Maintenance", "Curves only", "—"]
+        _ACTION_MAP = {
+            "Move": ACTION_MOVE,
+            "Maintenance": ACTION_MAINTAIN,
+            "Curves only": ACTION_MAINTAIN_CURVES,
+        }
+        st.caption("Click **Action** or **Days** cells to edit directly.")
+        edited_df = st.data_editor(
+            plan_df,
+            key="plan_step_editor",
+            use_container_width=True,
+            hide_index=True,
+            num_rows="fixed",
+            column_config={
+                "Step": st.column_config.NumberColumn(disabled=True),
+                "Type": st.column_config.TextColumn(disabled=True),
+                "Segment": st.column_config.TextColumn(disabled=True),
+                "Destination": st.column_config.TextColumn(disabled=True),
+                "Action": st.column_config.SelectboxColumn(
+                    "Action",
+                    options=_ACTION_OPTIONS,
+                    required=True,
+                ),
+                "Days": st.column_config.NumberColumn(
+                    "Days",
+                    min_value=1,
+                    max_value=365,
+                    step=1,
+                ),
+                "Capability": st.column_config.TextColumn(disabled=True),
+            },
+        )
+        # Apply changes made directly in the table
+        _new_plan = list(plan)
+        _changed = False
+        for _i, _row in edited_df.iterrows():
+            _step = _new_plan[_i]
+            _mode = _step.get("mode")
+            if _mode == "move":
+                _new_code = _ACTION_MAP.get(str(_row.get("Action", "Move")), ACTION_MOVE)
+                if _new_code != _step.get("action"):
+                    _new_plan[_i] = {**_step, "action": _new_code}
+                    _changed = True
+            elif _mode == "wait":
+                try:
+                    _new_days = max(1, min(365, int(_row.get("Days") or _step.get("days", 1))))
+                except (TypeError, ValueError):
+                    _new_days = _step.get("days", 1)
+                if _new_days != _step.get("days"):
+                    _new_plan[_i] = {**_step, "days": _new_days}
+                    _changed = True
+        if _changed:
+            callbacks.update_manual_plan(_new_plan)
+            callbacks.force_rerun()
+
         st.markdown('<div class="button-group">', unsafe_allow_html=True)
         col_undo, col_clear = st.columns([1, 1])
         with col_undo:
@@ -198,65 +253,6 @@ def render_manual_route_page(
                 callbacks.force_rerun()
             st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-        if len(plan) > 0:
-            with st.expander("✏️ Edit a step", expanded=False):
-                step_num = int(st.number_input(
-                    "Step number to edit",
-                    min_value=1,
-                    max_value=len(plan),
-                    value=1,
-                    step=1,
-                    key="edit_step_num",
-                ))
-                idx = step_num - 1
-                target = plan[idx]
-                mode = target.get("mode")
-                st.caption(f"Step {step_num}: {target}")
-
-                if mode == "move":
-                    from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
-                    _act = target.get("action", ACTION_MOVE)
-                    current_label = (
-                        "Maintenance (full)" if _act in ("m", "maintain")
-                        else "Maintenance (curves only)" if _act == "maintain_curves"
-                        else "Move only"
-                    )
-                    _options = ("Move only", "Maintenance (full)", "Maintenance (curves only)")
-                    new_choice = st.radio(
-                        "New action",
-                        _options,
-                        index=_options.index(current_label),
-                        horizontal=True,
-                        key="edit_step_action",
-                    )
-                    if st.button("Apply change", key="edit_step_apply"):
-                        new_code = (
-                            ACTION_MAINTAIN if new_choice == "Maintenance (full)"
-                            else ACTION_MAINTAIN_CURVES if new_choice == "Maintenance (curves only)"
-                            else ACTION_MOVE
-                        )
-                        new_plan = list(plan)
-                        new_plan[idx] = {**target, "action": new_code}
-                        callbacks.update_manual_plan(new_plan)
-                        callbacks.force_rerun()
-
-                elif mode == "wait":
-                    new_days = int(st.number_input(
-                        "Days",
-                        min_value=1,
-                        max_value=365,
-                        value=int(target.get("days", 1)),
-                        key="edit_step_days",
-                    ))
-                    if st.button("Apply change", key="edit_step_apply"):
-                        new_plan = list(plan)
-                        new_plan[idx] = {**target, "days": new_days}
-                        callbacks.update_manual_plan(new_plan)
-                        callbacks.force_rerun()
-
-                else:
-                    st.caption("Turn steps have no editable fields.")
 
     render_section_header("💾 Plan Presets", subtitle=True)
     saved_plans = state.get(session_keys.saved_plans_key, {})
@@ -396,15 +392,15 @@ def render_manual_route_page(
                 selected_option = st.selectbox("Next station", move_options, format_func=_format_option)
                 action_choice = st.radio(
                     "Action",
-                    ("Move only", "Maintenance (full)", "Maintenance (curves only)"),
+                    ("Move", "Maintenance", "Curves only"),
                     horizontal=True,
                 )
                 submitted_move = st.form_submit_button("Add move")
             if submitted_move:
                 from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
                 action_code = (
-                    ACTION_MAINTAIN if action_choice == "Maintenance (full)"
-                    else ACTION_MAINTAIN_CURVES if action_choice == "Maintenance (curves only)"
+                    ACTION_MAINTAIN if action_choice == "Maintenance"
+                    else ACTION_MAINTAIN_CURVES if action_choice == "Curves only"
                     else ACTION_MOVE
                 )
                 new_plan = plan + [
@@ -478,7 +474,7 @@ def render_manual_route_page(
 
 def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any]) -> pd.DataFrame:
     if not plan:
-        return pd.DataFrame(columns=["Step", "Type", "Segment", "Destination", "Action", "Capability"])
+        return pd.DataFrame(columns=["Step", "Type", "Segment", "Destination", "Action", "Days", "Capability"])
     second_kld = bool(config.get("second_kld", False))
     rows = []
     for idx, step in enumerate(plan, start=1):
@@ -488,7 +484,8 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any]) -
                 "Type": "Turn",
                 "Segment": "-",
                 "Destination": "-",
-                "Action": "Flip direction",
+                "Action": "—",
+                "Days": None,
                 "Capability": "Facing change",
             })
         elif step.get("mode") == "wait":
@@ -497,8 +494,9 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any]) -
                 "Step": idx,
                 "Type": "Wait",
                 "Segment": "-",
-                "Destination": f"Idle for {wait_days} day(s)",
-                "Action": "Idle",
+                "Destination": "-",
+                "Action": "—",
+                "Days": wait_days,
                 "Capability": "Hold position",
             })
         else:
@@ -509,16 +507,18 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any]) -
                 capability = "Maintenance allowed (2nd KLD)"
             else:
                 capability = "Move only"
+            _act = step.get("action")
             rows.append({
                 "Step": idx,
                 "Type": "Traverse",
                 "Segment": step.get("segment", ""),
-                "Destination": step.get("destination", ""),  # Changed from next_station
+                "Destination": step.get("destination", ""),
                 "Action": (
-                    "Maintenance (full)" if step.get("action") in ("m", "maintain")
-                    else "Maintenance (curves)" if step.get("action") == "maintain_curves"
+                    "Maintenance" if _act in ("m", "maintain")
+                    else "Curves only" if _act == "maintain_curves"
                     else "Move"
                 ),
+                "Days": None,
                 "Capability": capability,
             })
     return pd.DataFrame(rows)
