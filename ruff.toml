@@ -1,0 +1,22 @@
+line-length = 100
+
+[lint]
+select = ["E", "F", "B", "I", "Q"]
+ignore = [
+  "E101",
+  "E501",
+  "F401",
+  "F541",
+  "F841",
+  "T201",
+]
+
+[lint.per-file-ignores]
+"src/utils/timeline_generator.py" = ["Q000", "I001"]
+"src/utils/mtbt_transform.py" = ["I001"]
+"streamlit_app.py" = ["I001"]
+"tests/test_basic.py" = ["I001"]
+"src/models/__init__.py" = ["I001"]
+
+[lint.isort]
+known-first-party = ["src"]

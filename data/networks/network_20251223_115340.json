@@ -1,0 +1,216 @@
+{
+  "name": "Rumo - Nós",
+  "stations": [
+    {
+      "name": "TRO",
+      "can_turn": true
+    },
+    {
+      "name": "TAG",
+      "can_turn": false
+    },
+    {
+      "name": "TCS",
+      "can_turn": false
+    },
+    {
+      "name": "TMI",
+      "can_turn": false
+    },
+    {
+      "name": "ZEB",
+      "can_turn": false
+    },
+    {
+      "name": "ZCZ",
+      "can_turn": false
+    },
+    {
+      "name": "ZTO",
+      "can_turn": true
+    },
+    {
+      "name": "ZTI",
+      "can_turn": false
+    },
+    {
+      "name": "ZIQ",
+      "can_turn": false
+    },
+    {
+      "name": "ZQX",
+      "can_turn": false
+    },
+    {
+      "name": "ZRX",
+      "can_turn": false
+    },
+    {
+      "name": "ZRC",
+      "can_turn": false
+    },
+    {
+      "name": "ZBL",
+      "can_turn": false
+    },
+    {
+      "name": "ZKE",
+      "can_turn": false
+    },
+    {
+      "name": "ZEV",
+      "can_turn": false
+    },
+    {
+      "name": "ZPT",
+      "can_turn": true
+    },
+    {
+      "name": "ZPG",
+      "can_turn": false
+    },
+    {
+      "name": "PSS",
+      "can_turn": false
+    },
+    {
+      "name": "PIT",
+      "can_turn": false
+    },
+    {
+      "name": "PRV",
+      "can_turn": false
+    },
+    {
+      "name": "POV",
+      "can_turn": true
+    },
+    {
+      "name": "ZRL",
+      "can_turn": false
+    },
+    {
+      "name": "VLI",
+      "can_turn": true
+    }
+  ],
+  "segments": [],
+  "mtbt_schedule": {
+    "columns": [
+      "Segment Name",
+      "Initial Load",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09",
+      "2026-10",
+      "2026-11",
+      "2026-12",
+      "2027-01"
+    ],
+    "data": []
+  },
+  "layout": {
+    "mode": "table",
+    "table_overrides": {
+      "TRO": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "TAG": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "TCS": {
+        "x": 2.0,
+        "y": 0.0
+      },
+      "TMI": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "ZEB": {
+        "x": 4.0,
+        "y": 0.0
+      },
+      "ZCZ": {
+        "x": 5.0,
+        "y": 0.0
+      },
+      "ZTO": {
+        "x": 6.0,
+        "y": 0.0
+      },
+      "ZTI": {
+        "x": 7.0,
+        "y": 0.0
+      },
+      "ZIQ": {
+        "x": 8.0,
+        "y": 0.0
+      },
+      "ZQX": {
+        "x": 9.0,
+        "y": 0.0
+      },
+      "ZRX": {
+        "x": 10.0,
+        "y": 0.0
+      },
+      "ZRC": {
+        "x": 11.0,
+        "y": 0.0
+      },
+      "ZBL": {
+        "x": 12.0,
+        "y": 0.0
+      },
+      "ZKE": {
+        "x": 13.0,
+        "y": 0.0
+      },
+      "ZEV": {
+        "x": 14.0,
+        "y": 0.0
+      },
+      "ZPT": {
+        "x": 15.0,
+        "y": 0.0
+      },
+      "ZPG": {
+        "x": 16.0,
+        "y": 0.0
+      },
+      "PSS": {
+        "x": 17.0,
+        "y": 0.0
+      },
+      "PIT": {
+        "x": 18.0,
+        "y": 0.0
+      },
+      "PRV": {
+        "x": 19.0,
+        "y": 0.0
+      },
+      "POV": {
+        "x": 20.0,
+        "y": 0.0
+      },
+      "ZRL": {
+        "x": 21.0,
+        "y": 0.0
+      },
+      "VLI": {
+        "x": 22.0,
+        "y": 0.0
+      }
+    },
+    "scale": 1.0
+  }
+}

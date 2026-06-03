@@ -1,0 +1,239 @@
+{
+  "name": "Teste_Criação",
+  "stations": [
+    {
+      "name": "A",
+      "can_turn": true
+    },
+    {
+      "name": "B",
+      "can_turn": false
+    },
+    {
+      "name": "C",
+      "can_turn": false
+    },
+    {
+      "name": "D",
+      "can_turn": true
+    },
+    {
+      "name": "E",
+      "can_turn": false
+    },
+    {
+      "name": "F",
+      "can_turn": false
+    }
+  ],
+  "segments": [
+    {
+      "name": "A-B",
+      "start": "A",
+      "end": "B",
+      "length_km": 5.0,
+      "mtbt_threshold": 10.0,
+      "move_time_days": 5,
+      "maintenance_time_days": 10,
+      "allowed_movements": [
+        [
+          "A",
+          "B"
+        ],
+        [
+          "B",
+          "A"
+        ]
+      ]
+    },
+    {
+      "name": "B-C",
+      "start": "B",
+      "end": "C",
+      "length_km": 5.0,
+      "mtbt_threshold": 10.0,
+      "move_time_days": 5,
+      "maintenance_time_days": 15,
+      "allowed_movements": [
+        [
+          "B",
+          "C"
+        ],
+        [
+          "C",
+          "B"
+        ]
+      ]
+    },
+    {
+      "name": "C-D",
+      "start": "C",
+      "end": "D",
+      "length_km": 5.0,
+      "mtbt_threshold": 10.0,
+      "move_time_days": 10,
+      "maintenance_time_days": 20,
+      "allowed_movements": [
+        [
+          "C",
+          "D"
+        ],
+        [
+          "D",
+          "C"
+        ]
+      ]
+    },
+    {
+      "name": "D-E",
+      "start": "D",
+      "end": "E",
+      "length_km": 20.0,
+      "mtbt_threshold": 10.0,
+      "move_time_days": 10,
+      "maintenance_time_days": 20,
+      "allowed_movements": [
+        [
+          "D",
+          "E"
+        ],
+        [
+          "E",
+          "D"
+        ]
+      ]
+    }
+  ],
+  "direction_model": {
+    "corridor_order": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F"
+    ],
+    "spur_forward_carregado": [],
+    "spur_forward_vazio": []
+  },
+  "mtbt_schedule": {
+    "columns": [
+      "Segment Name",
+      "Initial Load",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09",
+      "2026-10",
+      "2026-11",
+      "2026-12",
+      "2027-01"
+    ],
+    "data": [
+      [
+        "A-B",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "B-C",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "C-D",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "D-E",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ]
+  },
+  "layout": {
+    "mode": "table",
+    "table_overrides": {
+      "A": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "B": {
+        "x": 2.0,
+        "y": 2.0
+      },
+      "C": {
+        "x": 4.0,
+        "y": 4.0
+      },
+      "D": {
+        "x": 6.0,
+        "y": 6.0
+      },
+      "E": {
+        "x": 7.0,
+        "y": 7.0
+      },
+      "F": {
+        "x": 3.0,
+        "y": 3.0
+      }
+    },
+    "scale": 2.4
+  },
+  "version": 1
+}

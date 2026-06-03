@@ -1,0 +1,374 @@
+"""Core Simulator class for railroad maintenance simulation."""
+
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+logger = logging.getLogger(__name__)
+
+from src.models import ACTION_MAINTAIN, ACTION_MOVE, VALID_ACTIONS, GrinderMachine, Segment, Station
+from src.utils.network_loader import NetworkConfig
+from src.simulator.direction_model import _direction_model_from_segments
+from src.simulator.network_utils import (
+    _get_possible_moves,
+    _get_turn_choices,
+    _resolve_network,
+    build_network,
+)
+
+DailyMap = Dict[str, Dict[str, float]]
+
+
+class Simulator:
+    """Programmatic simulator used by Streamlit and tests."""
+
+    def __init__(self, network: Optional[Union[NetworkConfig, str, Path]] = None) -> None:
+        self.stations: Dict[str, Station] = {}
+        self.segments: List[Segment] = []
+        self._network = _resolve_network(network)
+        self._build_network()
+        self._direction_model = _direction_model_from_segments(self.segments)
+
+        self.machine: Optional[GrinderMachine] = None
+        self.simulation_date: Optional[datetime] = None
+        self.previous_station: Optional[Station] = None
+        self.current_station: Optional[Station] = None
+
+        self.daily_map: Optional[DailyMap] = None
+
+        self.steps: List[Dict[str, object]] = []
+        self.movement_days_total = 0
+        self.maintenance_days_total = 0
+        self.maintenance_count = 0
+        self.idle_days_total = 0
+        self.maintenance_log: List[Tuple[str, Optional[str], int]] = []
+        self.stop_reason: str = ""
+        self.stop_details: Dict[str, object] = {}
+
+    def _build_network(self) -> None:
+        self.stations, self.segments = build_network(self._network)
+        self._direction_model = _direction_model_from_segments(self.segments)
+
+    def init_machine(
+        self,
+        start_station_name: str = "TRO",
+        facing_station_name: str = "TMI",
+        start_date: Optional[datetime] = None,
+        start_year: Optional[int] = None,
+        second_kld_installed: bool = False,
+        daily_map: Optional[DailyMap] = None,
+    ) -> None:
+        """Initialize the grinder machine state for simulation.
+
+        Args:
+            start_station_name: Name of station where machine begins.
+            facing_station_name: Name of station the machine initially faces.
+            start_date: Simulation start date. Takes precedence over start_year.
+            start_year: Simulation start year (defaults to January 1st).
+            second_kld_installed: Whether second KLD equipment is installed.
+            daily_map: Optional pre-built daily MTBT accumulation map.
+
+        Raises:
+            ValueError: If start_year is provided and is negative or invalid.
+            TypeError: If arguments have incorrect types.
+        """
+        if not isinstance(start_station_name, str):
+            raise TypeError(f"start_station_name must be str, got {type(start_station_name).__name__}")
+        if not isinstance(facing_station_name, str):
+            raise TypeError(f"facing_station_name must be str, got {type(facing_station_name).__name__}")
+        if start_date is not None and not isinstance(start_date, datetime):
+            raise TypeError(f"start_date must be datetime or None, got {type(start_date).__name__}")
+        if start_year is not None:
+            if not isinstance(start_year, int):
+                raise TypeError(f"start_year must be int or None, got {type(start_year).__name__}")
+            if start_year < 1900 or start_year > 2200:
+                raise ValueError(f"start_year must be between 1900-2200, got {start_year}")
+        if not isinstance(second_kld_installed, bool):
+            raise TypeError(f"second_kld_installed must be bool, got {type(second_kld_installed).__name__}")
+
+        if start_station_name not in self.stations:
+            start_station_name = "TRO"
+        if facing_station_name not in self.stations:
+            facing_station_name = "TMI"
+
+        start_segment = None
+        initial_dir = "forward"
+        for seg in self.segments:
+            if seg.start_station.name == start_station_name and seg.end_station.name == facing_station_name:
+                start_segment = seg
+                initial_dir = "forward"
+                break
+            if seg.end_station.name == start_station_name and seg.start_station.name == facing_station_name:
+                start_segment = seg
+                initial_dir = "reverse"
+                break
+        if not start_segment:
+            start_segment = self.segments[0]
+            facing_station_name = start_segment.end_station.name
+
+        init_global = self._direction_model.classify(start_station_name, facing_station_name) or "CARREGADO"
+        self.machine = GrinderMachine(
+            front_car_position=start_segment,
+            rear_car_position=start_segment,
+            direction=initial_dir,
+            facing=("Carregado" if init_global == "CARREGADO" else "Vazio"),
+            global_direction=init_global,
+            second_kld_installed=second_kld_installed,
+        )
+
+        if start_date:
+            self.simulation_date = start_date
+        elif start_year:
+            self.simulation_date = datetime(start_year, 1, 1)
+        else:
+            self.simulation_date = datetime.now()
+
+        self.daily_map = daily_map
+        self.current_station = self.stations[start_station_name]
+        self.previous_station = None
+
+    def get_possible_moves(self) -> List[Tuple[Segment, Station]]:
+        station = self.current_station
+        if station is None:
+            return []
+        pairs = _get_possible_moves(self.segments, station)
+        machine = self.machine
+        if not machine:
+            return pairs
+        filtered = []
+        for seg, other in pairs:
+            edge_dir = self._direction_model.classify(station.name, other.name)
+            if edge_dir is None or edge_dir == machine.global_direction:
+                filtered.append((seg, other))
+        return filtered
+
+    def get_all_moves_any_direction(self) -> List[Tuple[Segment, Station]]:
+        station = self.current_station
+        if station is None:
+            return []
+        return _get_possible_moves(self.segments, station)
+
+    def get_turn_choices(self) -> List[Station]:
+        station = self.current_station
+        if station is None:
+            return []
+        return _get_turn_choices(self.segments, station, self.previous_station)
+
+    def flip_global_direction(self) -> bool:
+        station = self.current_station
+        machine = self.machine
+        simulation_date = self.simulation_date
+        if not station or not station.can_turn:
+            return False
+        if machine is None or simulation_date is None:
+            return False
+        machine.global_direction = "VAZIO" if machine.global_direction == "CARREGADO" else "CARREGADO"
+        machine.facing = "Carregado" if machine.global_direction == "CARREGADO" else "Vazio"
+        start = simulation_date
+        duration = 1
+        self._apply_daily_mtbt_for_period(duration)
+        end_time = self.simulation_date
+        if end_time is None:
+            return False
+        self.movement_days_total += duration
+        self.steps.append(
+            {
+                "segment": station.name,
+                "action": "turn",
+                "facing": machine.facing,
+                "mtbt_before": None,
+                "days": duration,
+                "start": start.strftime("%Y-%m-%d"),
+                "end": end_time.strftime("%Y-%m-%d"),
+            }
+        )
+        return True
+
+    def _apply_daily_mtbt_for_period(self, days: int) -> None:
+        if days <= 0 or self.simulation_date is None:
+            return
+        if self.daily_map:
+            # Cache segment daily values to avoid repeated dict lookups
+            seg_daily_vals = [(seg, self.daily_map.get(seg.name)) for seg in self.segments]
+            for day_offset in range(days):
+                date_str = (self.simulation_date + timedelta(days=day_offset)).strftime("%Y-%m-%d")
+                for seg, vals in seg_daily_vals:
+                    if vals:
+                        val = vals.get(date_str)
+                        if val:
+                            try:
+                                seg.add_mtbt(float(val))
+                            except (TypeError, ValueError) as exc:
+                                logger.debug("Skipping MTBT value for %s on %s: %s", seg.name, date_str, exc)
+        self.simulation_date += timedelta(days=days)
+
+    def turn_to(self, station_name: str) -> bool:  # pragma: no cover (legacy signature)
+        del station_name
+        return self.flip_global_direction()
+
+    def _apply_arrival_facing_logic(self) -> None:
+        if not self.machine:
+            return
+        self.machine.facing = "Carregado" if self.machine.global_direction == "CARREGADO" else "Vazio"
+
+    def wait_days(self, days: int) -> bool:
+        """Wait for specified number of days without moving.
+
+        Args:
+            days: Number of days to wait.
+
+        Returns:
+            True if wait was successful.
+
+        Raises:
+            TypeError: If days is not an integer.
+            ValueError: If days is less than 1.
+        """
+        if not isinstance(days, int):
+            raise TypeError(f"days must be int, got {type(days).__name__}")
+        if days < 1:
+            raise ValueError(f"days must be at least 1, got {days}")
+
+        simulation_date = self.simulation_date
+        if simulation_date is None:
+            return False
+        start = simulation_date
+        self._apply_daily_mtbt_for_period(days)
+        end_time = self.simulation_date
+        if end_time is None:
+            return False
+        self.idle_days_total += days
+        self.steps.append(
+            {
+                "segment": self.current_station.name if self.current_station else "",
+                "action": "wait",
+                "facing": self.machine.facing if self.machine else None,
+                "mtbt_before": None,
+                "days": days,
+                "start": start.strftime("%Y-%m-%d"),
+                "end": end_time.strftime("%Y-%m-%d"),
+            }
+        )
+        return True
+
+    def move_to(self, seg: Segment, next_station: Station, action: str = "v") -> Dict[str, object]:
+        """Execute a move or maintenance action on a segment.
+
+        Args:
+            seg: Target segment to traverse or maintain.
+            next_station: Destination station.
+            action: Action type — use ACTION_MAINTAIN or ACTION_MOVE constants.
+                Legacy single-char values 'm' and 'v' are also accepted.
+
+        Returns:
+            Dictionary with step details.
+
+        Raises:
+            RuntimeError: If simulator not initialized.
+            TypeError: If arguments have incorrect types.
+            ValueError: If action is invalid or stations don't match segment.
+        """
+        if not isinstance(seg, Segment):
+            raise TypeError(f"seg must be Segment, got {type(seg).__name__}")
+        if not isinstance(next_station, Station):
+            raise TypeError(f"next_station must be Station, got {type(next_station).__name__}")
+        if not isinstance(action, str) or action not in VALID_ACTIONS:
+            raise ValueError(f"action must be one of {sorted(VALID_ACTIONS)!r}, got {action!r}")
+        # Normalise legacy single-char codes to canonical names
+        if action == "m":
+            action = ACTION_MAINTAIN
+        elif action == "v":
+            action = ACTION_MOVE
+
+        # Validate next_station is an endpoint of seg
+        if next_station not in (seg.start_station, seg.end_station):
+            raise ValueError(
+                f"next_station '{next_station.name}' is not an endpoint of segment '{seg.name}'. "
+                f"Valid endpoints: '{seg.start_station.name}', '{seg.end_station.name}'"
+            )
+
+        current_station = self.current_station
+        machine = self.machine
+        simulation_date = self.simulation_date
+        if current_station is None or machine is None or simulation_date is None:
+            raise RuntimeError(
+                "Simulator must be initialized with init_machine() before executing moves. "
+                "Call sim.init_machine(start_station_name, facing_station_name, start_year=YYYY) first."
+            )
+        if (current_station.name, next_station.name) not in getattr(seg, "allowed_movements", []):
+            for candidate in self.segments:
+                if (
+                    (candidate.start_station == current_station and candidate.end_station == next_station)
+                    or (candidate.end_station == current_station and candidate.start_station == next_station)
+                ) and (current_station.name, next_station.name) in getattr(candidate, "allowed_movements", []):
+                    seg = candidate
+                    break
+
+        edge_dir = self._direction_model.classify(current_station.name, next_station.name)
+        movement_dir = "forward" if edge_dir == machine.global_direction else "reverse"
+        machine.direction = movement_dir
+        machine.front_car_position = seg
+
+        mtbt_before = getattr(seg, "load", None)
+
+        performed = False
+        if action == ACTION_MAINTAIN:
+            if machine.second_kld_installed:
+                performed = machine.perform_maintenance(seg)
+            elif edge_dir == machine.global_direction:
+                performed = machine.perform_maintenance(seg)
+
+        if performed:
+            duration = seg.maintenance_time_days
+            self.maintenance_days_total += duration
+            self.maintenance_count += 1
+            self.maintenance_log.append((seg.name, None, duration))
+        else:
+            duration = seg.move_time_days
+            self.movement_days_total += duration
+            if not self.daily_map:
+                seg.increment_mtbt()
+
+        start = simulation_date
+        self._apply_daily_mtbt_for_period(duration)
+        end_time = self.simulation_date
+        if end_time is None:
+            raise RuntimeError("Simulation date unavailable after move")
+
+        self.steps.append(
+            {
+                "segment": seg.name,
+                "action": (
+                    "maintenance"
+                    if action == ACTION_MAINTAIN and performed
+                    else "maintenance_failed"
+                    if action == ACTION_MAINTAIN
+                    else "move"
+                ),
+                "facing": machine.facing,
+                "mtbt_before": float(mtbt_before) if isinstance(mtbt_before, (int, float)) else mtbt_before,
+                "days": duration,
+                "start": start.strftime("%Y-%m-%d"),
+                "end": end_time.strftime("%Y-%m-%d"),
+            }
+        )
+
+        for idx, entry in enumerate(self.maintenance_log):
+            if entry[0] == seg.name and entry[1] is None:
+                self.maintenance_log[idx] = (entry[0], end_time.strftime("%Y-%m-%d"), entry[2])
+
+        self.previous_station = current_station
+        self.current_station = next_station
+        self._apply_arrival_facing_logic()
+
+        return {"performed": performed, "duration": duration}
+
+    def classify_edge_direction(self, start_station: str, end_station: str) -> Optional[str]:
+        """Expose the simulator's direction model for tests and tooling."""
+        return self._direction_model.classify(start_station, end_station)
+
+
+__all__ = ["Simulator", "DailyMap"]

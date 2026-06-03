@@ -1,0 +1,6 @@
+pandas
+matplotlib
+networkx
+pytest
+streamlit>=1.40
+streamlit-drawable-canvas

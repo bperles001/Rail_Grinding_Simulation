@@ -1,0 +1,36 @@
+# Python build artifacts
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+railroad_maintenance_simulator.egg-info/
+build/
+.build/
+/dist/
+
+# Virtual environments
+.venv/
+.env/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Testing & tooling
+.pytest_cache/
+.nox/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Project outputs
+*.png
+reports/
+
+# Log files
+*.log
