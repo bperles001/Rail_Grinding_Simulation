@@ -311,6 +311,8 @@ class TimelineGenerator:
                 color = '#81C3FF'  # blue for moves
             elif status == 'maintenance':
                 color = '#4EA24E'  # green for maintenance
+            elif status == 'maintenance_curves':
+                color = '#9B59B6'  # purple for curves-only maintenance
             elif status == 'wait':
                 color = '#F2C744'  # yellow for idle periods
             elif status == 'turn':
@@ -567,6 +569,8 @@ class TimelineGenerator:
             handles.append(mpatches.Patch(color='#333399', label='Move'))
         if 'maintenance' in present:
             handles.append(mpatches.Patch(color='#4EA24E', label='Maintenance'))
+        if 'maintenance_curves' in present:
+            handles.append(mpatches.Patch(color='#9B59B6', label='Maintenance (curves)'))
         if 'turn' in present:
             handles.append(mpatches.Patch(color='#777777', label='Turn'))
         if handles:

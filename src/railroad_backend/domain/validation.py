@@ -91,8 +91,8 @@ def validate_manual_plan_step(step: Dict[str, Any], step_idx: int) -> List[str]:
             errors.append(f"Step {step_idx}: 'move' mode requires 'destination' field")
         if "action" not in step:
             errors.append(f"Step {step_idx}: 'move' mode requires 'action' field")
-        elif step["action"] not in ("v", "m"):
-            errors.append(f"Step {step_idx}: action must be 'v' (move) or 'm' (maintenance), got '{step['action']}'")
+        elif step["action"] not in ("v", "m", "move", "maintain", "maintain_curves"):
+            errors.append(f"Step {step_idx}: action must be 'move'/'v', 'maintain'/'m', or 'maintain_curves', got '{step['action']}'")
     
     elif mode == "wait":
         if "days" not in step:

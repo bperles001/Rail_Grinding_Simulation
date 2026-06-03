@@ -10,12 +10,13 @@ Position = Union["Segment", "Station"]
 
 # Action constants for move_to() — use these instead of bare string literals.
 ACTION_MAINTAIN = "maintain"
+ACTION_MAINTAIN_CURVES = "maintain_curves"
 ACTION_MOVE = "move"
 # Legacy single-char aliases kept for backward compatibility with stored plans.
 _LEGACY_ACTION_MAINTAIN = "m"
 _LEGACY_ACTION_MOVE = "v"
 # All valid action values accepted by Simulator.move_to()
-VALID_ACTIONS = frozenset({ACTION_MAINTAIN, ACTION_MOVE, _LEGACY_ACTION_MAINTAIN, _LEGACY_ACTION_MOVE})
+VALID_ACTIONS = frozenset({ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE, _LEGACY_ACTION_MAINTAIN, _LEGACY_ACTION_MOVE})
 
 
 @dataclass(slots=True)
@@ -127,6 +128,7 @@ __all__ = [
     "Segment",
     "Station",
     "ACTION_MAINTAIN",
+    "ACTION_MAINTAIN_CURVES",
     "ACTION_MOVE",
     "VALID_ACTIONS",
 ]

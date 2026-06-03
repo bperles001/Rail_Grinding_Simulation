@@ -131,7 +131,7 @@ def test_validate_manual_plan_step_rejects_invalid_action():
     step = {"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "action": "x"}
     errors = validate_manual_plan_step(step, 1)
     assert len(errors) == 1
-    assert "must be 'v'" in errors[0] or "must be 'm'" in errors[0]
+    assert "action" in errors[0] and "'x'" in errors[0]
 
 
 def test_validate_manual_plan_accepts_valid_plan():

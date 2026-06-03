@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
-from src.models import ACTION_MAINTAIN, ACTION_MOVE, VALID_ACTIONS, GrinderMachine, Segment, Station
+from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE, VALID_ACTIONS, GrinderMachine, Segment, Station
 from src.utils.network_loader import NetworkConfig
 from src.simulator.direction_model import _direction_model_from_segments
 from src.simulator.network_utils import (
@@ -315,7 +315,7 @@ class Simulator:
         mtbt_before = getattr(seg, "load", None)
 
         performed = False
-        if action == ACTION_MAINTAIN:
+        if action in (ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES):
             if machine.second_kld_installed:
                 performed = machine.perform_maintenance(seg)
             elif edge_dir == machine.global_direction:
@@ -346,6 +346,10 @@ class Simulator:
                     if action == ACTION_MAINTAIN and performed
                     else "maintenance_failed"
                     if action == ACTION_MAINTAIN
+                    else "maintenance_curves"
+                    if action == ACTION_MAINTAIN_CURVES and performed
+                    else "maintenance_curves_failed"
+                    if action == ACTION_MAINTAIN_CURVES
                     else "move"
                 ),
                 "facing": machine.facing,

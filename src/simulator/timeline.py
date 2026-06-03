@@ -31,8 +31,8 @@ def _create_timeline_row(
         "mtbt_threshold": segment_thresholds.get(label, None),
     }
 
-    if action in ("move", "maintenance"):
-        base_row["status"] = "maintenance" if action == "maintenance" else "move"
+    if action in ("move", "maintenance", "maintenance_curves"):
+        base_row["status"] = action
         base_row["mtbt_before"] = step.get("mtbt_before", None)
         return base_row
     elif action == "wait":
@@ -77,7 +77,7 @@ def prepare_timeline_rows(
     for step in report_data:
         seg = step.get("segment", "")
         action = step.get("action", "move")
-        if action in ("move", "maintenance"):
+        if action in ("move", "maintenance", "maintenance_curves"):
             label = _base_label(seg)
             last_step_label = label
             row = _create_timeline_row(action, label, step, segment_thresholds)
