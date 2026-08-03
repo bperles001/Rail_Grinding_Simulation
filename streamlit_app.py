@@ -808,18 +808,51 @@ def _render_matplotlib_image(fig, *, alt_text: str = "Visualization") -> Optiona
     if fig is None:
         st.info("Unable to generate the requested figure.")
         return None
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format="png", bbox_inches="tight")
-    buffer.seek(0)
-    png_bytes = buffer.getvalue()
+    if isinstance(fig, (bytes, bytearray)):
+        png_bytes = bytes(fig)
+    else:
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format="png", bbox_inches="tight")
+        buffer.seek(0)
+        png_bytes = buffer.getvalue()
+        plt.close(fig)
     encoded = base64.b64encode(png_bytes).decode("ascii")
     st.markdown(
         f'<img src="data:image/png;base64,{encoded}" alt="{alt_text}" '
         "style='max-width:100%; height:auto; display:block; margin:auto;' />",
         unsafe_allow_html=True,
     )
-    plt.close(fig)
     return png_bytes
+
+
+def _figure_to_png(fig) -> Optional[bytes]:
+    if fig is None:
+        return None
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format="png", bbox_inches="tight")
+    plt.close(fig)
+    return buffer.getvalue()
+
+
+@st.cache_data(show_spinner=False, max_entries=16)
+def _network_sketch_png_cached(path: str, digest: str, layout_json: str) -> Optional[bytes]:
+    # path/digest/layout_json capture every input that affects the sketch;
+    # the body reads them via the regular session helpers.
+    return _figure_to_png(_network_figure())
+
+
+def _network_sketch_payload():
+    """Cached PNG of the network sketch; falls back to a live figure when
+    there is no active network file to key the cache on."""
+    file_path = _current_network_file_path()
+    if file_path is None or not file_path.exists():
+        return _network_figure()
+    layout_json = json.dumps(
+        _layout_preferences_for_path(), sort_keys=True, default=str
+    )
+    return _network_sketch_png_cached(
+        str(file_path), _network_file_digest(file_path), layout_json
+    )
 
 
 def _network_figure():
@@ -980,7 +1013,7 @@ def _render_network_editor() -> None:
         clear_widgets=_clear_network_editor_widgets,
         force_rerun=_force_rerun,
         render_network_layout_controls=_render_network_layout_controls,
-        network_figure_factory=_network_figure,
+        network_figure_factory=_network_sketch_payload,
         render_matplotlib_image=_render_matplotlib_image,
         create_blank_network_file=_create_blank_network_file,
         duplicate_active_network_file=_duplicate_active_network_file,
@@ -1141,16 +1174,36 @@ def main() -> None:
     if current_network_path:
         try:
             schedule_df = _current_schedule_dataframe()
-            if schedule_df is not None:
-                raw_bytes = schedule_df.to_csv(index=False).encode("utf-8")
-                summary_df = _summarize_schedule(raw_bytes)
         except ValueError as exc:
             st.error(f"Schedule validation failed: {exc}")
             st.stop()
-        
+
         state = _ensure_network_editor_state()
         if state and schedule_df is not None:
-            missing_segments = _update_schedule_network_warnings(schedule_df)
+            # Validation + missing-segment check memoized by content: only
+            # recompute when the schedule or the network actually changed.
+            sched_sig = _dataframe_signature(schedule_df)
+            net_digest = _network_file_digest(current_network_path)
+            cached_check = st.session_state.get("_sidebar_schedule_check")
+            if (
+                not cached_check
+                or cached_check.get("sched_sig") != sched_sig
+                or cached_check.get("net_digest") != net_digest
+            ):
+                try:
+                    _summarize_schedule(schedule_df.to_csv(index=False).encode("utf-8"))
+                except ValueError as exc:
+                    st.error(f"Schedule validation failed: {exc}")
+                    st.stop()
+                missing_segments = _update_schedule_network_warnings(schedule_df)
+                st.session_state["_sidebar_schedule_check"] = {
+                    "sched_sig": sched_sig,
+                    "net_digest": net_digest,
+                    "missing": missing_segments,
+                }
+            else:
+                missing_segments = cached_check["missing"]
+                st.session_state[SCHEDULE_WARNING_KEY] = missing_segments
         else:
             missing_segments = []
     else:

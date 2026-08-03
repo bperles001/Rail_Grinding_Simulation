@@ -30,6 +30,48 @@ from railroad_backend.services.manual_planner import (
 )
 from railroad_frontend.components.timeline import render_timeline, render_timeline_table
 
+_REPLAY_MEMO_KEY = "_manual_replay_memo"
+
+
+def _file_sig(path: Any) -> str:
+    try:
+        info = Path(path).stat()
+        return f"{info.st_mtime_ns}:{info.st_size}"
+    except OSError:
+        return "?"
+
+
+def _replay_memo_key(manual_config: ManualPlanConfig, plan: List[Dict[str, Any]]) -> str:
+    return json.dumps(
+        {
+            "csv": [str(manual_config.csv_path), _file_sig(manual_config.csv_path)],
+            "net": [str(manual_config.network_source), _file_sig(manual_config.network_source)],
+            "start": manual_config.start_station,
+            "facing": manual_config.facing_station,
+            "years": [manual_config.start_year, manual_config.end_year],
+            "kld2": manual_config.second_kld,
+            "plan": plan,
+        },
+        sort_keys=True,
+        default=str,
+    )
+
+
+def _replay_memo_lookup(key: str):
+    """Return the cached replay for `key`, or None. The replay rebuilds the
+    whole simulation (~100ms) and is deterministic in (config, plan, schedule
+    file, network file), so reruns with unchanged inputs reuse the result."""
+    memo = st.session_state.get(_REPLAY_MEMO_KEY)
+    if memo and memo.get("key") == key:
+        return memo["result"]
+    return None
+
+
+def _replay_and_store(key: str, manual_config: ManualPlanConfig, plan: List[Dict[str, Any]]):
+    result = replay_manual_plan(manual_config, plan)
+    st.session_state[_REPLAY_MEMO_KEY] = {"key": key, "result": result}
+    return result
+
 
 @dataclass(frozen=True)
 class ManualRouteSessionKeys:
@@ -337,20 +379,20 @@ def render_manual_route_page(
         network_source=network_file_path,
     )
     
-    # Show progress for manual plan replay
-    if plan and len(plan) > 0:
-        progress_container = st.empty()
-        with progress_container.container():
-            render_step_progress(1, 2, "Replaying manual route", eta_seconds=len(plan) * 2)
-        
-        replay_result = replay_manual_plan(manual_config, plan)
-        
-        with progress_container.container():
-            render_step_progress(2, 2, "Generating timeline", eta_seconds=1)
-        
-        progress_container.empty()
-    else:
-        replay_result = replay_manual_plan(manual_config, plan)
+    # Replay only when inputs changed; memo hit skips progress UI entirely
+    replay_key = _replay_memo_key(manual_config, plan)
+    replay_result = _replay_memo_lookup(replay_key)
+    if replay_result is None:
+        if plan and len(plan) > 0:
+            progress_container = st.empty()
+            with progress_container.container():
+                render_step_progress(1, 2, "Replaying manual route", eta_seconds=len(plan) * 2)
+            replay_result = _replay_and_store(replay_key, manual_config, plan)
+            with progress_container.container():
+                render_step_progress(2, 2, "Generating timeline", eta_seconds=1)
+            progress_container.empty()
+        else:
+            replay_result = _replay_and_store(replay_key, manual_config, plan)
     
     sim_preview = replay_result.simulator
     preview_errors = replay_result.errors

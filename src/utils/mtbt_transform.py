@@ -5,6 +5,19 @@ from typing import Any, Dict, List, Union, cast
 
 import pandas as pd
 
+# Cache keyed by (path, mtime_ns, size, year): the expansion is pure on the
+# file content, and dashboards call it on every rerun.
+_DAILY_MTBT_CACHE: Dict[Any, pd.DataFrame] = {}
+_DAILY_MTBT_CACHE_MAX = 32
+
+
+def _daily_cache_key(csv_path: Union[str, Path], year: int) -> Any:
+    try:
+        stat = Path(csv_path).stat()
+    except OSError:
+        return None
+    return (str(csv_path), stat.st_mtime_ns, stat.st_size, int(year))
+
 
 def get_daily_mtbt(csv_path: Union[str, Path], year: int) -> pd.DataFrame:
     """Expand monthly MTBT values into per-day entries.
@@ -20,6 +33,10 @@ def get_daily_mtbt(csv_path: Union[str, Path], year: int) -> pd.DataFrame:
     Returns:
         DataFrame with columns: Segment Name, Date, MTBT Value.
     """
+
+    cache_key = _daily_cache_key(csv_path, year)
+    if cache_key is not None and cache_key in _DAILY_MTBT_CACHE:
+        return _DAILY_MTBT_CACHE[cache_key].copy()
 
     df = pd.read_csv(csv_path)
     segments = df["Segment Name"]
@@ -44,7 +61,12 @@ def get_daily_mtbt(csv_path: Union[str, Path], year: int) -> pd.DataFrame:
             for day in range(1, days_in_month + 1):
                 date = f"{year_val}-{month_num:02d}-{day:02d}"
                 rows.append({"Segment Name": segment, "Date": date, "MTBT Value": daily_value})
-    return pd.DataFrame(rows)
+    result = pd.DataFrame(rows)
+    if cache_key is not None:
+        while len(_DAILY_MTBT_CACHE) >= _DAILY_MTBT_CACHE_MAX:
+            _DAILY_MTBT_CACHE.pop(next(iter(_DAILY_MTBT_CACHE)))
+        _DAILY_MTBT_CACHE[cache_key] = result.copy()
+    return result
 
 def get_initial_loads(csv_path: str) -> Dict[str, float]:
     """Read 'Initial Load' values from the MTBT schedule CSV if present."""
