@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+from collections import deque
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Sequence, Tuple
 
 import networkx as nx
@@ -86,6 +88,102 @@ def automatic_station_layout(config: "NetworkConfig") -> Dict[str, Dict[str, flo
         y_norm = ((coords[1] - min_y) / span_y) * scale
         normalized[name] = {"x": float(x_norm), "y": float(y_norm)}
     return normalized
+
+def project_geographic_coordinates(
+    coordinates: Mapping[str, Tuple[float, float]]
+) -> Dict[str, Tuple[float, float]]:
+    """Project {name: (lat, long)} to local planar {name: (x, y)}.
+
+    Equirectangular approximation (x = long * cos(mean_latitude), y = lat),
+    adequate at a regional scale (a single rail corridor, not a global map).
+    Compresses east-west distance by the mean latitude's cosine so stations
+    at higher latitude don't get visually stretched east-west.
+    """
+    if not coordinates:
+        return {}
+    mean_lat_rad = math.radians(
+        sum(lat for lat, _lon in coordinates.values()) / len(coordinates)
+    )
+    scale = math.cos(mean_lat_rad)
+    return {
+        name: (lon * scale, lat)
+        for name, (lat, lon) in coordinates.items()
+    }
+
+
+def graph_diameter_endpoints(adjacency: Mapping[str, Sequence[str]]) -> Tuple[str, str]:
+    """Return two station names at opposite ends of a longest shortest-path.
+
+    Uses the standard double-BFS technique (correct for trees, a good-enough
+    heuristic otherwise): BFS from any node finds one diameter endpoint;
+    BFS from that endpoint finds the other. Assumes `adjacency` represents a
+    connected graph rooted at one of its own keys.
+    """
+
+    def farthest_from(start: str) -> str:
+        visited = {start: 0}
+        queue = deque([start])
+        farthest = start
+        while queue:
+            node = queue.popleft()
+            for neighbor in adjacency.get(node, []):
+                if neighbor not in visited:
+                    visited[neighbor] = visited[node] + 1
+                    if visited[neighbor] > visited[farthest]:
+                        farthest = neighbor
+                    queue.append(neighbor)
+        return farthest
+
+    start = next(iter(adjacency))
+    first_endpoint = farthest_from(start)
+    second_endpoint = farthest_from(first_endpoint)
+    return first_endpoint, second_endpoint
+
+
+def schematic_layout_from_seed(
+    adjacency: Mapping[str, Sequence[str]],
+    seed_positions: Mapping[str, Tuple[float, float]],
+    *,
+    spacing: float = 1.0,
+) -> Dict[str, Tuple[float, float]]:
+    """BFS layout that keeps each edge's real direction (from `seed_positions`)
+    but normalizes every edge to the same `spacing` length.
+
+    Only stations present in `seed_positions` participate; the walk never
+    crosses into a station lacking seed data, so those are simply absent
+    from the result (caller merges this over an existing layout - see
+    `_render_network_layout_controls` in streamlit_app.py).
+    """
+    seeded = set(seed_positions)
+    sub_adjacency: Dict[str, List[str]] = {
+        name: [n for n in neighbors if n in seeded]
+        for name, neighbors in adjacency.items()
+        if name in seeded
+    }
+    if not sub_adjacency:
+        return {}
+
+    root, _ = graph_diameter_endpoints(sub_adjacency)
+    positions: Dict[str, Tuple[float, float]] = {root: (0.0, 0.0)}
+    visited = {root}
+    queue = deque([root])
+    while queue:
+        current = queue.popleft()
+        cx, cy = positions[current]
+        sx, sy = seed_positions[current]
+        for neighbor in sub_adjacency.get(current, []):
+            if neighbor in visited:
+                continue
+            visited.add(neighbor)
+            nx_seed, ny_seed = seed_positions[neighbor]
+            angle = math.atan2(ny_seed - sy, nx_seed - sx)
+            positions[neighbor] = (
+                cx + math.cos(angle) * spacing,
+                cy + math.sin(angle) * spacing,
+            )
+            queue.append(neighbor)
+    return positions
+
 
 def default_station_layout(config: "NetworkConfig") -> Dict[str, Dict[str, float]]:
     """Provide deterministic fallback coordinates using adjacency heuristics."""

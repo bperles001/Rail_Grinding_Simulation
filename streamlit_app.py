@@ -20,6 +20,13 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+import matplotlib
+# Headless web app - never renders to a screen, only serves figures as PNG
+# bytes (see _render_matplotlib_image). Force the non-interactive Agg backend
+# instead of relying on matplotlib's auto-selection, which can land on a GUI
+# backend (e.g. TkAgg) that isn't safe to touch outside its owning thread and
+# crashes when Streamlit runs script code in a worker thread.
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
@@ -85,11 +92,18 @@ from railroad_frontend.views.network_editor import (
     render_network_editor_page,
 )
 from railroad_frontend.views.schedule import render_schedule_page
-from railroad_backend.domain.network_layout import automatic_layout_positions, automatic_station_layout
+from railroad_backend.domain.network_layout import (
+    automatic_layout_positions,
+    automatic_station_layout,
+    build_adjacency_map,
+    project_geographic_coordinates,
+    schematic_layout_from_seed,
+)
 from src.simulator import DEFAULT_NETWORK_FILE, Simulator
 from railroad_backend.domain.network_editor import (
     network_editor_segment_df,
     network_editor_station_df,
+    parse_station_coordinates,
     spur_rows_from_text,
     unique_network_path,
 )
@@ -536,7 +550,8 @@ def _render_schedule_network_alert() -> None:
 
 
 def _update_schedule_network_warnings(schedule_df: pd.DataFrame) -> List[str]:
-    missing = schedule_missing_segments(schedule_df, _current_network_segments())
+    segment_names = [segment.name for segment in _current_network_segments()]
+    missing = schedule_missing_segments(schedule_df, segment_names)
     st.session_state[SCHEDULE_WARNING_KEY] = missing
     return missing
 
@@ -565,6 +580,50 @@ def _render_network_layout_controls(state: Dict[str, Any]) -> None:
         state["dirty"] = True
     if mode == "table":
         overrides = prefs.get("table_overrides", {}) or {}
+
+        with st.expander("📍 Importar coordenadas GPS", expanded=False):
+            st.caption(
+                "Cole uma linha por estação: NOME, LATITUDE, LONGITUDE "
+                "(vírgula ou tab, direto do Excel). O sistema preserva a "
+                "direção real entre estações vizinhas mas normaliza o "
+                "espaçamento entre elas."
+            )
+            gps_text = st.text_area(
+                "Coordenadas GPS", key="network_layout_gps_text", height=150
+            )
+            if st.button("Aplicar e normalizar posições", key="network_layout_gps_apply"):
+                parsed, parse_messages = parse_station_coordinates(gps_text)
+                station_set = set(state["stations_df"]["Name"].astype(str).tolist())
+                unknown = sorted(set(parsed) - station_set)
+                usable = {name: coords for name, coords in parsed.items() if name in station_set}
+                for msg in parse_messages:
+                    st.warning(msg)
+                if unknown:
+                    st.warning(
+                        f"Estação(ões) não encontrada(s) na rede, ignorada(s): {', '.join(unknown)}."
+                    )
+                if usable:
+                    projected = project_geographic_coordinates(usable)
+                    schematic = schematic_layout_from_seed(
+                        build_adjacency_map(config.segments),
+                        projected,
+                        spacing=1.0,
+                    )
+                    if schematic:
+                        merged_overrides = dict(overrides)
+                        merged_overrides.update(
+                            {name: {"x": x, "y": y} for name, (x, y) in schematic.items()}
+                        )
+                        prefs["table_overrides"] = merged_overrides
+                        overrides = merged_overrides
+                        state["dirty"] = True
+                        st.session_state.pop("network_layout_editor", None)
+                        st.success(f"{len(schematic)} estação(ões) reposicionada(s).")
+                    else:
+                        st.warning("Nenhuma estação com dados suficientes para calcular posição.")
+                elif not unknown:
+                    st.warning("Nenhuma coordenada válida encontrada no texto colado.")
+
         rows = []
         auto_defaults = automatic_station_layout(config)
         station_names = state["stations_df"]["Name"].astype(str).tolist()
@@ -576,26 +635,29 @@ def _render_network_layout_controls(state: Dict[str, Any]) -> None:
                 coords = {"x": float(idx), "y": 0.0}
             rows.append({"Station": name, "X": float(coords.get("x", 0.0)), "Y": float(coords.get("y", 0.0))})
         
-        editor_df = st.data_editor(
-            pd.DataFrame(rows),
-            key="network_layout_editor",
-            hide_index=True,
-            use_container_width=True,
-            column_config={
-                "Station": st.column_config.TextColumn("Station", disabled=True),
-                "X": st.column_config.NumberColumn("X", step=0.5),
-                "Y": st.column_config.NumberColumn("Y", step=0.5),
-            },
-        )
-        new_overrides: Dict[str, Dict[str, float]] = {}
-        for _, row in editor_df.iterrows():
-            name = str(row.get("Station", "")).strip()
-            if not name:
-                continue
-            new_overrides[name] = {"x": float(row.get("X", 0.0)), "y": float(row.get("Y", 0.0))}
-        if new_overrides != overrides:
-            prefs["table_overrides"] = new_overrides
-            state["dirty"] = True
+        with st.form("network_layout_form", clear_on_submit=False):
+            editor_df = st.data_editor(
+                pd.DataFrame(rows),
+                key="network_layout_editor",
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "Station": st.column_config.TextColumn("Station", disabled=True),
+                    "X": st.column_config.NumberColumn("X", step=0.5),
+                    "Y": st.column_config.NumberColumn("Y", step=0.5),
+                },
+            )
+            layout_submit = st.form_submit_button("Apply layout changes")
+        if layout_submit:
+            new_overrides: Dict[str, Dict[str, float]] = {}
+            for _, row in editor_df.iterrows():
+                name = str(row.get("Station", "")).strip()
+                if not name:
+                    continue
+                new_overrides[name] = {"x": float(row.get("X", 0.0)), "y": float(row.get("Y", 0.0))}
+            if new_overrides != overrides:
+                prefs["table_overrides"] = new_overrides
+                state["dirty"] = True
         if st.button("Reset layout overrides", key="network_layout_reset", disabled=not overrides):
             prefs["table_overrides"] = {}
             state["dirty"] = True

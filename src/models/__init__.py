@@ -31,6 +31,13 @@ class Station:
         if segment not in self.segments:
             self.segments.append(segment)
 
+    def __repr__(self) -> str:
+        # Station <-> Segment hold circular references (segments back-reference
+        # their stations); the default dataclass repr recurses through the whole
+        # network graph with no memoization, which is combinatorially explosive
+        # on anything but a tiny network. Keep this shallow.
+        return f"Station(name={self.name!r}, can_turn={self.can_turn}, segments={len(self.segments)})"
+
 
 @dataclass(slots=True)
 class Segment:
@@ -46,6 +53,18 @@ class Segment:
     allowed_movements: List[Movement] = field(default_factory=list)
     move_time_days: int = 1
     maintenance_time_days: int = 1
+    curve_length_km: float = 0.0
+    tangent_length_km: float = 0.0
+    move_billed_days: float = 0.0
+    maintenance_billed_days: float = 0.0
+
+    def __repr__(self) -> str:
+        # See Station.__repr__: avoid recursing into start_station/end_station,
+        # which each hold a back-reference to their full segment list.
+        return (
+            f"Segment(name={self.name!r}, start={self.start_station.name!r}, "
+            f"end={self.end_station.name!r}, length={self.length})"
+        )
 
     def __post_init__(self) -> None:
         if not self.allowed_movements:

@@ -54,9 +54,13 @@ def network_editor_segment_df(payload: Dict[str, Any]) -> pd.DataFrame:
                 "Start": entry.get("start", ""),
                 "End": entry.get("end", ""),
                 "Length (km)": entry.get("length_km", 0.0),
+                "Curve length (km)": entry.get("curve_length_km", 0.0),
+                "Tangent length (km)": entry.get("tangent_length_km", 0.0),
                 "MTBT threshold": entry.get("mtbt_threshold", 0.0),
                 "Move days": entry.get("move_time_days", 0),
                 "Maintenance days": entry.get("maintenance_time_days", 0),
+                "Move billed days": entry.get("move_billed_days", 0.0),
+                "Maintenance billed days": entry.get("maintenance_billed_days", 0.0),
                 "Allowed movements": allowed_text,
             }
         )
@@ -68,15 +72,19 @@ def network_editor_segment_df(payload: Dict[str, Any]) -> pd.DataFrame:
                 "Start",
                 "End",
                 "Length (km)",
+                "Curve length (km)",
+                "Tangent length (km)",
                 "MTBT threshold",
                 "Move days",
                 "Maintenance days",
+                "Move billed days",
+                "Maintenance billed days",
                 "Allowed movements",
             ]
         )
     for col in ("Name", "Start", "End", "Allowed movements"):
         df[col] = df[col].astype(str)
-    for col in ("Length (km)", "MTBT threshold"):
+    for col in ("Length (km)", "Curve length (km)", "Tangent length (km)", "MTBT threshold", "Move billed days", "Maintenance billed days"):
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
     for col in ("Move days", "Maintenance days"):
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
@@ -86,9 +94,13 @@ def network_editor_segment_df(payload: Dict[str, Any]) -> pd.DataFrame:
             "Start",
             "End",
             "Length (km)",
+            "Curve length (km)",
+            "Tangent length (km)",
             "MTBT threshold",
             "Move days",
             "Maintenance days",
+            "Move billed days",
+            "Maintenance billed days",
             "Allowed movements",
         ]
     ]
@@ -133,6 +145,41 @@ def parse_spur_text(value: str) -> List[List[str]]:
             raise ValueError(f"Invalid spur entry '{line}'.")
         movements.append([src, dst])
     return movements
+
+
+def parse_station_coordinates(text: str) -> Tuple[Dict[str, Tuple[float, float]], List[str]]:
+    """Parse pasted 'NAME, LAT, LONG' (comma- or tab-separated) lines.
+
+    Returns (parsed, messages): parsed maps station name -> (lat, long);
+    messages lists one human-readable warning per skipped/invalid line.
+    Never raises - bad input becomes a message, not an exception. Duplicate
+    station names: the later line wins, with a warning.
+    """
+    parsed: Dict[str, Tuple[float, float]] = {}
+    messages: List[str] = []
+    for line_no, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        parts = [p.strip() for p in re.split(r"[,\t]+", line) if p.strip()]
+        if len(parts) != 3:
+            messages.append(
+                f"Line {line_no}: expected 'NAME, LAT, LONG', got {len(parts)} field(s) - skipped."
+            )
+            continue
+        name, lat_raw, lon_raw = parts
+        try:
+            lat = float(lat_raw)
+            lon = float(lon_raw)
+        except ValueError:
+            messages.append(
+                f"Line {line_no}: '{lat_raw}' / '{lon_raw}' is not numeric - skipped."
+            )
+            continue
+        if name in parsed:
+            messages.append(f"Line {line_no}: duplicate station '{name}' - using the later value.")
+        parsed[name] = (lat, lon)
+    return parsed, messages
 
 
 def spur_rows_from_text(value: str) -> List[Dict[str, str]]:

@@ -211,9 +211,13 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
                 "Start",
                 "End",
                 "Length (km)",
+                "Curve length (km)",
+                "Tangent length (km)",
                 "MTBT threshold",
                 "Move days",
                 "Maintenance days",
+                "Move billed days",
+                "Maintenance billed days",
                 "Allowed direction",
                 "Allowed movements",
                 "Endpoint status",
@@ -231,9 +235,25 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
                     help="Choose the destination station from the table above.",
                 ),
                 "Length (km)": st.column_config.NumberColumn("Length (km)", min_value=0.0, step=0.1),
+                "Curve length (km)": st.column_config.NumberColumn(
+                    "Curve length (km)", min_value=0.0, step=0.1,
+                    help="Extensão em curva dentro deste segmento (para separar o ciclo de esmerilhamento de curva x tangente).",
+                ),
+                "Tangent length (km)": st.column_config.NumberColumn(
+                    "Tangent length (km)", min_value=0.0, step=0.1,
+                    help="Extensão em tangente dentro deste segmento.",
+                ),
                 "MTBT threshold": st.column_config.NumberColumn("MTBT threshold", min_value=0.0, step=10.0),
-                "Move days": st.column_config.NumberColumn("Move days", min_value=0, step=1),
-                "Maintenance days": st.column_config.NumberColumn("Maintenance days", min_value=0, step=1),
+                "Move days": st.column_config.NumberColumn("Move days", min_value=0, step=1, help="Dias corridos de deslocamento."),
+                "Maintenance days": st.column_config.NumberColumn("Maintenance days", min_value=0, step=1, help="Dias corridos de manutenção."),
+                "Move billed days": st.column_config.NumberColumn(
+                    "Move billed days", min_value=0.0, step=0.5,
+                    help="Diárias pagas de deslocamento (pode ser menor que os dias corridos).",
+                ),
+                "Maintenance billed days": st.column_config.NumberColumn(
+                    "Maintenance billed days", min_value=0.0, step=0.5,
+                    help="Diárias pagas de manutenção/operação (pode ser menor que os dias corridos).",
+                ),
                 "Allowed direction": st.column_config.SelectboxColumn(
                     "Allowed direction",
                     options=list(_ALLOWED_DIRECTION_CHOICES),
@@ -259,7 +279,7 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
         segment_editor = segment_editor.copy(deep=True)
         for col in ("Name", "Start", "End", "Allowed movements"):
             segment_editor[col] = segment_editor[col].astype(str)
-    for col in ("Length (km)", "MTBT threshold"):
+    for col in ("Length (km)", "Curve length (km)", "Tangent length (km)", "MTBT threshold", "Move billed days", "Maintenance billed days"):
         segment_editor[col] = pd.to_numeric(segment_editor[col], errors="coerce").fillna(0.0)
     for col in ("Move days", "Maintenance days"):
         segment_editor[col] = pd.to_numeric(segment_editor[col], errors="coerce").fillna(0).astype(int)

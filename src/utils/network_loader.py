@@ -186,6 +186,10 @@ def _build_segments(
             move_time_days=int(entry["move_time_days"]),
             maintenance_time_days=int(entry["maintenance_time_days"]),
             allowed_movements=cleaned_allowed,
+            curve_length_km=float(entry.get("curve_length_km", 0.0) or 0.0),
+            tangent_length_km=float(entry.get("tangent_length_km", 0.0) or 0.0),
+            move_billed_days=float(entry.get("move_billed_days", 0.0) or 0.0),
+            maintenance_billed_days=float(entry.get("maintenance_billed_days", 0.0) or 0.0),
         )
         segments.append(segment)
     return segments
