@@ -108,6 +108,29 @@ def test_schematic_layout_from_seed_empty_seed_returns_empty():
     assert schematic_layout_from_seed({"A": ["B"]}, {}, spacing=1.0) == {}
 
 
+def test_schematic_layout_from_seed_snaps_to_octilinear_angles_by_default():
+    adjacency = {"A": ["B"], "B": ["A"]}
+    # B is at a shallow ~10 degree angle from A in the seed data - not a
+    # multiple of 45 degrees.
+    seed = {"A": (0.0, 0.0), "B": (10.0, 1.76)}
+    result = schematic_layout_from_seed(adjacency, seed, spacing=2.0)
+    ax, ay = result["A"]
+    bx, by = result["B"]
+    # Snapped to the nearest octilinear direction (due east, 0 degrees):
+    # B ends up due east of A, not at the shallow original angle.
+    assert math.isclose(bx - ax, 2.0, abs_tol=1e-9)
+    assert math.isclose(by - ay, 0.0, abs_tol=1e-9)
+
+
+def test_schematic_layout_from_seed_octilinear_false_keeps_exact_angle():
+    adjacency = {"A": ["B"], "B": ["A"]}
+    seed = {"A": (0.0, 0.0), "B": (10.0, 10.0)}  # exactly 45 degrees anyway
+    result = schematic_layout_from_seed(adjacency, seed, spacing=2.0, octilinear=False)
+    ax, ay = result["A"]
+    bx, by = result["B"]
+    assert math.isclose(bx - ax, by - ay, abs_tol=1e-9)  # still a 45-degree move
+
+
 def test_schematic_layout_from_seed_branch_point_fans_out_children():
     # B connects to A, C, and D - a branch point, like ZIQ in the real network.
     adjacency = {"A": ["B"], "B": ["A", "C", "D"], "C": ["B"], "D": ["B"]}

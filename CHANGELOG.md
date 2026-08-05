@@ -25,6 +25,26 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   (`src/railroad_backend/domain/network_layout.py`) and
   `parse_station_coordinates` (`src/railroad_backend/domain/network_editor.py`).
   Design: `docs/superpowers/specs/2026-08-04-schematic-network-layout-design.md`.
+  `parse_station_coordinates` also tolerates Brazilian-locale decimal-comma
+  input pasted straight from Excel (e.g. `RDA,-15,55,-54,56`), and
+  semicolon-separated fields.
+- `schematic_layout_from_seed` gained an `octilinear` option (default on):
+  snaps each edge's angle to the nearest 45° before placing the next
+  station, the standard technique behind metro-map-style schematics - same
+  topology/shape, but clean horizontal/vertical/diagonal lines instead of
+  arbitrary angles.
+- Network sketch: segments between the same station pair are now drawn to
+  reflect real track layout instead of overlapping straight lines. Where a
+  shared Singela plus Carregado (LP)/Vazio (LD) all exist between a pair,
+  Singela is drawn as a continuous line with Carregado inline through the
+  middle (the "Linha Principal" stays straight) and Vazio as a siding loop
+  that splits off and rejoins (the "Linha Desviada" bows out) - matching
+  real trackwork where the main line runs straight and the passing siding
+  is what curves away. Where only Carregado+Vazio exist (no shared track,
+  e.g. SP Sul), they're drawn as straight parallel lines. Stations that can
+  turn (`can_turn`) are colored distinctly from regular stations, with a
+  legend. Node circles are large enough for the 3-letter station code to
+  render inside them, always on top of the segment lines.
 
 ### Fixed
 - **Critical**: selecting a network with enough stations/segments (~20+/~40+)

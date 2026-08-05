@@ -29,8 +29,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import pandas as pd
 import streamlit as st
+from matplotlib.patches import FancyArrowPatch
 from matplotlib.ticker import FuncFormatter
 
 from railroad_backend.services.auto_planner import run_auto_plan_from_args
@@ -607,7 +609,7 @@ def _render_network_layout_controls(state: Dict[str, Any]) -> None:
                     schematic = schematic_layout_from_seed(
                         build_adjacency_map(config.segments),
                         projected,
-                        spacing=1.0,
+                        spacing=3.0,
                     )
                     if schematic:
                         merged_overrides = dict(overrides)
@@ -1007,29 +1009,177 @@ def _network_figure():
     ax.axhline(0, color="#B0B0B0", linewidth=0.6, zorder=0)
     ax.axvline(0, color="#B0B0B0", linewidth=0.6, zorder=0)
 
-    nx.draw_networkx_nodes(graph, pos, node_size=700, node_color="#B3DAF1", ax=ax)
-    nx.draw_networkx_labels(graph, pos, font_size=10, ax=ax)
-    for segment in config.segments:
-        u = segment.start_station.name
-        v = segment.end_station.name
-        if "Carregado" in segment.name:
-            color = "#1f77b4"
-            rad = 0.35
-        elif "Vazio" in segment.name:
-            color = "#2ca02c"
-            rad = -0.35
-        else:
-            color = "#7f7f7f"
-            rad = 0.0
-        nx.draw_networkx_edges(
-            graph,
-            pos,
-            edgelist=[(u, v)],
+    STATION_NODE_COLOR = "#B3DAF1"
+    CAN_TURN_NODE_COLOR = "#FFB74D"
+    node_colors = [
+        CAN_TURN_NODE_COLOR if config.stations[name].can_turn else STATION_NODE_COLOR
+        for name in graph.nodes()
+    ]
+
+    # Segments between the same station pair come in up to three flavors:
+    # a bidirectional "trunk" (Singela - shared track, both directions) and
+    # up to two directional ones (Carregado/"-LP" = export direction,
+    # Vazio/"-LD" = import direction).
+    #
+    # Where all three exist, the physical layout is a shared track that
+    # splits into two parallel tracks around a crossing yard and rejoins.
+    # Drawn per the user's reference sketch: the trunk is one continuous
+    # black line the full station-to-station distance; Carregado (green)
+    # and Vazio (blue) are a flattened lens overlaid on top of it - two
+    # straight risers converging near each station, a flat parallel section
+    # in the middle - matching real trackwork: Linha Principal (Carregado)
+    # IS the straight through-track, so it's drawn inline with no offset;
+    # Linha Desviada (Vazio) is the siding, so it's the one that actually
+    # bows away from the straight line and rejoins it, for a shorter,
+    # centered stretch. No arrowheads on the loop (the shape plus the color
+    # legend already carry the direction meaning).
+    #
+    # Where only Carregado+Vazio exist (no shared track, e.g. SP Sul), keep
+    # the earlier smooth-arc-with-arrowhead rendering spanning the full
+    # distance - already confirmed readable. Where only the trunk exists,
+    # a single straight black line as before.
+    TRUNK_COLOR = "#000000"
+    CARREGADO_COLOR = "#2ca02c"  # green = LP / Carregado = export direction
+    VAZIO_COLOR = "#1f77b4"  # blue = LD / Vazio = import direction
+    PARALLEL_OFFSET_FRACTION = 0.08
+    # Singela (black) is the real long-haul track; the yard where it splits
+    # into Principal/Desviada is short by comparison. Keep the inline green
+    # (Carregado) section the same length as the blue (Vazio) loop, both
+    # spanning just the middle - not most of the segment - so black stays
+    # dominant, like the real proportions.
+    TRUNK_END_FRACTION = 0.35  # black portion at each end
+    LOOP_START_FRACTION = 0.35  # where Vazio splits off the straight line
+    LOOP_END_FRACTION = 0.65  # where Vazio rejoins the straight line
+    LOOP_RISE = 0.06  # fraction of span spent rising/falling into the loop
+    LOOP_OFFSET_FRACTION = 0.14
+
+    def _segment_direction(name: str) -> str:
+        if "Carregado" in name or name.endswith("-LP") or name.endswith("-C"):
+            return "carregado"
+        if "Vazio" in name or name.endswith("-LD") or name.endswith("-V"):
+            return "vazio"
+        return "trunk"
+
+    def _draw_edge(p_from: np.ndarray, p_to: np.ndarray, *, color: str, rad: float, arrow: bool) -> None:
+        patch = FancyArrowPatch(
+            tuple(p_from),
+            tuple(p_to),
             connectionstyle=f"arc3,rad={rad}",
-            edge_color=color,
-            arrows=True,
-            ax=ax,
+            arrowstyle="-|>" if arrow else "-",
+            color=color,
+            linewidth=2.0,
+            mutation_scale=14,
+            shrinkA=10,
+            shrinkB=10,
+            zorder=1,
         )
+        ax.add_patch(patch)
+
+    def _draw_polyline(points: List[np.ndarray], *, color: str) -> None:
+        ax.plot(
+            [p[0] for p in points],
+            [p[1] for p in points],
+            color=color,
+            linewidth=2.0,
+            solid_capstyle="round",
+            solid_joinstyle="round",
+            zorder=2,
+        )
+
+    def _draw_siding_loop(p_start: np.ndarray, p_end: np.ndarray, *, color: str) -> None:
+        span = p_end - p_start
+        length = float(np.linalg.norm(span))
+        if length < 1e-9:
+            return
+        unit = span / length
+        perp = np.array([-unit[1], unit[0]]) * (LOOP_OFFSET_FRACTION * length)
+        points = [
+            p_start + LOOP_START_FRACTION * span,
+            p_start + (LOOP_START_FRACTION + LOOP_RISE) * span + perp,
+            p_start + (LOOP_END_FRACTION - LOOP_RISE) * span + perp,
+            p_start + LOOP_END_FRACTION * span,
+        ]
+        _draw_polyline(points, color=color)
+
+    def _draw_parallel_line(p_from: np.ndarray, p_to: np.ndarray, *, color: str, side: float) -> None:
+        # Straight line offset perpendicular to the from->to direction, used
+        # for station pairs with only Carregado+Vazio (no shared Singela) -
+        # two straight, parallel tracks the full distance, not a curved arc.
+        span = p_to - p_from
+        length = float(np.linalg.norm(span))
+        if length < 1e-9:
+            _draw_edge(p_from, p_to, color=color, rad=0.0, arrow=True)
+            return
+        unit = span / length
+        perp = np.array([-unit[1], unit[0]]) * (PARALLEL_OFFSET_FRACTION * length) * side
+        _draw_edge(p_from + perp, p_to + perp, color=color, rad=0.0, arrow=True)
+
+    segments_by_pair: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    for segment in config.segments:
+        pair_key = tuple(sorted((segment.start_station.name, segment.end_station.name)))
+        segments_by_pair.setdefault(pair_key, {})[_segment_direction(segment.name)] = segment
+
+    has_lens = False
+    has_arc_fork = False
+    for by_kind in segments_by_pair.values():
+        trunk = by_kind.get("trunk")
+        carregado = by_kind.get("carregado")
+        vazio = by_kind.get("vazio")
+        anchor = trunk or carregado or vazio
+        if anchor is None:
+            continue
+        p_start = np.array(pos[anchor.start_station.name], dtype=float)
+        p_end = np.array(pos[anchor.end_station.name], dtype=float)
+
+        if trunk and carregado and vazio:
+            has_lens = True
+            span = p_end - p_start
+            p_black_a = p_start + TRUNK_END_FRACTION * span
+            p_black_b = p_start + (1 - TRUNK_END_FRACTION) * span
+            _draw_polyline([p_start, p_black_a], color=TRUNK_COLOR)
+            _draw_polyline([p_black_a, p_black_b], color=CARREGADO_COLOR)
+            _draw_polyline([p_black_b, p_end], color=TRUNK_COLOR)
+            _draw_siding_loop(p_start, p_end, color=VAZIO_COLOR)
+        elif carregado and vazio:
+            has_arc_fork = True
+            for seg, color, side in ((carregado, CARREGADO_COLOR, 1.0), (vazio, VAZIO_COLOR, -1.0)):
+                forward = seg.start_station.name == anchor.start_station.name
+                seg_from, seg_to = (p_start, p_end) if forward else (p_end, p_start)
+                _draw_parallel_line(seg_from, seg_to, color=color, side=side if forward else -side)
+        elif trunk:
+            _draw_polyline([p_start, p_end], color=TRUNK_COLOR)
+        else:
+            seg = carregado or vazio
+            color = CARREGADO_COLOR if carregado else VAZIO_COLOR
+            _draw_edge(p_start, p_end, color=color, rad=0.0, arrow=True)
+
+    # Drawn after all segment lines so nodes and labels always render on top.
+    # Node size large enough that the 3-letter station code fits inside the
+    # circle instead of floating beside it (which got cluttered/hard to read
+    # once segments got their own line-color coding).
+    nx.draw_networkx_nodes(graph, pos, node_size=900, node_color=node_colors, ax=ax)
+    for station_name, (node_x, node_y) in pos.items():
+        ax.annotate(
+            station_name,
+            xy=(node_x, node_y),
+            ha="center",
+            va="center",
+            fontsize=9,
+            fontweight="bold",
+            zorder=4,
+        )
+
+    legend_handles = []
+    if any(station.can_turn for station in config.stations.values()):
+        legend_handles.append(ax.scatter([], [], s=90, color=CAN_TURN_NODE_COLOR, label="Can turn"))
+        legend_handles.append(ax.scatter([], [], s=90, color=STATION_NODE_COLOR, label="Regular station"))
+    if has_lens or has_arc_fork:
+        legend_handles.append(ax.plot([], [], color=TRUNK_COLOR, linewidth=2.0, label="Singela (both directions)")[0])
+        legend_handles.append(ax.plot([], [], color=CARREGADO_COLOR, linewidth=2.0, label="Carregado / LP (export)")[0])
+        legend_handles.append(ax.plot([], [], color=VAZIO_COLOR, linewidth=2.0, label="Vazio / LD (import)")[0])
+    if legend_handles:
+        ax.legend(handles=legend_handles, loc="upper left", fontsize=8, framealpha=0.9)
+
     fig.tight_layout()
     return fig
 

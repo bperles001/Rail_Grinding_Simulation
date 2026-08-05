@@ -148,7 +148,16 @@ def parse_spur_text(value: str) -> List[List[str]]:
 
 
 def parse_station_coordinates(text: str) -> Tuple[Dict[str, Tuple[float, float]], List[str]]:
-    """Parse pasted 'NAME, LAT, LONG' (comma- or tab-separated) lines.
+    """Parse pasted 'NAME, LAT, LONG' lines.
+
+    Accepts tab- or semicolon-separated fields with Brazilian-locale decimal
+    commas (e.g. 'RDA;-15,55;-54,56'), or comma-separated fields with
+    dot-decimal numbers (e.g. 'RDA, -15.55, -54.56'). Also tolerates a
+    comma-separated paste where the numbers themselves use decimal commas
+    too (e.g. copied straight from an Excel column formatted with a
+    Brazilian locale: 'RDA,-15,55204687,-54,55858631') - that reliably
+    splits into 5 fields (name + 2 fields per number), which is
+    reconstructed back into two decimal-comma numbers.
 
     Returns (parsed, messages): parsed maps station name -> (lat, long);
     messages lists one human-readable warning per skipped/invalid line.
@@ -161,13 +170,29 @@ def parse_station_coordinates(text: str) -> Tuple[Dict[str, Tuple[float, float]]
         line = raw_line.strip()
         if not line:
             continue
-        parts = [p.strip() for p in re.split(r"[,\t]+", line) if p.strip()]
-        if len(parts) != 3:
+        if ";" in line or "\t" in line:
+            # Unambiguous field separator - commas inside a field are never
+            # field separators here, so they must be decimal commas.
+            fields = [p.strip() for p in re.split(r"[;\t]+", line) if p.strip()]
+            fields = [f.replace(",", ".") for f in fields]
+        else:
+            raw_fields = [p.strip() for p in line.split(",") if p.strip()]
+            if len(raw_fields) == 5:
+                # Comma used both as field separator and as each number's
+                # decimal separator: NAME,LAT_INT,LAT_DEC,LONG_INT,LONG_DEC.
+                fields = [
+                    raw_fields[0],
+                    f"{raw_fields[1]}.{raw_fields[2]}",
+                    f"{raw_fields[3]}.{raw_fields[4]}",
+                ]
+            else:
+                fields = raw_fields
+        if len(fields) != 3:
             messages.append(
-                f"Line {line_no}: expected 'NAME, LAT, LONG', got {len(parts)} field(s) - skipped."
+                f"Line {line_no}: expected 'NAME, LAT, LONG', got {len(fields)} field(s) - skipped."
             )
             continue
-        name, lat_raw, lon_raw = parts
+        name, lat_raw, lon_raw = fields
         try:
             lat = float(lat_raw)
             lon = float(lon_raw)

@@ -145,9 +145,17 @@ def schematic_layout_from_seed(
     seed_positions: Mapping[str, Tuple[float, float]],
     *,
     spacing: float = 1.0,
+    octilinear: bool = True,
 ) -> Dict[str, Tuple[float, float]]:
     """BFS layout that keeps each edge's real direction (from `seed_positions`)
     but normalizes every edge to the same `spacing` length.
+
+    When `octilinear` is True (the default), each edge's angle is snapped to
+    the nearest multiple of 45 degrees before placing the next station - the
+    standard technique behind metro-map-style schematics (e.g. the London
+    Underground diagram): it keeps the overall shape/topology recognizable
+    while making the result read as clean horizontal/vertical/diagonal
+    lines instead of arbitrary angles.
 
     Only stations present in `seed_positions` participate; the walk never
     crosses into a station lacking seed data, so those are simply absent
@@ -167,6 +175,7 @@ def schematic_layout_from_seed(
     positions: Dict[str, Tuple[float, float]] = {root: (0.0, 0.0)}
     visited = {root}
     queue = deque([root])
+    octant = math.pi / 4
     while queue:
         current = queue.popleft()
         cx, cy = positions[current]
@@ -177,6 +186,8 @@ def schematic_layout_from_seed(
             visited.add(neighbor)
             nx_seed, ny_seed = seed_positions[neighbor]
             angle = math.atan2(ny_seed - sy, nx_seed - sx)
+            if octilinear:
+                angle = round(angle / octant) * octant
             positions[neighbor] = (
                 cx + math.cos(angle) * spacing,
                 cy + math.sin(angle) * spacing,

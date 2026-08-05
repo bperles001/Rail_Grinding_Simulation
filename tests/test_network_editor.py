@@ -132,6 +132,26 @@ def test_parse_station_coordinates_reports_duplicate_and_keeps_last():
     assert "duplicate" in messages[0].lower()
 
 
+def test_parse_station_coordinates_brazilian_decimal_comma_with_comma_separator():
+    # Pasted straight from an Excel column formatted with a Brazilian
+    # locale: the decimal comma in each number splits the line into 5
+    # comma-separated fields (name + 2 fields per number), not 3.
+    text = "RDA,-15,55204687,-54,55858631\nTRO,-16,697259,-54,666807"
+    parsed, messages = network_editor.parse_station_coordinates(text)
+    assert parsed == {
+        "RDA": (-15.55204687, -54.55858631),
+        "TRO": (-16.697259, -54.666807),
+    }
+    assert messages == []
+
+
+def test_parse_station_coordinates_semicolon_separated_with_decimal_comma():
+    text = "RDA;-15,55;-54,56"
+    parsed, messages = network_editor.parse_station_coordinates(text)
+    assert parsed == {"RDA": (-15.55, -54.56)}
+    assert messages == []
+
+
 def test_parse_spur_text_round_trip():
     text = "A->B\nB->C"
     rows = network_editor.spur_rows_from_text(text)
