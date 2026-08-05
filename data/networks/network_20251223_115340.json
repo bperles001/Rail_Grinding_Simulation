@@ -2,6 +2,10 @@
   "name": "Rumo - Nós",
   "stations": [
     {
+      "name": "RDA",
+      "can_turn": true
+    },
+    {
       "name": "TRO",
       "can_turn": true
     },
@@ -70,7 +74,7 @@
       "can_turn": false
     },
     {
-      "name": "PSS",
+      "name": "ZTP",
       "can_turn": false
     },
     {
@@ -78,23 +82,1167 @@
       "can_turn": false
     },
     {
-      "name": "PRV",
+      "name": "PSS",
       "can_turn": false
     },
     {
-      "name": "POV",
-      "can_turn": true
-    },
-    {
-      "name": "ZRL",
-      "can_turn": false
-    },
-    {
-      "name": "VLI",
+      "name": "PSG",
       "can_turn": true
     }
   ],
-  "segments": [],
+  "segments": [
+    {
+      "name": "TAG-TRO",
+      "start": "TAG",
+      "end": "TRO",
+      "length_km": 227.7,
+      "curve_length_km": 117.1,
+      "tangent_length_km": 110.6,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 10,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TAG",
+          "TRO"
+        ],
+        [
+          "TRO",
+          "TAG"
+        ]
+      ]
+    },
+    {
+      "name": "TAG-TRO-LD",
+      "start": "TAG",
+      "end": "TRO",
+      "length_km": 24.7,
+      "curve_length_km": 13.0,
+      "tangent_length_km": 11.7,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TAG",
+          "TRO"
+        ]
+      ]
+    },
+    {
+      "name": "TAG-TRO-LP",
+      "start": "TRO",
+      "end": "TAG",
+      "length_km": 29.8,
+      "curve_length_km": 15.7,
+      "tangent_length_km": 14.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TRO",
+          "TAG"
+        ]
+      ]
+    },
+    {
+      "name": "TCS-TAG",
+      "start": "TCS",
+      "end": "TAG",
+      "length_km": 181.4,
+      "curve_length_km": 73.8,
+      "tangent_length_km": 107.7,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 9,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TCS",
+          "TAG"
+        ],
+        [
+          "TAG",
+          "TCS"
+        ]
+      ]
+    },
+    {
+      "name": "TCS-TAG-LD",
+      "start": "TCS",
+      "end": "TAG",
+      "length_km": 28.9,
+      "curve_length_km": 12.3,
+      "tangent_length_km": 16.7,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TCS",
+          "TAG"
+        ]
+      ]
+    },
+    {
+      "name": "TCS-TAG-LP",
+      "start": "TAG",
+      "end": "TCS",
+      "length_km": 28.9,
+      "curve_length_km": 11.7,
+      "tangent_length_km": 17.2,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TAG",
+          "TCS"
+        ]
+      ]
+    },
+    {
+      "name": "TMI-TCS",
+      "start": "TMI",
+      "end": "TCS",
+      "length_km": 251.7,
+      "curve_length_km": 128.5,
+      "tangent_length_km": 123.2,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 10,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TMI",
+          "TCS"
+        ],
+        [
+          "TCS",
+          "TMI"
+        ]
+      ]
+    },
+    {
+      "name": "TMI-TCS-LD",
+      "start": "TMI",
+      "end": "TCS",
+      "length_km": 38.8,
+      "curve_length_km": 14.0,
+      "tangent_length_km": 24.8,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TMI",
+          "TCS"
+        ]
+      ]
+    },
+    {
+      "name": "TMI-TCS-LP",
+      "start": "TCS",
+      "end": "TMI",
+      "length_km": 38.8,
+      "curve_length_km": 13.4,
+      "tangent_length_km": 25.4,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TCS",
+          "TMI"
+        ]
+      ]
+    },
+    {
+      "name": "ZEB-TMI",
+      "start": "ZEB",
+      "end": "TMI",
+      "length_km": 153.0,
+      "curve_length_km": 79.7,
+      "tangent_length_km": 73.4,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZEB",
+          "TMI"
+        ],
+        [
+          "TMI",
+          "ZEB"
+        ]
+      ]
+    },
+    {
+      "name": "ZEB-TMI-LD",
+      "start": "ZEB",
+      "end": "TMI",
+      "length_km": 43.2,
+      "curve_length_km": 21.3,
+      "tangent_length_km": 22.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZEB",
+          "TMI"
+        ]
+      ]
+    },
+    {
+      "name": "ZEB-TMI-LP",
+      "start": "TMI",
+      "end": "ZEB",
+      "length_km": 43.2,
+      "curve_length_km": 21.3,
+      "tangent_length_km": 21.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TMI",
+          "ZEB"
+        ]
+      ]
+    },
+    {
+      "name": "ZCZ-ZEB",
+      "start": "ZCZ",
+      "end": "ZEB",
+      "length_km": 116.2,
+      "curve_length_km": 67.2,
+      "tangent_length_km": 48.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZCZ",
+          "ZEB"
+        ],
+        [
+          "ZEB",
+          "ZCZ"
+        ]
+      ]
+    },
+    {
+      "name": "ZCZ-ZEB-LD",
+      "start": "ZCZ",
+      "end": "ZEB",
+      "length_km": 36.0,
+      "curve_length_km": 15.0,
+      "tangent_length_km": 20.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZCZ",
+          "ZEB"
+        ]
+      ]
+    },
+    {
+      "name": "ZCZ-ZEB-LP",
+      "start": "ZEB",
+      "end": "ZCZ",
+      "length_km": 36.0,
+      "curve_length_km": 15.0,
+      "tangent_length_km": 20.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZEB",
+          "ZCZ"
+        ]
+      ]
+    },
+    {
+      "name": "ZTO-ZCZ",
+      "start": "ZTO",
+      "end": "ZCZ",
+      "length_km": 60.9,
+      "curve_length_km": 34.6,
+      "tangent_length_km": 26.3,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTO",
+          "ZCZ"
+        ],
+        [
+          "ZCZ",
+          "ZTO"
+        ]
+      ]
+    },
+    {
+      "name": "ZTO-ZCZ-LD",
+      "start": "ZTO",
+      "end": "ZCZ",
+      "length_km": 22.0,
+      "curve_length_km": 8.1,
+      "tangent_length_km": 13.8,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTO",
+          "ZCZ"
+        ]
+      ]
+    },
+    {
+      "name": "ZTO-ZCZ-LP",
+      "start": "ZCZ",
+      "end": "ZTO",
+      "length_km": 30.9,
+      "curve_length_km": 12.2,
+      "tangent_length_km": 18.7,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZCZ",
+          "ZTO"
+        ]
+      ]
+    },
+    {
+      "name": "ZTI-ZTO",
+      "start": "ZTI",
+      "end": "ZTO",
+      "length_km": 6.6,
+      "curve_length_km": 3.2,
+      "tangent_length_km": 3.5,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTI",
+          "ZTO"
+        ],
+        [
+          "ZTO",
+          "ZTI"
+        ]
+      ]
+    },
+    {
+      "name": "ZTI-ZTO-LD",
+      "start": "ZTI",
+      "end": "ZTO",
+      "length_km": 27.6,
+      "curve_length_km": 10.9,
+      "tangent_length_km": 16.6,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTI",
+          "ZTO"
+        ]
+      ]
+    },
+    {
+      "name": "ZTI-ZTO-LP",
+      "start": "ZTO",
+      "end": "ZTI",
+      "length_km": 27.6,
+      "curve_length_km": 10.9,
+      "tangent_length_km": 16.6,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTO",
+          "ZTI"
+        ]
+      ]
+    },
+    {
+      "name": "ZIQ-ZTI",
+      "start": "ZIQ",
+      "end": "ZTI",
+      "length_km": 27.9,
+      "curve_length_km": 12.3,
+      "tangent_length_km": 15.6,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 0,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZIQ",
+          "ZTI"
+        ],
+        [
+          "ZTI",
+          "ZIQ"
+        ]
+      ]
+    },
+    {
+      "name": "ZIQ-ZTI-LD",
+      "start": "ZIQ",
+      "end": "ZTI",
+      "length_km": 24.8,
+      "curve_length_km": 7.8,
+      "tangent_length_km": 17.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 0,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZIQ",
+          "ZTI"
+        ]
+      ]
+    },
+    {
+      "name": "ZIQ-ZTI-LP",
+      "start": "ZTI",
+      "end": "ZIQ",
+      "length_km": 20.9,
+      "curve_length_km": 7.9,
+      "tangent_length_km": 13.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 0,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTI",
+          "ZIQ"
+        ]
+      ]
+    },
+    {
+      "name": "ZQX-ZIQ",
+      "start": "ZQX",
+      "end": "ZIQ",
+      "length_km": 17.8,
+      "curve_length_km": 15.8,
+      "tangent_length_km": 2.1,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZQX",
+          "ZIQ"
+        ],
+        [
+          "ZIQ",
+          "ZQX"
+        ]
+      ]
+    },
+    {
+      "name": "ZQX-ZIQ-LD",
+      "start": "ZQX",
+      "end": "ZIQ",
+      "length_km": 5.0,
+      "curve_length_km": 3.2,
+      "tangent_length_km": 1.8,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZQX",
+          "ZIQ"
+        ]
+      ]
+    },
+    {
+      "name": "ZQX-ZIQ-LP",
+      "start": "ZIQ",
+      "end": "ZQX",
+      "length_km": 4.9,
+      "curve_length_km": 3.4,
+      "tangent_length_km": 1.5,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZIQ",
+          "ZQX"
+        ]
+      ]
+    },
+    {
+      "name": "ZQX-ZRX",
+      "start": "ZRX",
+      "end": "ZQX",
+      "length_km": 14.8,
+      "curve_length_km": 8.7,
+      "tangent_length_km": 6.1,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 0,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZRX",
+          "ZQX"
+        ],
+        [
+          "ZQX",
+          "ZRX"
+        ]
+      ]
+    },
+    {
+      "name": "ZRX-ZRC",
+      "start": "ZRC",
+      "end": "ZRX",
+      "length_km": 24.1,
+      "curve_length_km": 15.7,
+      "tangent_length_km": 8.3,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZRC",
+          "ZRX"
+        ],
+        [
+          "ZRX",
+          "ZRC"
+        ]
+      ]
+    },
+    {
+      "name": "ZRX-ZRC-V",
+      "start": "ZRC",
+      "end": "ZRX",
+      "length_km": 44.7,
+      "curve_length_km": 24.8,
+      "tangent_length_km": 19.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 0,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZRC",
+          "ZRX"
+        ]
+      ]
+    },
+    {
+      "name": "ZRX-ZRC-C",
+      "start": "ZRC",
+      "end": "ZRX",
+      "length_km": 29.6,
+      "curve_length_km": 14.3,
+      "tangent_length_km": 15.3,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 0,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZRC",
+          "ZRX"
+        ]
+      ]
+    },
+    {
+      "name": "ZRC-ZBL",
+      "start": "ZBL",
+      "end": "ZRC",
+      "length_km": 17.4,
+      "curve_length_km": 7.9,
+      "tangent_length_km": 9.5,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZBL",
+          "ZRC"
+        ],
+        [
+          "ZRC",
+          "ZBL"
+        ]
+      ]
+    },
+    {
+      "name": "ZRC-ZBL-LP",
+      "start": "ZBL",
+      "end": "ZRC",
+      "length_km": 10.2,
+      "curve_length_km": 5.4,
+      "tangent_length_km": 4.8,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZBL",
+          "ZRC"
+        ]
+      ]
+    },
+    {
+      "name": "ZRC-ZBL-LD",
+      "start": "ZBL",
+      "end": "ZRC",
+      "length_km": 10.2,
+      "curve_length_km": 5.5,
+      "tangent_length_km": 4.7,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZBL",
+          "ZRC"
+        ]
+      ]
+    },
+    {
+      "name": "ZKE-ZBL-V",
+      "start": "ZKE",
+      "end": "ZBL",
+      "length_km": 90.6,
+      "curve_length_km": 44.8,
+      "tangent_length_km": 62.3,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZKE",
+          "ZBL"
+        ]
+      ]
+    },
+    {
+      "name": "ZKE-ZBL-C",
+      "start": "ZBL",
+      "end": "ZKE",
+      "length_km": 107.1,
+      "curve_length_km": 36.8,
+      "tangent_length_km": 54.1,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZBL",
+          "ZKE"
+        ]
+      ]
+    },
+    {
+      "name": "ZEV-ZKE-V",
+      "start": "ZEV",
+      "end": "ZKE",
+      "length_km": 82.7,
+      "curve_length_km": 53.4,
+      "tangent_length_km": 29.3,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZEV",
+          "ZKE"
+        ]
+      ]
+    },
+    {
+      "name": "ZEV-ZKE-C",
+      "start": "ZKE",
+      "end": "ZEV",
+      "length_km": 82.7,
+      "curve_length_km": 53.6,
+      "tangent_length_km": 29.1,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZKE",
+          "ZEV"
+        ]
+      ]
+    },
+    {
+      "name": "ZPT-ZEV-V",
+      "start": "ZPT",
+      "end": "ZEV",
+      "length_km": 41.5,
+      "curve_length_km": 37.1,
+      "tangent_length_km": 4.4,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZPT",
+          "ZEV"
+        ]
+      ]
+    },
+    {
+      "name": "ZPT-ZEV-C",
+      "start": "ZEV",
+      "end": "ZPT",
+      "length_km": 43.5,
+      "curve_length_km": 38.9,
+      "tangent_length_km": 4.6,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZEV",
+          "ZPT"
+        ]
+      ]
+    },
+    {
+      "name": "ZPG-ZPT-V",
+      "start": "ZPG",
+      "end": "ZPT",
+      "length_km": 19.7,
+      "curve_length_km": 11.5,
+      "tangent_length_km": 8.2,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZPG",
+          "ZPT"
+        ]
+      ]
+    },
+    {
+      "name": "ZPG-ZPT-C",
+      "start": "ZPT",
+      "end": "ZPG",
+      "length_km": 18.8,
+      "curve_length_km": 10.4,
+      "tangent_length_km": 8.3,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 4,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZPT",
+          "ZPG"
+        ]
+      ]
+    },
+    {
+      "name": "TRO-RDA",
+      "start": "TRO",
+      "end": "RDA",
+      "length_km": 149.4,
+      "curve_length_km": 67.0,
+      "tangent_length_km": 82.4,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 7,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TRO",
+          "RDA"
+        ],
+        [
+          "RDA",
+          "TRO"
+        ]
+      ]
+    },
+    {
+      "name": "TRO-RDA-LP",
+      "start": "TRO",
+      "end": "RDA",
+      "length_km": 13.7,
+      "curve_length_km": 4.7,
+      "tangent_length_km": 9.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TRO",
+          "RDA"
+        ]
+      ]
+    },
+    {
+      "name": "TRO-RDA-LD",
+      "start": "TRO",
+      "end": "RDA",
+      "length_km": 13.7,
+      "curve_length_km": 4.7,
+      "tangent_length_km": 9.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 2,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "TRO",
+          "RDA"
+        ]
+      ]
+    },
+    {
+      "name": "PIT-ZRL",
+      "start": "PIT",
+      "end": "TMI",
+      "length_km": 79.6,
+      "curve_length_km": 48.6,
+      "tangent_length_km": 30.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 3,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PIT",
+          "TMI"
+        ],
+        [
+          "TMI",
+          "PIT"
+        ]
+      ]
+    },
+    {
+      "name": "PIT-ZRL-LP",
+      "start": "PIT",
+      "end": "TMI",
+      "length_km": 8.3,
+      "curve_length_km": 3.3,
+      "tangent_length_km": 5.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PIT",
+          "TMI"
+        ]
+      ]
+    },
+    {
+      "name": "PIT-ZRL-LD",
+      "start": "PIT",
+      "end": "TMI",
+      "length_km": 8.3,
+      "curve_length_km": 3.4,
+      "tangent_length_km": 4.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PIT",
+          "TMI"
+        ]
+      ]
+    },
+    {
+      "name": "PSS-PIT",
+      "start": "PSS",
+      "end": "PIT",
+      "length_km": 79.5,
+      "curve_length_km": 48.7,
+      "tangent_length_km": 30.8,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 3,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PSS",
+          "PIT"
+        ],
+        [
+          "PIT",
+          "PSS"
+        ]
+      ]
+    },
+    {
+      "name": "PSS-PIT-LP",
+      "start": "PSS",
+      "end": "PIT",
+      "length_km": 5.4,
+      "curve_length_km": 1.2,
+      "tangent_length_km": 4.2,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PSS",
+          "PIT"
+        ]
+      ]
+    },
+    {
+      "name": "PSS-PIT-LD",
+      "start": "PSS",
+      "end": "PIT",
+      "length_km": 5.4,
+      "curve_length_km": 1.2,
+      "tangent_length_km": 4.2,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PSS",
+          "PIT"
+        ]
+      ]
+    },
+    {
+      "name": "PSG-PSS",
+      "start": "PSG",
+      "end": "PSS",
+      "length_km": 212.4,
+      "curve_length_km": 134.3,
+      "tangent_length_km": 78.1,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 2,
+      "maintenance_time_days": 3,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PSG",
+          "PSS"
+        ],
+        [
+          "PSS",
+          "PSG"
+        ]
+      ]
+    },
+    {
+      "name": "PSG-PSS-LP",
+      "start": "PSG",
+      "end": "PSS",
+      "length_km": 14.4,
+      "curve_length_km": 8.4,
+      "tangent_length_km": 6.0,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PSG",
+          "PSS"
+        ]
+      ]
+    },
+    {
+      "name": "PSG-PSS-LD",
+      "start": "PSG",
+      "end": "PSS",
+      "length_km": 14.4,
+      "curve_length_km": 8.5,
+      "tangent_length_km": 5.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "PSG",
+          "PSS"
+        ]
+      ]
+    },
+    {
+      "name": "ZIQ-ZTP",
+      "start": "ZTP",
+      "end": "ZIQ",
+      "length_km": 150.9,
+      "curve_length_km": 61.0,
+      "tangent_length_km": 89.9,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 3,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTP",
+          "ZIQ"
+        ],
+        [
+          "ZIQ",
+          "ZTP"
+        ]
+      ]
+    },
+    {
+      "name": "ZIQ-ZTP-LP",
+      "start": "ZTP",
+      "end": "ZIQ",
+      "length_km": 8.7,
+      "curve_length_km": 3.1,
+      "tangent_length_km": 5.6,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTP",
+          "ZIQ"
+        ]
+      ]
+    },
+    {
+      "name": "ZIQ-ZTP-LD",
+      "start": "ZTP",
+      "end": "ZIQ",
+      "length_km": 7.2,
+      "curve_length_km": 2.8,
+      "tangent_length_km": 4.3,
+      "mtbt_threshold": 0.0,
+      "move_time_days": 1,
+      "maintenance_time_days": 1,
+      "move_billed_days": 0.0,
+      "maintenance_billed_days": 0.0,
+      "allowed_movements": [
+        [
+          "ZTP",
+          "ZIQ"
+        ]
+      ]
+    }
+  ],
   "mtbt_schedule": {
     "columns": [
       "Segment Name",
@@ -113,104 +1261,1071 @@
       "2026-12",
       "2027-01"
     ],
-    "data": []
+    "data": [
+      [
+        "TAG-TRO",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TAG-TRO-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TAG-TRO-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TCS-TAG",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TCS-TAG-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TCS-TAG-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TMI-TCS",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TMI-TCS-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TMI-TCS-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZEB-TMI",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZEB-TMI-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZEB-TMI-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZCZ-ZEB",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZCZ-ZEB-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZCZ-ZEB-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZTO-ZCZ",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZTO-ZCZ-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZTO-ZCZ-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZTI-ZTO",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZTI-ZTO-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZTI-ZTO-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZIQ-ZTI",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZIQ-ZTI-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZIQ-ZTI-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZQX-ZIQ",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZQX-ZIQ-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZQX-ZIQ-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZQX-ZRX",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZRX-ZRC",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZRX-ZRC-V",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZRX-ZRC-C",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZRC-ZBL",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZRC-ZBL-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZRC-ZBL-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZKE-ZBL-V",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZKE-ZBL-C",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZEV-ZKE-V",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZEV-ZKE-C",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZPT-ZEV-V",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZPT-ZEV-C",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZPG-ZPT-V",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZPG-ZPT-C",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TRO-RDA",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TRO-RDA-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "TRO-RDA-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PIT-ZRL",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PIT-ZRL-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PIT-ZRL-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PSS-PIT",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PSS-PIT-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PSS-PIT-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PSG-PSS",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PSG-PSS-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "PSG-PSS-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZIQ-ZTP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZIQ-ZTP-LP",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        "ZIQ-ZTP-LD",
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ]
   },
   "layout": {
     "mode": "table",
     "table_overrides": {
-      "TRO": {
+      "RDA": {
         "x": 0.0,
         "y": 0.0
       },
-      "TAG": {
-        "x": 1.0,
+      "TRO": {
+        "x": 22.0,
         "y": 0.0
+      },
+      "TAG": {
+        "x": 20.9,
+        "y": 2.7499999999999996
       },
       "TCS": {
-        "x": 2.0,
-        "y": 0.0
+        "x": 20.35,
+        "y": 4.125
       },
       "TMI": {
-        "x": 1.0,
-        "y": 0.0
+        "x": 19.799999999999997,
+        "y": 5.5
       },
       "ZEB": {
-        "x": 4.0,
-        "y": 0.0
+        "x": 15.95,
+        "y": 6.875
       },
       "ZCZ": {
-        "x": 5.0,
-        "y": 0.0
+        "x": 15.399999999999999,
+        "y": 8.25
       },
       "ZTO": {
-        "x": 6.0,
-        "y": 0.0
+        "x": 14.849999999999998,
+        "y": 9.624999999999998
       },
       "ZTI": {
-        "x": 7.0,
-        "y": 0.0
+        "x": 14.299999999999997,
+        "y": 11.0
       },
       "ZIQ": {
-        "x": 8.0,
-        "y": 0.0
+        "x": 13.749999999999998,
+        "y": 12.375
       },
       "ZQX": {
-        "x": 9.0,
-        "y": 0.0
+        "x": 12.099999999999998,
+        "y": 13.75
       },
       "ZRX": {
-        "x": 10.0,
-        "y": 0.0
+        "x": 11.55,
+        "y": 15.125
       },
       "ZRC": {
         "x": 11.0,
-        "y": 0.0
+        "y": 16.5
       },
       "ZBL": {
-        "x": 12.0,
-        "y": 0.0
+        "x": 10.45,
+        "y": 17.875000000000004
       },
       "ZKE": {
-        "x": 13.0,
-        "y": 0.0
+        "x": 9.899999999999999,
+        "y": 19.250000000000004
       },
       "ZEV": {
-        "x": 14.0,
-        "y": 0.0
+        "x": 9.349999999999998,
+        "y": 20.625
       },
       "ZPT": {
-        "x": 15.0,
-        "y": 0.0
+        "x": 8.799999999999999,
+        "y": 22.0
       },
       "ZPG": {
-        "x": 16.0,
-        "y": 0.0
+        "x": 0.5499999999999988,
+        "y": 1.3750000000000007
       },
-      "PSS": {
-        "x": 17.0,
-        "y": 0.0
+      "ZTP": {
+        "x": 12.649999999999999,
+        "y": 15.125
       },
       "PIT": {
-        "x": 18.0,
-        "y": 0.0
+        "x": 18.150000000000002,
+        "y": 9.624999999999998
       },
-      "PRV": {
-        "x": 19.0,
-        "y": 0.0
+      "PSS": {
+        "x": 17.6,
+        "y": 11.0
       },
-      "POV": {
-        "x": 20.0,
-        "y": 0.0
-      },
-      "ZRL": {
-        "x": 21.0,
-        "y": 0.0
-      },
-      "VLI": {
-        "x": 22.0,
-        "y": 0.0
+      "PSG": {
+        "x": 16.5,
+        "y": 8.25
       }
     },
-    "scale": 1.0
-  }
+    "scale": 1.5
+  },
+  "timeline_order": []
 }
