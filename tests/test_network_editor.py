@@ -20,7 +20,8 @@ def _base_payload():
                 "start": "A",
                 "end": "B",
                 "length_km": 1.0,
-                "mtbt_threshold": 5.0,
+                "mtbt_threshold_curva": 5.0,
+                "mtbt_threshold_tangente": 20.0,
                 "move_time_days": 2,
                 "maintenance_time_days": 3,
                 "allowed_movements": [["A", "B"], ["B", "A"]],
@@ -61,6 +62,15 @@ def test_segment_dataframe_from_payload():
     assert df.loc[0, "Tangent length (km)"] == 0.0
     assert df.loc[0, "Move billed days"] == 0.0
     assert df.loc[0, "Maintenance billed days"] == 0.0
+
+
+def test_segment_dataframe_splits_mtbt_threshold_columns():
+    df = network_editor.network_editor_segment_df(_base_payload())
+    assert "MTBT threshold (curva)" in df.columns
+    assert "MTBT threshold (tangente)" in df.columns
+    assert "MTBT threshold" not in df.columns
+    assert df.loc[0, "MTBT threshold (curva)"] == 5.0
+    assert df.loc[0, "MTBT threshold (tangente)"] == 20.0
 
 
 def test_segment_dataframe_from_payload_with_curve_tangent_and_billed_days():

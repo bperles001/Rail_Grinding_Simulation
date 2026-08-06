@@ -213,7 +213,8 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
                 "Length (km)",
                 "Curve length (km)",
                 "Tangent length (km)",
-                "MTBT threshold",
+                "MTBT threshold (curva)",
+                "MTBT threshold (tangente)",
                 "Move days",
                 "Maintenance days",
                 "Move billed days",
@@ -243,7 +244,14 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
                     "Tangent length (km)", min_value=0.0, step=0.1,
                     help="Extensão em tangente dentro deste segmento.",
                 ),
-                "MTBT threshold": st.column_config.NumberColumn("MTBT threshold", min_value=0.0, step=10.0),
+                "MTBT threshold (curva)": st.column_config.NumberColumn(
+                    "MTBT threshold (curva)", min_value=0.0, step=10.0,
+                    help="Limite de MTBT acumulado para a componente de curva deste trecho.",
+                ),
+                "MTBT threshold (tangente)": st.column_config.NumberColumn(
+                    "MTBT threshold (tangente)", min_value=0.0, step=10.0,
+                    help="Limite de MTBT acumulado para a componente de tangente deste trecho.",
+                ),
                 "Move days": st.column_config.NumberColumn("Move days", min_value=0, step=1, help="Dias corridos de deslocamento."),
                 "Maintenance days": st.column_config.NumberColumn("Maintenance days", min_value=0, step=1, help="Dias corridos de manutenção."),
                 "Move billed days": st.column_config.NumberColumn(
@@ -279,7 +287,7 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
         segment_editor = segment_editor.copy(deep=True)
         for col in ("Name", "Start", "End", "Allowed movements"):
             segment_editor[col] = segment_editor[col].astype(str)
-    for col in ("Length (km)", "Curve length (km)", "Tangent length (km)", "MTBT threshold", "Move billed days", "Maintenance billed days"):
+    for col in ("Length (km)", "Curve length (km)", "Tangent length (km)", "MTBT threshold (curva)", "MTBT threshold (tangente)", "Move billed days", "Maintenance billed days"):
         segment_editor[col] = pd.to_numeric(segment_editor[col], errors="coerce").fillna(0.0)
     for col in ("Move days", "Maintenance days"):
         segment_editor[col] = pd.to_numeric(segment_editor[col], errors="coerce").fillna(0).astype(int)
@@ -294,7 +302,8 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
         start = str(segment_editor.at[idx, "Start"]).strip()
         end = str(segment_editor.at[idx, "End"]).strip()
         length = segment_editor.at[idx, "Length (km)"]
-        mtbt = segment_editor.at[idx, "MTBT threshold"]
+        mtbt_curva = segment_editor.at[idx, "MTBT threshold (curva)"]
+        mtbt_tangente = segment_editor.at[idx, "MTBT threshold (tangente)"]
         
         # Validate segment name
         if not name:
@@ -311,8 +320,10 @@ def render_network_editor_page(*, callbacks: NetworkEditorCallbacks) -> None:
         # Validate numeric fields
         if length <= 0:
             validation_errors.append(f"Row {row_num}: Length must be greater than 0")
-        if mtbt < 0:
-            validation_errors.append(f"Row {row_num}: MTBT threshold cannot be negative")
+        if mtbt_curva < 0:
+            validation_errors.append(f"Row {row_num}: MTBT threshold (curva) cannot be negative")
+        if mtbt_tangente < 0:
+            validation_errors.append(f"Row {row_num}: MTBT threshold (tangente) cannot be negative")
     
     if validation_errors:
         for error in validation_errors[:3]:  # Show max 3 errors

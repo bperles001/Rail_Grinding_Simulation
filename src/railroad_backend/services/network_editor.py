@@ -314,7 +314,8 @@ def network_editor_diff_summary(original: Dict[str, Any], updated: Dict[str, Any
             "length_km",
             "curve_length_km",
             "tangent_length_km",
-            "mtbt_threshold",
+            "mtbt_threshold_curva",
+            "mtbt_threshold_tangente",
             "move_time_days",
             "maintenance_time_days",
             "move_billed_days",
@@ -462,7 +463,8 @@ def serialize_network_editor_state(state: Dict[str, Any]) -> Dict[str, Any]:
             length = float(row.get("Length (km)", 0.0) or 0.0)
             curve_length = float(row.get("Curve length (km)", 0.0) or 0.0)
             tangent_length = float(row.get("Tangent length (km)", 0.0) or 0.0)
-            threshold = float(row.get("MTBT threshold", 0.0) or 0.0)
+            threshold_curva = float(row.get("MTBT threshold (curva)", 0.0) or 0.0)
+            threshold_tangente = float(row.get("MTBT threshold (tangente)", 0.0) or 0.0)
             move_days = int(row.get("Move days", 0) or 0)
             maint_days = int(row.get("Maintenance days", 0) or 0)
             move_billed_days = float(row.get("Move billed days", 0.0) or 0.0)
@@ -477,7 +479,8 @@ def serialize_network_editor_state(state: Dict[str, Any]) -> Dict[str, Any]:
             "length_km": length,
             "curve_length_km": curve_length,
             "tangent_length_km": tangent_length,
-            "mtbt_threshold": threshold,
+            "mtbt_threshold_curva": threshold_curva,
+            "mtbt_threshold_tangente": threshold_tangente,
             "move_time_days": move_days,
             "maintenance_time_days": maint_days,
             "move_billed_days": move_billed_days,

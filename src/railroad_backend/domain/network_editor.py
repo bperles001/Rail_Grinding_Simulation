@@ -56,7 +56,8 @@ def network_editor_segment_df(payload: Dict[str, Any]) -> pd.DataFrame:
                 "Length (km)": entry.get("length_km", 0.0),
                 "Curve length (km)": entry.get("curve_length_km", 0.0),
                 "Tangent length (km)": entry.get("tangent_length_km", 0.0),
-                "MTBT threshold": entry.get("mtbt_threshold", 0.0),
+                "MTBT threshold (curva)": entry.get("mtbt_threshold_curva", 0.0),
+                "MTBT threshold (tangente)": entry.get("mtbt_threshold_tangente", 0.0),
                 "Move days": entry.get("move_time_days", 0),
                 "Maintenance days": entry.get("maintenance_time_days", 0),
                 "Move billed days": entry.get("move_billed_days", 0.0),
@@ -74,7 +75,8 @@ def network_editor_segment_df(payload: Dict[str, Any]) -> pd.DataFrame:
                 "Length (km)",
                 "Curve length (km)",
                 "Tangent length (km)",
-                "MTBT threshold",
+                "MTBT threshold (curva)",
+                "MTBT threshold (tangente)",
                 "Move days",
                 "Maintenance days",
                 "Move billed days",
@@ -84,7 +86,7 @@ def network_editor_segment_df(payload: Dict[str, Any]) -> pd.DataFrame:
         )
     for col in ("Name", "Start", "End", "Allowed movements"):
         df[col] = df[col].astype(str)
-    for col in ("Length (km)", "Curve length (km)", "Tangent length (km)", "MTBT threshold", "Move billed days", "Maintenance billed days"):
+    for col in ("Length (km)", "Curve length (km)", "Tangent length (km)", "MTBT threshold (curva)", "MTBT threshold (tangente)", "Move billed days", "Maintenance billed days"):
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
     for col in ("Move days", "Maintenance days"):
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
@@ -96,7 +98,8 @@ def network_editor_segment_df(payload: Dict[str, Any]) -> pd.DataFrame:
             "Length (km)",
             "Curve length (km)",
             "Tangent length (km)",
-            "MTBT threshold",
+            "MTBT threshold (curva)",
+            "MTBT threshold (tangente)",
             "Move days",
             "Maintenance days",
             "Move billed days",
