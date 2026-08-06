@@ -139,26 +139,88 @@ def test_simulator_init_machine_validates_inputs():
 
 
 def test_needs_maintenance_handles_missing_threshold():
-    """_needs_maintenance correctly handles segments without mtbt_threshold."""
+    """_needs_maintenance correctly handles segments without a threshold set."""
     start = Station("A")
     end = Station("B")
-    seg = Segment("A-B", start, end, 10, 0.0, 1, 1)
-    seg.mtbt_threshold = None  # type: ignore[assignment]
-    seg.load = 1000  # Lots of load but no threshold
-    
+    seg = Segment("A-B", start, end, length=10)
+    seg.mtbt_threshold_curva = None  # type: ignore[assignment]
+    seg.mtbt_threshold_tangente = None  # type: ignore[assignment]
+    seg.load_curva = 1000  # Lots of load but no threshold
+    seg.load_tangente = 1000
+
     result = _needs_maintenance(seg)
     assert result is False  # No threshold means no maintenance needed
+
+
+def test_needs_maintenance_true_when_only_curva_due():
+    start = Station("A")
+    end = Station("B")
+    seg = Segment("A-B", start, end, length=10, mtbt_threshold_curva=5.0, mtbt_threshold_tangente=100.0)
+    seg.add_load(5.0)
+    assert _needs_maintenance(seg) is True
+
+
+def test_needs_maintenance_false_when_neither_due():
+    start = Station("A")
+    end = Station("B")
+    seg = Segment("A-B", start, end, length=10, mtbt_threshold_curva=5.0, mtbt_threshold_tangente=100.0)
+    seg.add_load(1.0)
+    assert _needs_maintenance(seg) is False
+
+
+def test_maintenance_action_is_curves_only_when_only_curva_due():
+    from railroad_backend.services.auto_planner import _maintenance_action_for
+    from src.models import ACTION_MAINTAIN_CURVES
+
+    start = Station("A")
+    end = Station("B")
+    seg = Segment("A-B", start, end, length=10, mtbt_threshold_curva=5.0, mtbt_threshold_tangente=100.0)
+    seg.add_load(5.0)
+    assert _maintenance_action_for(seg) == ACTION_MAINTAIN_CURVES
+
+
+def test_maintenance_action_is_full_when_tangente_due():
+    from railroad_backend.services.auto_planner import _maintenance_action_for
+    from src.models import ACTION_MAINTAIN
+
+    start = Station("A")
+    end = Station("B")
+    seg = Segment("A-B", start, end, length=10, mtbt_threshold_curva=5.0, mtbt_threshold_tangente=5.0)
+    seg.add_load(5.0)
+    assert _maintenance_action_for(seg) == ACTION_MAINTAIN
 
 
 def test_needs_maintenance_handles_edge_case_exactly_at_threshold():
     """_needs_maintenance returns True when load exactly equals threshold."""
     start = Station("A")
     end = Station("B")
-    seg = Segment("A-B", start, end, 10, 5.0, 1, 1)
-    seg.load = 5.0  # Exactly at threshold
-    
+    seg = Segment("A-B", start, end, length=10, mtbt_threshold_curva=5.0, mtbt_threshold_tangente=5.0)
+    seg.load_curva = 5.0  # Exactly at threshold
+    seg.load_tangente = 5.0
+
     result = _needs_maintenance(seg)
     assert result is True
+
+
+def test_maintain_curves_action_resets_only_curva_component():
+    """ACTION_MAINTAIN_CURVES must not clear the tangente accumulator (regression for the
+    latent bug where perform_maintenance() ignored which action triggered it)."""
+    from src.models import ACTION_MAINTAIN_CURVES
+
+    sim = Simulator()
+    sim.init_machine("TRO", "TMI", start_year=2025)
+    seg = sim.segments[0]
+    seg.mtbt_threshold_curva = 1.0
+    seg.mtbt_threshold_tangente = 1000.0
+    seg.add_load(2.0)
+    assert seg.maintenance_due_curva is True
+    assert seg.maintenance_due_tangente is False
+
+    sim.machine.second_kld_installed = True  # force perform_maintenance to run regardless of direction
+    sim.move_to(seg, seg.end_station, action=ACTION_MAINTAIN_CURVES)
+
+    assert seg.load_curva == 0.0
+    assert seg.load_tangente == pytest.approx(2.0)
 
 
 def test_days_until_next_threshold_returns_zero_when_no_daily_map():
@@ -178,9 +240,9 @@ def test_days_until_next_threshold_returns_zero_when_already_due():
     
     # Make a segment need maintenance
     seg = sim.segments[0]
-    if seg.mtbt_threshold:
-        seg.load = seg.mtbt_threshold + 1
-    
+    if seg.mtbt_threshold_curva:
+        seg.load_curva = seg.mtbt_threshold_curva + 1
+
     result = _days_until_next_threshold(sim)
     assert result == 0
 
@@ -240,14 +302,17 @@ def test_simulator_handles_segment_with_zero_threshold():
     """Simulator correctly handles segments with mtbt_threshold of 0."""
     sim = Simulator()
     sim.init_machine("TRO", "TMI", start_year=2025)
-    
+
     # Find or create segment with zero threshold
     seg = sim.segments[0]
-    seg.mtbt_threshold = 0
-    seg.load = 100  # Lots of load
-    
-    # Segment with zero threshold DOES trigger maintenance (100 >= 0 is True)
-    # This is the current behavior - treating 0 as "always needs maintenance"
+    seg.mtbt_threshold_curva = 0
+    seg.mtbt_threshold_tangente = 0
+    seg.load_curva = 100  # Lots of load
+    seg.load_tangente = 100
+
+    # Segment with zero threshold DOES trigger maintenance (100 >= 0 is True):
+    # _needs_maintenance treats an explicit 0 as configured (only `None` means
+    # "no threshold set"), same as the pre-split single-field behavior.
     assert _needs_maintenance(seg) is True
 
 
@@ -271,23 +336,29 @@ def test_segment_load_operations():
     """Test segment load addition and reset operations."""
     start = Station("A")
     end = Station("B")
-    seg = Segment("A-B", start, end, 10, 0.0, 1, 1)
-    seg.mtbt_threshold = 10.0
-    
-    # add_load should accumulate
+    seg = Segment("A-B", start, end, length=10, mtbt_threshold_curva=10.0, mtbt_threshold_tangente=10.0)
+
+    # add_load should accumulate on both components
     seg.add_load(3.0)
-    assert seg.load == pytest.approx(3.0)
+    assert seg.load_curva == pytest.approx(3.0)
+    assert seg.load_tangente == pytest.approx(3.0)
     seg.add_load(2.5)
-    assert seg.load == pytest.approx(5.5)
-    
+    assert seg.load_curva == pytest.approx(5.5)
+    assert seg.load_tangente == pytest.approx(5.5)
+
     # add_mtbt is alias for add_load
     seg.add_mtbt(1.5)
-    assert seg.load == pytest.approx(7.0)
+    assert seg.load_curva == pytest.approx(7.0)
+    assert seg.load_tangente == pytest.approx(7.0)
     # reset_maintenance should zero load and clear flag
-    seg.load = 12.0  # Over threshold
-    assert seg.maintenance_due  # Check truthiness instead of exact True
+    seg.load_curva = 12.0  # Over threshold
+    seg.load_tangente = 12.0
+    seg.maintenance_due_curva = True
+    seg.maintenance_due_tangente = True
+    seg.maintenance_due = True
     seg.reset_maintenance()
-    assert seg.load == 0.0
+    assert seg.load_curva == 0.0
+    assert seg.load_tangente == 0.0
     assert not seg.maintenance_due
     assert seg.maintenance_due is False
 

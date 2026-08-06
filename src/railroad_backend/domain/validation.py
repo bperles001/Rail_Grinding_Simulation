@@ -165,7 +165,7 @@ def validate_network_payload(payload: Dict[str, Any]) -> List[str]:
                 errors.append(f"Station {idx}: 'name' must be non-empty string")
     
     # Validate segments structure
-    required_seg_fields = {"name", "start", "end", "length_km", "mtbt_threshold", "move_time_days", "maintenance_time_days"}
+    required_seg_fields = {"name", "start", "end", "length_km", "mtbt_threshold_curva", "mtbt_threshold_tangente", "move_time_days", "maintenance_time_days"}
     if "segments" in payload and isinstance(payload["segments"], list):
         for idx, segment in enumerate(payload["segments"], start=1):
             if not isinstance(segment, dict):

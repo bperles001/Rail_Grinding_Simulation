@@ -174,7 +174,8 @@ def test_validate_network_payload_accepts_valid_payload():
                 "start": "TRO",
                 "end": "TMI",
                 "length_km": 10,
-                "mtbt_threshold": 100,
+                "mtbt_threshold_curva": 100,
+                "mtbt_threshold_tangente": 100,
                 "move_time_days": 1,
                 "maintenance_time_days": 2,
             }

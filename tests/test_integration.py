@@ -175,7 +175,8 @@ def test_auto_plan_with_initial_loads(tmp_path):
     tro_tmi = next((s for s in sim.segments if s.name == "TRO-TMI"), None)
     assert tro_tmi is not None
     # Initial load should have been applied (may have changed due to moves)
-    assert hasattr(tro_tmi, "load")
+    assert hasattr(tro_tmi, "load_curva")
+    assert hasattr(tro_tmi, "load_tangente")
 
 
 # ============================================================================

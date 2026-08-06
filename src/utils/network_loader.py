@@ -38,7 +38,7 @@ class NetworkConfigError(ValueError):
 
 
 _REQUIRED_STATION_FIELDS = {"name"}
-_REQUIRED_SEGMENT_FIELDS = {"name", "start", "end", "length_km", "mtbt_threshold", "move_time_days", "maintenance_time_days"}
+_REQUIRED_SEGMENT_FIELDS = {"name", "start", "end", "length_km", "mtbt_threshold_curva", "mtbt_threshold_tangente", "move_time_days", "maintenance_time_days"}
 
 
 def _validate_mapping(payload: Mapping[str, Any], *, path: Path) -> None:
@@ -182,7 +182,8 @@ def _build_segments(
             start_station=start,
             end_station=end,
             length=float(entry["length_km"]),
-            mtbt_threshold=float(entry["mtbt_threshold"]),
+            mtbt_threshold_curva=float(entry["mtbt_threshold_curva"]),
+            mtbt_threshold_tangente=float(entry["mtbt_threshold_tangente"]),
             move_time_days=int(entry["move_time_days"]),
             maintenance_time_days=int(entry["maintenance_time_days"]),
             allowed_movements=cleaned_allowed,

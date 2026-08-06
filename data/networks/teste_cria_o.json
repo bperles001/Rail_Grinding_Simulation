@@ -32,7 +32,6 @@
       "start": "A",
       "end": "B",
       "length_km": 5.0,
-      "mtbt_threshold": 10.0,
       "move_time_days": 5,
       "maintenance_time_days": 10,
       "allowed_movements": [
@@ -44,14 +43,15 @@
           "B",
           "A"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 10.0,
+      "mtbt_threshold_tangente": 10.0
     },
     {
       "name": "B-C",
       "start": "B",
       "end": "C",
       "length_km": 5.0,
-      "mtbt_threshold": 10.0,
       "move_time_days": 5,
       "maintenance_time_days": 15,
       "allowed_movements": [
@@ -63,14 +63,15 @@
           "C",
           "B"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 10.0,
+      "mtbt_threshold_tangente": 10.0
     },
     {
       "name": "C-D",
       "start": "C",
       "end": "D",
       "length_km": 5.0,
-      "mtbt_threshold": 10.0,
       "move_time_days": 10,
       "maintenance_time_days": 20,
       "allowed_movements": [
@@ -82,14 +83,15 @@
           "D",
           "C"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 10.0,
+      "mtbt_threshold_tangente": 10.0
     },
     {
       "name": "D-E",
       "start": "D",
       "end": "E",
       "length_km": 20.0,
-      "mtbt_threshold": 10.0,
       "move_time_days": 10,
       "maintenance_time_days": 20,
       "allowed_movements": [
@@ -101,7 +103,9 @@
           "E",
           "D"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 10.0,
+      "mtbt_threshold_tangente": 10.0
     }
   ],
   "direction_model": {

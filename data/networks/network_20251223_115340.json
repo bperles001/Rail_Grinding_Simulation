@@ -98,7 +98,6 @@
       "length_km": 227.7,
       "curve_length_km": 117.1,
       "tangent_length_km": 110.6,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 10,
       "move_billed_days": 0.0,
@@ -112,7 +111,9 @@
           "TRO",
           "TAG"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TAG-TRO-LD",
@@ -121,7 +122,6 @@
       "length_km": 24.7,
       "curve_length_km": 13.0,
       "tangent_length_km": 11.7,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -131,7 +131,9 @@
           "TAG",
           "TRO"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TAG-TRO-LP",
@@ -140,7 +142,6 @@
       "length_km": 29.8,
       "curve_length_km": 15.7,
       "tangent_length_km": 14.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -150,7 +151,9 @@
           "TRO",
           "TAG"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TCS-TAG",
@@ -159,7 +162,6 @@
       "length_km": 181.4,
       "curve_length_km": 73.8,
       "tangent_length_km": 107.7,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 9,
       "move_billed_days": 0.0,
@@ -173,7 +175,9 @@
           "TAG",
           "TCS"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TCS-TAG-LD",
@@ -182,7 +186,6 @@
       "length_km": 28.9,
       "curve_length_km": 12.3,
       "tangent_length_km": 16.7,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -192,7 +195,9 @@
           "TCS",
           "TAG"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TCS-TAG-LP",
@@ -201,7 +206,6 @@
       "length_km": 28.9,
       "curve_length_km": 11.7,
       "tangent_length_km": 17.2,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -211,7 +215,9 @@
           "TAG",
           "TCS"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TMI-TCS",
@@ -220,7 +226,6 @@
       "length_km": 251.7,
       "curve_length_km": 128.5,
       "tangent_length_km": 123.2,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 10,
       "move_billed_days": 0.0,
@@ -234,7 +239,9 @@
           "TCS",
           "TMI"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TMI-TCS-LD",
@@ -243,7 +250,6 @@
       "length_km": 38.8,
       "curve_length_km": 14.0,
       "tangent_length_km": 24.8,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -253,7 +259,9 @@
           "TMI",
           "TCS"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TMI-TCS-LP",
@@ -262,7 +270,6 @@
       "length_km": 38.8,
       "curve_length_km": 13.4,
       "tangent_length_km": 25.4,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -272,7 +279,9 @@
           "TCS",
           "TMI"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZEB-TMI",
@@ -281,7 +290,6 @@
       "length_km": 153.0,
       "curve_length_km": 79.7,
       "tangent_length_km": 73.4,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -295,7 +303,9 @@
           "TMI",
           "ZEB"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZEB-TMI-LD",
@@ -304,7 +314,6 @@
       "length_km": 43.2,
       "curve_length_km": 21.3,
       "tangent_length_km": 22.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -314,7 +323,9 @@
           "ZEB",
           "TMI"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZEB-TMI-LP",
@@ -323,7 +334,6 @@
       "length_km": 43.2,
       "curve_length_km": 21.3,
       "tangent_length_km": 21.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -333,7 +343,9 @@
           "TMI",
           "ZEB"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZCZ-ZEB",
@@ -342,7 +354,6 @@
       "length_km": 116.2,
       "curve_length_km": 67.2,
       "tangent_length_km": 48.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -356,7 +367,9 @@
           "ZEB",
           "ZCZ"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZCZ-ZEB-LD",
@@ -365,7 +378,6 @@
       "length_km": 36.0,
       "curve_length_km": 15.0,
       "tangent_length_km": 20.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -375,7 +387,9 @@
           "ZCZ",
           "ZEB"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZCZ-ZEB-LP",
@@ -384,7 +398,6 @@
       "length_km": 36.0,
       "curve_length_km": 15.0,
       "tangent_length_km": 20.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -394,7 +407,9 @@
           "ZEB",
           "ZCZ"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZTO-ZCZ",
@@ -403,7 +418,6 @@
       "length_km": 60.9,
       "curve_length_km": 34.6,
       "tangent_length_km": 26.3,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -417,7 +431,9 @@
           "ZCZ",
           "ZTO"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZTO-ZCZ-LD",
@@ -426,7 +442,6 @@
       "length_km": 22.0,
       "curve_length_km": 8.1,
       "tangent_length_km": 13.8,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -436,7 +451,9 @@
           "ZTO",
           "ZCZ"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZTO-ZCZ-LP",
@@ -445,7 +462,6 @@
       "length_km": 30.9,
       "curve_length_km": 12.2,
       "tangent_length_km": 18.7,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -455,7 +471,9 @@
           "ZCZ",
           "ZTO"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZTI-ZTO",
@@ -464,7 +482,6 @@
       "length_km": 6.6,
       "curve_length_km": 3.2,
       "tangent_length_km": 3.5,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -478,7 +495,9 @@
           "ZTO",
           "ZTI"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZTI-ZTO-LD",
@@ -487,7 +506,6 @@
       "length_km": 27.6,
       "curve_length_km": 10.9,
       "tangent_length_km": 16.6,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -497,7 +515,9 @@
           "ZTI",
           "ZTO"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZTI-ZTO-LP",
@@ -506,7 +526,6 @@
       "length_km": 27.6,
       "curve_length_km": 10.9,
       "tangent_length_km": 16.6,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -516,7 +535,9 @@
           "ZTO",
           "ZTI"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZIQ-ZTI",
@@ -525,7 +546,6 @@
       "length_km": 27.9,
       "curve_length_km": 12.3,
       "tangent_length_km": 15.6,
-      "mtbt_threshold": 0.0,
       "move_time_days": 0,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -539,7 +559,9 @@
           "ZTI",
           "ZIQ"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZIQ-ZTI-LD",
@@ -548,7 +570,6 @@
       "length_km": 24.8,
       "curve_length_km": 7.8,
       "tangent_length_km": 17.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 0,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -558,7 +579,9 @@
           "ZIQ",
           "ZTI"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZIQ-ZTI-LP",
@@ -567,7 +590,6 @@
       "length_km": 20.9,
       "curve_length_km": 7.9,
       "tangent_length_km": 13.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 0,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -577,7 +599,9 @@
           "ZTI",
           "ZIQ"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZQX-ZIQ",
@@ -586,7 +610,6 @@
       "length_km": 17.8,
       "curve_length_km": 15.8,
       "tangent_length_km": 2.1,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -600,7 +623,9 @@
           "ZIQ",
           "ZQX"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZQX-ZIQ-LD",
@@ -609,7 +634,6 @@
       "length_km": 5.0,
       "curve_length_km": 3.2,
       "tangent_length_km": 1.8,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -619,7 +643,9 @@
           "ZQX",
           "ZIQ"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZQX-ZIQ-LP",
@@ -628,7 +654,6 @@
       "length_km": 4.9,
       "curve_length_km": 3.4,
       "tangent_length_km": 1.5,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -638,7 +663,9 @@
           "ZIQ",
           "ZQX"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZQX-ZRX",
@@ -647,7 +674,6 @@
       "length_km": 14.8,
       "curve_length_km": 8.7,
       "tangent_length_km": 6.1,
-      "mtbt_threshold": 0.0,
       "move_time_days": 0,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -661,7 +687,9 @@
           "ZQX",
           "ZRX"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZRX-ZRC",
@@ -670,7 +698,6 @@
       "length_km": 24.1,
       "curve_length_km": 15.7,
       "tangent_length_km": 8.3,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -684,7 +711,9 @@
           "ZRX",
           "ZRC"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZRX-ZRC-V",
@@ -693,7 +722,6 @@
       "length_km": 44.7,
       "curve_length_km": 24.8,
       "tangent_length_km": 19.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 0,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -703,7 +731,9 @@
           "ZRC",
           "ZRX"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZRX-ZRC-C",
@@ -712,7 +742,6 @@
       "length_km": 29.6,
       "curve_length_km": 14.3,
       "tangent_length_km": 15.3,
-      "mtbt_threshold": 0.0,
       "move_time_days": 0,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -722,7 +751,9 @@
           "ZRC",
           "ZRX"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZRC-ZBL",
@@ -731,7 +762,6 @@
       "length_km": 17.4,
       "curve_length_km": 7.9,
       "tangent_length_km": 9.5,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -745,7 +775,9 @@
           "ZRC",
           "ZBL"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZRC-ZBL-LP",
@@ -754,7 +786,6 @@
       "length_km": 10.2,
       "curve_length_km": 5.4,
       "tangent_length_km": 4.8,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -764,7 +795,9 @@
           "ZBL",
           "ZRC"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZRC-ZBL-LD",
@@ -773,7 +806,6 @@
       "length_km": 10.2,
       "curve_length_km": 5.5,
       "tangent_length_km": 4.7,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -783,7 +815,9 @@
           "ZBL",
           "ZRC"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZKE-ZBL-V",
@@ -792,7 +826,6 @@
       "length_km": 90.6,
       "curve_length_km": 44.8,
       "tangent_length_km": 62.3,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -802,7 +835,9 @@
           "ZKE",
           "ZBL"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZKE-ZBL-C",
@@ -811,7 +846,6 @@
       "length_km": 107.1,
       "curve_length_km": 36.8,
       "tangent_length_km": 54.1,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -821,7 +855,9 @@
           "ZBL",
           "ZKE"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZEV-ZKE-V",
@@ -830,7 +866,6 @@
       "length_km": 82.7,
       "curve_length_km": 53.4,
       "tangent_length_km": 29.3,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -840,7 +875,9 @@
           "ZEV",
           "ZKE"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZEV-ZKE-C",
@@ -849,7 +886,6 @@
       "length_km": 82.7,
       "curve_length_km": 53.6,
       "tangent_length_km": 29.1,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -859,7 +895,9 @@
           "ZKE",
           "ZEV"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZPT-ZEV-V",
@@ -868,7 +906,6 @@
       "length_km": 41.5,
       "curve_length_km": 37.1,
       "tangent_length_km": 4.4,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -878,7 +915,9 @@
           "ZPT",
           "ZEV"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZPT-ZEV-C",
@@ -887,7 +926,6 @@
       "length_km": 43.5,
       "curve_length_km": 38.9,
       "tangent_length_km": 4.6,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -897,7 +935,9 @@
           "ZEV",
           "ZPT"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZPG-ZPT-V",
@@ -906,7 +946,6 @@
       "length_km": 19.7,
       "curve_length_km": 11.5,
       "tangent_length_km": 8.2,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -916,7 +955,9 @@
           "ZPG",
           "ZPT"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZPG-ZPT-C",
@@ -925,7 +966,6 @@
       "length_km": 18.8,
       "curve_length_km": 10.4,
       "tangent_length_km": 8.3,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 4,
       "move_billed_days": 0.0,
@@ -935,7 +975,9 @@
           "ZPT",
           "ZPG"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TRO-RDA",
@@ -944,7 +986,6 @@
       "length_km": 149.4,
       "curve_length_km": 67.0,
       "tangent_length_km": 82.4,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 7,
       "move_billed_days": 0.0,
@@ -958,7 +999,9 @@
           "RDA",
           "TRO"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TRO-RDA-LP",
@@ -967,7 +1010,6 @@
       "length_km": 13.7,
       "curve_length_km": 4.7,
       "tangent_length_km": 9.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -977,7 +1019,9 @@
           "TRO",
           "RDA"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "TRO-RDA-LD",
@@ -986,7 +1030,6 @@
       "length_km": 13.7,
       "curve_length_km": 4.7,
       "tangent_length_km": 9.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 2,
       "move_billed_days": 0.0,
@@ -996,7 +1039,9 @@
           "TRO",
           "RDA"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PIT-ZRL",
@@ -1005,7 +1050,6 @@
       "length_km": 79.6,
       "curve_length_km": 48.6,
       "tangent_length_km": 30.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 3,
       "move_billed_days": 0.0,
@@ -1019,7 +1063,9 @@
           "TMI",
           "PIT"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PIT-ZRL-LP",
@@ -1028,7 +1074,6 @@
       "length_km": 8.3,
       "curve_length_km": 3.3,
       "tangent_length_km": 5.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1038,7 +1083,9 @@
           "PIT",
           "TMI"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PIT-ZRL-LD",
@@ -1047,7 +1094,6 @@
       "length_km": 8.3,
       "curve_length_km": 3.4,
       "tangent_length_km": 4.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1057,7 +1103,9 @@
           "TMI",
           "PIT"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PSS-PIT",
@@ -1066,7 +1114,6 @@
       "length_km": 79.5,
       "curve_length_km": 48.7,
       "tangent_length_km": 30.8,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 3,
       "move_billed_days": 0.0,
@@ -1080,7 +1127,9 @@
           "PIT",
           "PSS"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PSS-PIT-LP",
@@ -1089,7 +1138,6 @@
       "length_km": 5.4,
       "curve_length_km": 1.2,
       "tangent_length_km": 4.2,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1099,7 +1147,9 @@
           "PSS",
           "PIT"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PSS-PIT-LD",
@@ -1108,7 +1158,6 @@
       "length_km": 5.4,
       "curve_length_km": 1.2,
       "tangent_length_km": 4.2,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1118,7 +1167,9 @@
           "PIT",
           "PSS"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PSG-PSS",
@@ -1127,7 +1178,6 @@
       "length_km": 212.4,
       "curve_length_km": 134.3,
       "tangent_length_km": 78.1,
-      "mtbt_threshold": 0.0,
       "move_time_days": 2,
       "maintenance_time_days": 3,
       "move_billed_days": 0.0,
@@ -1141,7 +1191,9 @@
           "PSS",
           "PSG"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PSG-PSS-LP",
@@ -1150,7 +1202,6 @@
       "length_km": 14.4,
       "curve_length_km": 8.4,
       "tangent_length_km": 6.0,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1160,7 +1211,9 @@
           "PSG",
           "PSS"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "PSG-PSS-LD",
@@ -1169,7 +1222,6 @@
       "length_km": 14.4,
       "curve_length_km": 8.5,
       "tangent_length_km": 5.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1179,7 +1231,9 @@
           "PSS",
           "PSG"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZIQ-ZTP",
@@ -1188,7 +1242,6 @@
       "length_km": 150.9,
       "curve_length_km": 61.0,
       "tangent_length_km": 89.9,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 3,
       "move_billed_days": 0.0,
@@ -1202,7 +1255,9 @@
           "ZIQ",
           "ZTP"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZIQ-ZTP-LP",
@@ -1211,7 +1266,6 @@
       "length_km": 8.7,
       "curve_length_km": 3.1,
       "tangent_length_km": 5.6,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1221,7 +1275,9 @@
           "ZTP",
           "ZIQ"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     },
     {
       "name": "ZIQ-ZTP-LD",
@@ -1230,7 +1286,6 @@
       "length_km": 7.2,
       "curve_length_km": 2.8,
       "tangent_length_km": 4.3,
-      "mtbt_threshold": 0.0,
       "move_time_days": 1,
       "maintenance_time_days": 1,
       "move_billed_days": 0.0,
@@ -1240,7 +1295,9 @@
           "ZIQ",
           "ZTP"
         ]
-      ]
+      ],
+      "mtbt_threshold_curva": 0.0,
+      "mtbt_threshold_tangente": 0.0
     }
   ],
   "mtbt_schedule": {

@@ -312,14 +312,16 @@ class Simulator:
         machine.direction = movement_dir
         machine.front_car_position = seg
 
-        mtbt_before = getattr(seg, "load", None)
+        mtbt_before_curva = getattr(seg, "load_curva", None)
+        mtbt_before_tangente = getattr(seg, "load_tangente", None)
 
         performed = False
         if action in (ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES):
+            component = "curva" if action == ACTION_MAINTAIN_CURVES else "both"
             if machine.second_kld_installed:
-                performed = machine.perform_maintenance(seg)
+                performed = machine.perform_maintenance(seg, component=component)
             elif edge_dir == machine.global_direction:
-                performed = machine.perform_maintenance(seg)
+                performed = machine.perform_maintenance(seg, component=component)
 
         if performed:
             duration = seg.maintenance_time_days
@@ -353,7 +355,8 @@ class Simulator:
                     else "move"
                 ),
                 "facing": machine.facing,
-                "mtbt_before": float(mtbt_before) if isinstance(mtbt_before, (int, float)) else mtbt_before,
+                "mtbt_before_curva": float(mtbt_before_curva) if isinstance(mtbt_before_curva, (int, float)) else mtbt_before_curva,
+                "mtbt_before_tangente": float(mtbt_before_tangente) if isinstance(mtbt_before_tangente, (int, float)) else mtbt_before_tangente,
                 "days": duration,
                 "start": start.strftime("%Y-%m-%d"),
                 "end": end_time.strftime("%Y-%m-%d"),

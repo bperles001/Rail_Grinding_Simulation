@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
-from src.models import ACTION_MAINTAIN, ACTION_MOVE
+from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
 from src.railroad_backend.domain.schedule import build_daily_map
 from src.utils.mtbt_transform import get_initial_loads
 
@@ -96,9 +96,13 @@ def _apply_initial_loads(sim: Simulator, csv_path: Path) -> None:
     loads = get_initial_loads(str(csv_path))
     for seg in sim.segments:
         if seg.name in loads:
-            seg.load = loads[seg.name]
-            if seg.mtbt_threshold is not None:
-                seg.maintenance_due = seg.load >= seg.mtbt_threshold
+            seg.load_curva = loads[seg.name]
+            seg.load_tangente = loads[seg.name]
+            if seg.mtbt_threshold_curva:
+                seg.maintenance_due_curva = seg.load_curva >= seg.mtbt_threshold_curva
+            if seg.mtbt_threshold_tangente:
+                seg.maintenance_due_tangente = seg.load_tangente >= seg.mtbt_threshold_tangente
+            seg.maintenance_due = seg.maintenance_due_curva or seg.maintenance_due_tangente
 
 
 def _init_simulation(config: AutoPlanConfig) -> Simulator:
@@ -124,23 +128,45 @@ def _init_simulation(config: AutoPlanConfig) -> Simulator:
     return sim
 
 
-def _needs_maintenance(seg) -> bool:
-    """Check if segment load exceeds MTBT threshold.
+def _component_due(seg, component: str) -> bool:
+    """Check if a single component (curva or tangente) has reached its threshold.
 
-    Args:
-        seg: Segment object with load and mtbt_threshold attributes.
-
-    Returns:
-        True if maintenance is needed.
+    Mirrors the pre-split semantics: an explicit 0 threshold still counts as
+    "configured" (>= comparison applies); only a `None` threshold means "not
+    configured" and never triggers maintenance.
     """
-    threshold = getattr(seg, "mtbt_threshold", None)
-    load = getattr(seg, "load", 0.0) or 0.0
+    threshold = getattr(seg, f"mtbt_threshold_{component}", None)
+    load = getattr(seg, f"load_{component}", 0.0) or 0.0
     if threshold is None:
         return False
     try:
         return float(load) >= float(threshold)
     except (TypeError, ValueError):  # pragma: no cover
         return False
+
+
+def _needs_maintenance(seg) -> bool:
+    """Check if the segment's curva or tangente load exceeds its threshold.
+
+    Args:
+        seg: Segment object with load_curva/load_tangente and
+            mtbt_threshold_curva/mtbt_threshold_tangente attributes.
+
+    Returns:
+        True if either component needs maintenance.
+    """
+    return _component_due(seg, "curva") or _component_due(seg, "tangente")
+
+
+def _maintenance_action_for(seg) -> str:
+    """Pick maintain_curves when only curva is due, full maintain otherwise.
+
+    There is no "tangente only" action: a full grind covers both components,
+    so it's the correct choice whenever tangente is due (curva or not).
+    """
+    if _component_due(seg, "tangente"):
+        return ACTION_MAINTAIN
+    return ACTION_MAINTAIN_CURVES
 
 
 def _segments_already_due(sim: Simulator) -> bool:
@@ -169,32 +195,40 @@ def _days_until_next_threshold(sim: Simulator, *, scan_limit_days: int = 180) ->
         return 0
     projected: Dict[str, float] = {}
     thresholds: Dict[str, float] = {}
+    component_seg_name: Dict[str, str] = {}
     for seg in sim.segments:
-        threshold = getattr(seg, "mtbt_threshold", None)
-        if threshold in (None, 0):
-            continue
-        thresholds[seg.name] = float(threshold) if threshold is not None else 0.0
-        projected[seg.name] = float(getattr(seg, "load", 0.0) or 0.0)
+        for component, threshold, load in (
+            (f"{seg.name}::curva", seg.mtbt_threshold_curva, seg.load_curva),
+            (f"{seg.name}::tangente", seg.mtbt_threshold_tangente, seg.load_tangente),
+        ):
+            if threshold in (None, 0):
+                continue
+            thresholds[component] = float(threshold)
+            projected[component] = float(load or 0.0)
+            component_seg_name[component] = seg.name
     if not thresholds:
         return 0
     if _segments_already_due(sim):
         return 0
-    # Cache daily values for all segments to reduce dict lookups
-    cached_daily_vals = {seg_name: sim.daily_map.get(seg_name) or {} for seg_name in thresholds}
+    # Cache daily values for all components to reduce dict lookups
+    cached_daily_vals = {
+        component: sim.daily_map.get(component_seg_name[component]) or {}
+        for component in thresholds
+    }
     current = sim.simulation_date
     for offset in range(1, scan_limit_days + 1):
         date_str = (current + timedelta(days=offset - 1)).strftime("%Y-%m-%d")
         progressed = False
-        for seg_name, threshold in thresholds.items():
-            daily_values = cached_daily_vals[seg_name]
+        for component, threshold in thresholds.items():
+            daily_values = cached_daily_vals[component]
             increment = daily_values.get(date_str)
             if increment:
-                projected[seg_name] = projected.get(seg_name, 0.0) + float(increment)
+                projected[component] = projected.get(component, 0.0) + float(increment)
                 progressed = True
-            if projected.get(seg_name, 0.0) >= threshold:
+            if projected.get(component, 0.0) >= threshold:
                 return offset
         if not progressed:
-            # Early exit: if no segment had data today, check if any future data exists
+            # Early exit: if no component had data today, check if any future data exists
             if not any(daily_vals.get(date_str) for daily_vals in cached_daily_vals.values()):
                 break
     return 0
@@ -211,7 +245,10 @@ def _move_priority(pair) -> Tuple[int, float, str]:
     """
     seg, _ = pair
     urgent = 0 if _needs_maintenance(seg) else 1
-    load = float(getattr(seg, "load", 0.0) or 0.0)
+    load = max(
+        float(getattr(seg, "load_curva", 0.0) or 0.0),
+        float(getattr(seg, "load_tangente", 0.0) or 0.0),
+    )
     return (urgent, -load, seg.name)
 
 
@@ -236,7 +273,7 @@ def _perform_next_step(sim: Simulator) -> bool:
             if not options:
                 return False
         seg, next_station = sorted(options, key=_move_priority)[0]
-        action = ACTION_MAINTAIN if _needs_maintenance(seg) else ACTION_MOVE
+        action = _maintenance_action_for(seg) if _needs_maintenance(seg) else ACTION_MOVE
         sim.move_to(seg, next_station, action=action)
         return True
 

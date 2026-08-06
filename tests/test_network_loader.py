@@ -21,7 +21,8 @@ def _base_payload() -> dict:
                 "start": "A",
                 "end": "B",
                 "length_km": 1,
-                "mtbt_threshold": 5,
+                "mtbt_threshold_curva": 5,
+                "mtbt_threshold_tangente": 20,
                 "move_time_days": 1,
                 "maintenance_time_days": 2,
             }

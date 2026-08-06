@@ -119,7 +119,8 @@ def test_load_network_rejects_unknown_station(tmp_path):
                 "start": "A",
                 "end": "B",
                 "length_km": 1,
-                "mtbt_threshold": 1,
+                "mtbt_threshold_curva": 1,
+                "mtbt_threshold_tangente": 1,
                 "move_time_days": 1,
                 "maintenance_time_days": 1,
             }
