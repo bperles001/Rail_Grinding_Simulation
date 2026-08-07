@@ -1,559 +1,394 @@
 {
   "manual": {
-    "Original": [
+    "Plano - Nós": [
       {
         "mode": "move",
-        "segment": "TMI-ZTO",
+        "segments": [
+          "ZTO-ZCZ",
+          "ZTO-ZCZ-LD"
+        ],
+        "destination": "ZCZ",
+        "segment_actions": {
+          "ZTO-ZCZ": "completa",
+          "ZTO-ZCZ-LD": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZCZ-ZEB",
+          "ZCZ-ZEB-LD"
+        ],
+        "destination": "ZEB",
+        "segment_actions": {
+          "ZCZ-ZEB": "completa",
+          "ZCZ-ZEB-LD": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZEB-TMI",
+          "ZEB-TMI-LD"
+        ],
         "destination": "TMI",
-        "action": "m"
+        "segment_actions": {
+          "ZEB-TMI": "completa",
+          "ZEB-TMI-LD": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "TMI-PSG",
+        "segments": [
+          "PIT-ZRL",
+          "PIT-ZRL-LD"
+        ],
+        "destination": "PIT",
+        "segment_actions": {
+          "PIT-ZRL": "completa",
+          "PIT-ZRL-LD": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "PSS-PIT",
+          "PSS-PIT-LD"
+        ],
+        "destination": "PSS",
+        "segment_actions": {
+          "PSS-PIT": "completa",
+          "PSS-PIT-LD": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "PSG-PSS",
+          "PSG-PSS-LD"
+        ],
         "destination": "PSG",
-        "action": "m"
+        "segment_actions": {
+          "PSG-PSS": "completa",
+          "PSG-PSS-LD": "completa"
+        }
+      },
+      {
+        "mode": "turn"
+      },
+      {
+        "mode": "wait",
+        "days": 15
       },
       {
         "mode": "move",
-        "segment": "PSG-PPN",
-        "destination": "PPN",
-        "action": "v"
+        "segments": [
+          "PSG-PSS",
+          "PSG-PSS-LP"
+        ],
+        "destination": "PSS",
+        "segment_actions": {
+          "PSG-PSS": "completa",
+          "PSG-PSS-LP": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "PPN-VLI",
-        "destination": "VLI",
-        "action": "m"
+        "segments": [
+          "PSS-PIT",
+          "PSS-PIT-LP"
+        ],
+        "destination": "PIT",
+        "segment_actions": {
+          "PSS-PIT": "completa",
+          "PSS-PIT-LP": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "PPN-VLI",
-        "destination": "PPN",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "PSG-PPN",
-        "destination": "PSG",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-PSG",
+        "segments": [
+          "PIT-ZRL",
+          "PIT-ZRL-LP"
+        ],
         "destination": "TMI",
-        "action": "m"
+        "segment_actions": {
+          "PIT-ZRL": "none",
+          "PIT-ZRL-LP": "none"
+        }
       },
       {
         "mode": "move",
-        "segment": "TRO-TMI",
+        "segments": [
+          "TMI-TCS",
+          "TMI-TCS-LD"
+        ],
+        "destination": "TCS",
+        "segment_actions": {
+          "TMI-TCS": "completa",
+          "TMI-TCS-LD": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "TCS-TAG",
+          "TCS-TAG-LD"
+        ],
+        "destination": "TAG",
+        "segment_actions": {
+          "TCS-TAG": "completa",
+          "TCS-TAG-LD": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "TAG-TRO",
+          "TAG-TRO-LD"
+        ],
         "destination": "TRO",
-        "action": "v"
+        "segment_actions": {
+          "TAG-TRO": "completa",
+          "TAG-TRO-LD": "completa"
+        }
+      },
+      {
+        "mode": "turn"
       },
       {
         "mode": "move",
-        "segment": "TRO-TMI",
+        "segments": [
+          "TAG-TRO",
+          "TAG-TRO-LP"
+        ],
+        "destination": "TAG",
+        "segment_actions": {
+          "TAG-TRO": "completa",
+          "TAG-TRO-LP": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "TCS-TAG",
+          "TCS-TAG-LP"
+        ],
+        "destination": "TCS",
+        "segment_actions": {
+          "TCS-TAG": "completa",
+          "TCS-TAG-LP": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "TMI-TCS",
+          "TMI-TCS-LP"
+        ],
         "destination": "TMI",
-        "action": "m"
+        "segment_actions": {
+          "TMI-TCS": "completa",
+          "TMI-TCS-LP": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "TMI-ZTO",
+        "segments": [
+          "ZEB-TMI",
+          "ZEB-TMI-LP"
+        ],
+        "destination": "ZEB",
+        "segment_actions": {
+          "ZEB-TMI": "completa",
+          "ZEB-TMI-LP": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZCZ-ZEB",
+          "ZCZ-ZEB-LP"
+        ],
+        "destination": "ZCZ",
+        "segment_actions": {
+          "ZCZ-ZEB": "completa",
+          "ZCZ-ZEB-LP": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZTO-ZCZ",
+          "ZTO-ZCZ-LP"
+        ],
         "destination": "ZTO",
-        "action": "m"
+        "segment_actions": {
+          "ZTO-ZCZ": "completa",
+          "ZTO-ZCZ-LP": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "Trecho 2 - Singela",
+        "segments": [
+          "ZTI-ZTO",
+          "ZTI-ZTO-LP"
+        ],
+        "destination": "ZTI",
+        "segment_actions": {
+          "ZTI-ZTO": "completa",
+          "ZTI-ZTO-LP": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZIQ-ZTI",
+          "ZIQ-ZTI-LP"
+        ],
         "destination": "ZIQ",
-        "action": "m"
+        "segment_actions": {
+          "ZIQ-ZTI": "completa",
+          "ZIQ-ZTI-LP": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "Trecho 2 - Carregado",
-        "destination": "ZBV",
-        "action": "m"
+        "segments": [
+          "ZQX-ZIQ",
+          "ZQX-ZIQ-LP"
+        ],
+        "destination": "ZQX",
+        "segment_actions": {
+          "ZQX-ZIQ": "completa",
+          "ZQX-ZIQ-LP": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "ZBV-ZKE Carregado",
+        "segments": [
+          "ZQX-ZRX"
+        ],
+        "destination": "ZRX",
+        "segment_actions": {
+          "ZQX-ZRX": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZRX-ZRC"
+        ],
+        "destination": "ZRC",
+        "segment_actions": {
+          "ZRX-ZRC": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZRC-ZBL"
+        ],
+        "destination": "ZBL",
+        "segment_actions": {
+          "ZRC-ZBL": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZKE-ZBL-C"
+        ],
         "destination": "ZKE",
-        "action": "m"
+        "segment_actions": {
+          "ZKE-ZBL-C": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "ZKE-ZEV Carregado",
+        "segments": [
+          "ZEV-ZKE-C"
+        ],
         "destination": "ZEV",
-        "action": "m"
+        "segment_actions": {
+          "ZEV-ZKE-C": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "ZEV-ZPT Carregado",
+        "segments": [
+          "ZPT-ZEV-C"
+        ],
         "destination": "ZPT",
-        "action": "m"
+        "segment_actions": {
+          "ZPT-ZEV-C": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "ZPT-ZPG Carregado",
+        "segments": [
+          "ZPG-ZPT-C"
+        ],
         "destination": "ZPG",
-        "action": "m"
+        "segment_actions": {
+          "ZPG-ZPT-C": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "ZPT-ZPG Vazio",
+        "segments": [
+          "ZPG-ZPT-V"
+        ],
         "destination": "ZPT",
-        "action": "m"
+        "segment_actions": {
+          "ZPG-ZPT-V": "completa"
+        }
+      },
+      {
+        "mode": "turn"
       },
       {
         "mode": "move",
-        "segment": "ZEV-ZPT Vazio",
+        "segments": [
+          "ZPT-ZEV-V"
+        ],
         "destination": "ZEV",
-        "action": "m"
+        "segment_actions": {
+          "ZPT-ZEV-V": "completa"
+        }
       },
       {
         "mode": "move",
-        "segment": "ZKE-ZEV Vazio",
+        "segments": [
+          "ZEV-ZKE-V"
+        ],
         "destination": "ZKE",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZBV-ZKE Vazio",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Vazio",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZTO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "TMI",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "ZTO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Carregado",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Vazio",
-        "destination": "ZIQ",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "ZIQ-ZPD",
-        "destination": "ZPD",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "ZIQ-ZPD",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZTO",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "TMI",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TRO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TMI",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "ZTO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Carregado",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZBV-ZKE Carregado",
-        "destination": "ZKE",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZKE-ZEV Carregado",
-        "destination": "ZEV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZEV-ZPT Carregado",
-        "destination": "ZPT",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZEV-ZPT Vazio",
-        "destination": "ZEV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZKE-ZEV Vazio",
-        "destination": "ZKE",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZBV-ZKE Vazio",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Vazio",
-        "destination": "ZIQ",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZTO",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "TMI",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TRO",
-        "action": "v"
-      }
-    ],
-    "2026-Original": [
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "TMI",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-PSG",
-        "destination": "PSG",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "PSG-PPN",
-        "destination": "PPN",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "PPN-VLI",
-        "destination": "VLI",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "PPN-VLI",
-        "destination": "PPN",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "PSG-PPN",
-        "destination": "PSG",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-PSG",
-        "destination": "TMI",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TRO",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TMI",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "ZTO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Carregado",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZBV-ZKE Carregado",
-        "destination": "ZKE",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZKE-ZEV Carregado",
-        "destination": "ZEV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZEV-ZPT Carregado",
-        "destination": "ZPT",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZPT-ZPG Carregado",
-        "destination": "ZPG",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZPT-ZPG Vazio",
-        "destination": "ZPT",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZEV-ZPT Vazio",
-        "destination": "ZEV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZKE-ZEV Vazio",
-        "destination": "ZKE",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZBV-ZKE Vazio",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Vazio",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZTO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "TMI",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "ZTO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Carregado",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Vazio",
-        "destination": "ZIQ",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "ZIQ-ZPD",
-        "destination": "ZPD",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "ZIQ-ZPD",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZTO",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "TMI",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TRO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TMI",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "ZTO",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZIQ",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Carregado",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZBV-ZKE Carregado",
-        "destination": "ZKE",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZKE-ZEV Carregado",
-        "destination": "ZEV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZEV-ZPT Carregado",
-        "destination": "ZPT",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZEV-ZPT Vazio",
-        "destination": "ZEV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZKE-ZEV Vazio",
-        "destination": "ZKE",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "ZBV-ZKE Vazio",
-        "destination": "ZBV",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Vazio",
-        "destination": "ZIQ",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "Trecho 2 - Singela",
-        "destination": "ZTO",
-        "action": "v"
-      },
-      {
-        "mode": "move",
-        "segment": "TMI-ZTO",
-        "destination": "TMI",
-        "action": "m"
-      },
-      {
-        "mode": "move",
-        "segment": "TRO-TMI",
-        "destination": "TRO",
-        "action": "v"
+        "segment_actions": {
+          "ZEV-ZKE-V": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZKE-ZBL-V"
+        ],
+        "destination": "ZBL",
+        "segment_actions": {
+          "ZKE-ZBL-V": "completa"
+        }
+      },
+      {
+        "mode": "move",
+        "segments": [
+          "ZRC-ZBL",
+          "ZRC-ZBL-LP",
+          "ZRC-ZBL-LD"
+        ],
+        "destination": "ZRC",
+        "segment_actions": {
+          "ZRC-ZBL": "curva",
+          "ZRC-ZBL-LP": "curva",
+          "ZRC-ZBL-LD": "curva"
+        }
       }
     ]
   },
