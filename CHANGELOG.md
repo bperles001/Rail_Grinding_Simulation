@@ -22,6 +22,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   partida" — um segmento unidirecional só pode ser percorrido no seu único
   sentido permitido, então a conta antiga sempre dava Carregado e nunca
   Vazio, travando a manutenção em "só Move" depois de qualquer Turn.
+- `init_machine()` (configuração de início/frente) usava uma classificação
+  Carregado/Vazio diferente da usada depois em cada movimento — podia
+  iniciar a máquina "de frente" para um trecho que nunca batia com o
+  próprio sentido dela, travando manutenção em "só Move" desde o primeiro
+  passo. Os dois pontos agora usam a mesma lógica.
 
 ### Added
 - Manual Route plan steps can now override the day-count of a single
