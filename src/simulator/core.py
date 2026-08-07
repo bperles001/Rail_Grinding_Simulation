@@ -254,7 +254,7 @@ class Simulator:
         )
         return True
 
-    def move_to(self, seg: Segment, next_station: Station, action: str = "v") -> Dict[str, object]:
+    def move_to(self, seg: Segment, next_station: Station, action: str = "v", duration_override: Optional[int] = None) -> Dict[str, object]:
         """Execute a move or maintenance action on a segment.
 
         Args:
@@ -324,12 +324,12 @@ class Simulator:
                 performed = machine.perform_maintenance(seg, component=component)
 
         if performed:
-            duration = seg.maintenance_time_days
+            duration = duration_override if duration_override is not None else seg.maintenance_time_days
             self.maintenance_days_total += duration
             self.maintenance_count += 1
             self.maintenance_log.append((seg.name, None, duration))
         else:
-            duration = seg.move_time_days
+            duration = duration_override if duration_override is not None else seg.move_time_days
             self.movement_days_total += duration
             if not self.daily_map:
                 seg.increment_mtbt()

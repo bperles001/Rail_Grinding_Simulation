@@ -202,6 +202,52 @@ def test_needs_maintenance_handles_edge_case_exactly_at_threshold():
     assert result is True
 
 
+def test_move_to_duration_override_replaces_base_move_days():
+    """duration_override should control the date advance instead of seg.move_time_days."""
+    sim = Simulator()
+    sim.init_machine("TRO", "TMI", start_year=2025)
+    seg = next(s for s in sim.segments if s.start_station.name == "TRO" and s.end_station.name == "TMI")
+    assert seg.move_time_days != 7  # sanity: override differs from the base fixture value
+    before = sim.simulation_date
+    try:
+        sim.move_to(seg, seg.end_station, action="v", duration_override=7)
+        assert (sim.simulation_date - before).days == 7
+        assert sim.steps[-1]["days"] == 7
+    finally:
+        seg.reset_maintenance()  # segments come from the cached default network, shared across tests
+
+
+def test_move_to_duration_override_replaces_base_maintenance_days():
+    """duration_override should also apply to the maintenance branch."""
+    from src.models import ACTION_MAINTAIN
+
+    sim = Simulator()
+    sim.init_machine("TRO", "TMI", start_year=2025)
+    seg = next(s for s in sim.segments if s.start_station.name == "TRO" and s.end_station.name == "TMI")
+    assert seg.maintenance_time_days != 11
+    sim.machine.second_kld_installed = True  # force perform_maintenance regardless of direction
+    before = sim.simulation_date
+    try:
+        sim.move_to(seg, seg.end_station, action=ACTION_MAINTAIN, duration_override=11)
+        assert (sim.simulation_date - before).days == 11
+        assert sim.steps[-1]["days"] == 11
+    finally:
+        seg.reset_maintenance()  # segments come from the cached default network, shared across tests
+
+
+def test_move_to_without_duration_override_uses_segment_base():
+    """No override -> unchanged behavior, duration comes from the segment."""
+    sim = Simulator()
+    sim.init_machine("TRO", "TMI", start_year=2025)
+    seg = next(s for s in sim.segments if s.start_station.name == "TRO" and s.end_station.name == "TMI")
+    before = sim.simulation_date
+    try:
+        sim.move_to(seg, seg.end_station, action="v")
+        assert (sim.simulation_date - before).days == seg.move_time_days
+    finally:
+        seg.reset_maintenance()  # segments come from the cached default network, shared across tests
+
+
 def test_maintain_curves_action_resets_only_curva_component():
     """ACTION_MAINTAIN_CURVES must not clear the tangente accumulator (regression for the
     latent bug where perform_maintenance() ignored which action triggered it)."""
