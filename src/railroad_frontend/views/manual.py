@@ -222,14 +222,10 @@ def render_manual_route_page(
             action_text="💡 Tip: Start by adding a segment move or turn based on available options."
         )
     else:
-        from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
-        _ACTION_OPTIONS = ["Move", "Maintenance", "Curves only", "—"]
-        _ACTION_MAP = {
-            "Move": ACTION_MOVE,
-            "Maintenance": ACTION_MAINTAIN,
-            "Curves only": ACTION_MAINTAIN_CURVES,
-        }
-        st.caption("Edit **Action** or **Days**, then click Apply to save changes.")
+        st.caption(
+            "**Action** é somente leitura — pra mudar a ação de um passo, remova-o "
+            "e recrie pelo formulário abaixo. Edite **Days** e clique Apply pra salvar."
+        )
         # Wrapped in a form (matches the Network Editor's Stations/Segments/Layout
         # tables): a bare data_editor reruns on every keystroke and rebuilds its
         # own `data=` baseline from the state the previous keystroke just wrote,
@@ -247,11 +243,7 @@ def render_manual_route_page(
                     "Type": st.column_config.TextColumn(disabled=True),
                     "Segment": st.column_config.TextColumn(disabled=True),
                     "Destination": st.column_config.TextColumn(disabled=True),
-                    "Action": st.column_config.SelectboxColumn(
-                        "Action",
-                        options=_ACTION_OPTIONS,
-                        required=True,
-                    ),
+                    "Action": st.column_config.TextColumn(disabled=True),
                     "Days": st.column_config.NumberColumn(
                         "Days",
                         min_value=1,
@@ -271,16 +263,12 @@ def render_manual_route_page(
                 _step = _new_plan[_i]
                 _mode = _step.get("mode")
                 if _mode == "move":
-                    _new_code = _ACTION_MAP.get(str(_row.get("Action", "Move")), ACTION_MOVE)
-                    if _new_code != _step.get("action"):
-                        _step = {**_step, "action": _new_code}
-                        _new_plan[_i] = _step
-                        _changed = True
-                    _is_maintenance = _step.get("action") in ("m", "maintain", "maintain_curves")
                     _step_segment_names = _step.get("segments") or ([_step["segment"]] if "segment" in _step else [])
                     _step_seg_objs = [_segments_by_name[name] for name in _step_segment_names if name in _segments_by_name]
+                    _segment_actions = _step.get("segment_actions", {})
                     _base_days = sum(
-                        (o.maintenance_time_days if _is_maintenance else o.move_time_days) for o in _step_seg_objs
+                        (o.maintenance_time_days if _segment_actions.get(o.name, "none") != "none" else o.move_time_days)
+                        for o in _step_seg_objs
                     ) if _step_seg_objs else None
                     try:
                         _edited_days = int(_row.get("Days")) if _row.get("Days") is not None else _base_days
