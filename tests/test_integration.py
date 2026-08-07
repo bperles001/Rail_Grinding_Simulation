@@ -263,7 +263,7 @@ def test_manual_plan_step_days_override_changes_duration(tmp_path):
     seg = next(s for s in sim.segments if s.start_station.name == "TRO" and s.end_station.name == "TMI")
     assert seg.move_time_days != 9
 
-    plan = [{"mode": "move", "segment": seg.name, "destination": "TMI", "action": "v", "days_override": 9}]
+    plan = [{"mode": "move", "segment": seg.name, "destination": "TMI", "segment_actions": {seg.name: "none"}, "days_override": 9}]
     try:
         result = replay_manual_plan(config, plan)
         assert result.errors == []
@@ -317,16 +317,15 @@ def test_manual_plan_move_step_with_segments_list_traverses_trio(tmp_path):
         network_source=network_path,
     )
 
-    plan = [{"mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B", "action": "v"}]
+    plan = [{"mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B", "segment_actions": {"A-B": "none", "A-B-LD": "none"}}]
     result = replay_manual_plan(config, plan)
     assert result.errors == []
     assert result.simulator.steps[-1]["days"] == 3  # 2 (Singela) + 1 (directional)
     assert result.simulator.steps[-1]["segments"] == ["A-B", "A-B-LD"]
 
 
-def test_manual_plan_move_step_with_maintain_segments_resets_only_that_leg(tmp_path):
+def test_manual_plan_move_step_with_segment_actions_resets_only_that_leg(tmp_path):
     import json
-    from src.models import ACTION_MAINTAIN
 
     network_payload = {
         "name": "trio",
@@ -370,7 +369,7 @@ def test_manual_plan_move_step_with_maintain_segments_resets_only_that_leg(tmp_p
 
     plan = [{
         "mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B",
-        "action": ACTION_MAINTAIN, "maintain_segments": ["A-B-LD"],
+        "segment_actions": {"A-B": "none", "A-B-LD": "completa"},
     }]
     result = replay_manual_plan(config, plan)
     assert result.errors == []
@@ -397,7 +396,7 @@ def test_manual_plan_move_step_with_legacy_segment_key_still_works(tmp_path):
         second_kld=False,
     )
 
-    plan = [{"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "action": "v"}]
+    plan = [{"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "segment_actions": {"TRO-TMI": "none"}}]
     result = replay_manual_plan(config, plan)
     assert result.errors == []
 
@@ -418,7 +417,7 @@ def test_manual_plan_error_handling(tmp_path):
     
     # Create plan with invalid moves
     invalid_plan = [
-        {"mode": "move", "segment": "INVALID-SEGMENT", "destination": "TMI", "action": "v"},
+        {"mode": "move", "segment": "INVALID-SEGMENT", "destination": "TMI", "segment_actions": {"INVALID-SEGMENT": "completa"}},
     ]
     
     result = replay_manual_plan(config, invalid_plan)

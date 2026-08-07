@@ -149,17 +149,17 @@ def _handle_wait_step(simulator: Simulator, step: Dict[str, Any], step_idx: int)
 
 
 def _handle_move_step(simulator: Simulator, step: Dict[str, Any], step_idx: int) -> Optional[str]:
-    """Execute a move or maintenance step.
+    """Execute a move step using per-segment segment_actions.
 
     Args:
         simulator: Active simulator instance.
-        step: Step definition with segment and destination.
+        step: Step definition with segment(s), destination and segment_actions.
         step_idx: Current step index for error messages.
 
     Returns:
         Error message if step failed, None if successful.
     """
-    dest_name = step.get("destination")  # Changed from next_station
+    dest_name = step.get("destination")
     segment_names = step.get("segments")
     if segment_names is None and "segment" in step:
         segment_names = [step["segment"]]  # plans saved before the corridor change
@@ -175,16 +175,16 @@ def _handle_move_step(simulator: Simulator, step: Dict[str, Any], step_idx: int)
         current = simulator.current_station.name if simulator.current_station else "unknown"
         return f"Step {step_idx}: segment(s) {segment_names} cannot reach {dest_name} from {current}."
 
-    action_code = step.get("action", ACTION_MOVE)
+    segment_actions = step.get("segment_actions")
+    if not isinstance(segment_actions, dict):
+        return f"Step {step_idx}: 'move' step requires a 'segment_actions' mapping."
+
     duration_override = step.get("days_override")
-    maintain_segment_names = step.get("maintain_segments")
-    maintain_segments = (
-        tuple(s for s in segments if s.name in maintain_segment_names)
-        if maintain_segment_names is not None
-        else None
-    )
     try:
-        simulator.move_to(segments, destination, action=action_code, duration_override=duration_override, maintain_segments=maintain_segments)
+        simulator.move_to(
+            segments, destination, action=ACTION_MOVE,
+            duration_override=duration_override, segment_actions=segment_actions,
+        )
     except (RuntimeError, TypeError, ValueError) as exc:
         logger.warning("Manual plan step %d failed: %s", step_idx, exc)
         return f"Step {step_idx}: failed to execute ({exc})."

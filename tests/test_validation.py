@@ -82,7 +82,10 @@ def test_validate_file_path_accepts_nonexistent_when_optional(tmp_path):
 
 def test_validate_manual_plan_step_accepts_valid_move():
     """Plan step validation accepts valid move step."""
-    step = {"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "action": "v"}
+    step = {
+        "mode": "move", "segment": "TRO-TMI", "destination": "TMI",
+        "segment_actions": {"TRO-TMI": "completa"},
+    }
     errors = validate_manual_plan_step(step, 1)
     assert errors == []
 
@@ -111,11 +114,11 @@ def test_validate_manual_plan_step_rejects_invalid_mode():
 
 def test_validate_manual_plan_step_rejects_move_missing_fields():
     """Plan step validation rejects move step missing required fields."""
-    step = {"mode": "move", "segment": "TRO-TMI"}  # Missing destination and action
+    step = {"mode": "move", "segment": "TRO-TMI"}  # Missing destination and segment_actions
     errors = validate_manual_plan_step(step, 1)
     assert len(errors) >= 2
     assert any("destination" in e for e in errors)
-    assert any("action" in e for e in errors)
+    assert any("segment_actions" in e for e in errors)
 
 
 def test_validate_manual_plan_step_rejects_wait_with_negative_days():
@@ -126,18 +129,32 @@ def test_validate_manual_plan_step_rejects_wait_with_negative_days():
     assert "at least 1" in errors[0]
 
 
-def test_validate_manual_plan_step_rejects_invalid_action():
-    """Plan step validation rejects invalid action code."""
-    step = {"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "action": "x"}
+def test_validate_manual_plan_step_rejects_invalid_segment_action_value():
+    """Plan step validation rejects an unknown segment_actions token."""
+    step = {
+        "mode": "move", "segment": "TRO-TMI", "destination": "TMI",
+        "segment_actions": {"TRO-TMI": "x"},
+    }
     errors = validate_manual_plan_step(step, 1)
     assert len(errors) == 1
-    assert "action" in errors[0] and "'x'" in errors[0]
+    assert "segment_actions" in errors[0] and "'x'" in errors[0]
+
+
+def test_validate_manual_plan_step_rejects_segment_actions_key_mismatch():
+    """Plan step validation rejects segment_actions keys that don't match segments."""
+    step = {
+        "mode": "move", "segment": "TRO-TMI", "destination": "TMI",
+        "segment_actions": {"OTHER-SEG": "completa"},
+    }
+    errors = validate_manual_plan_step(step, 1)
+    assert len(errors) == 1
+    assert "segment_actions" in errors[0]
 
 
 def test_validate_manual_plan_accepts_valid_plan():
     """Manual plan validation accepts valid multi-step plan."""
     plan = [
-        {"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "action": "m"},
+        {"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "segment_actions": {"TRO-TMI": "completa"}},
         {"mode": "wait", "days": 3},
         {"mode": "turn"},
     ]

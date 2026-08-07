@@ -85,14 +85,31 @@ def validate_manual_plan_step(step: Dict[str, Any], step_idx: int) -> List[str]:
         errors.append(f"Step {step_idx}: mode must be 'move', 'turn', or 'wait', got '{mode}'")
     
     if mode == "move":
-        if "segment" not in step and "segments" not in step:
+        segment_names = step.get("segments")
+        if segment_names is None and "segment" in step:
+            segment_names = [step["segment"]]
+        if segment_names is None:
             errors.append(f"Step {step_idx}: 'move' mode requires a 'segment' or 'segments' field")
+
         if "destination" not in step:
             errors.append(f"Step {step_idx}: 'move' mode requires 'destination' field")
-        if "action" not in step:
-            errors.append(f"Step {step_idx}: 'move' mode requires 'action' field")
-        elif step["action"] not in ("v", "m", "move", "maintain", "maintain_curves"):
-            errors.append(f"Step {step_idx}: action must be 'move'/'v', 'maintain'/'m', or 'maintain_curves', got '{step['action']}'")
+
+        segment_actions = step.get("segment_actions")
+        valid_tokens = ("none", "curva", "completa")
+        if not isinstance(segment_actions, dict):
+            errors.append(f"Step {step_idx}: 'move' mode requires a 'segment_actions' mapping (one of {valid_tokens} per segment name)")
+        elif segment_names is not None:
+            expected = set(segment_names)
+            actual = set(segment_actions.keys())
+            if actual != expected:
+                errors.append(
+                    f"Step {step_idx}: 'segment_actions' keys {sorted(actual)} must match segment names {sorted(expected)}"
+                )
+            invalid = {name: token for name, token in segment_actions.items() if token not in valid_tokens}
+            if invalid:
+                errors.append(
+                    f"Step {step_idx}: 'segment_actions' values must be one of {valid_tokens}, got {invalid!r}"
+                )
     
     elif mode == "wait":
         if "days" not in step:
