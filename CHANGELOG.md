@@ -17,6 +17,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   Singela (só Carregado/Vazio) não mudam. `get_possible_moves()`/
   `Simulator.move_to()` agora trabalham com tuplas de 1-2 segmentos;
   `Simulator.move_to()` continua aceitando um único `Segment` normalmente.
+- Classificação Carregado/Vazio de trechos LP/LD (e C/V) passou a usar a
+  identidade do segmento (sufixo do nome) em vez de "qual estação de
+  partida" — um segmento unidirecional só pode ser percorrido no seu único
+  sentido permitido, então a conta antiga sempre dava Carregado e nunca
+  Vazio, travando a manutenção em "só Move" depois de qualquer Turn.
 
 ### Added
 - Manual Route plan steps can now override the day-count of a single
