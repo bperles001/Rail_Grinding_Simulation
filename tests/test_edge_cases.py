@@ -661,3 +661,130 @@ def test_simulator_with_invalid_network_path():
     """Simulator raises error when network file doesn't exist."""
     with pytest.raises(Exception):  # NetworkConfigError
         Simulator(network_reference="/nonexistent/path.json")
+
+
+def test_move_to_with_segment_actions_mixes_curva_and_completa(tmp_path):
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments
+    singela.add_load(10.0)  # threshold 100/100 -- so "curva" nao teria zerado por acaso
+    directional.add_load(10.0)  # threshold 5/20
+
+    sim.machine.second_kld_installed = True  # elimina a variavel de alinhamento deste teste
+    result = sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "curva", "A-B-LD": "completa"},
+    )
+
+    assert result["performed"] is True
+    assert singela.load_curva == 0.0
+    assert singela.load_tangente == 10.0  # so curva foi resetada
+    assert directional.load_curva == 0.0
+    assert directional.load_tangente == 0.0  # completa reseta os dois
+    # duracao: maintenance_time_days dos dois, porque nenhum token e "none"
+    assert result["duration"] == singela.maintenance_time_days + directional.maintenance_time_days
+    assert sim.steps[-1]["maintained_segments"] == ["A-B", "A-B-LD"]
+
+
+def test_move_to_with_segment_actions_none_skips_segment_entirely(tmp_path):
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments
+    singela.add_load(10.0)
+    directional.add_load(10.0)
+
+    sim.machine.second_kld_installed = True
+    result = sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "none", "A-B-LD": "completa"},
+    )
+
+    assert singela.load_curva == 10.0  # nao mantido, load intacto (so passou por cima)
+    assert directional.load_curva == 0.0  # mantido
+    # duracao: move_time_days da singela (nao mantida) + maintenance_time_days da directional
+    assert result["duration"] == singela.move_time_days + directional.maintenance_time_days
+    assert sim.steps[-1]["maintained_segments"] == ["A-B-LD"]
+
+
+def test_move_to_with_segment_actions_always_performs_without_second_kld_misaligned(tmp_path):
+    """Mudanca de comportamento central desta rodada: hoje, sem 2o KLD e
+    desalinhado, a manutencao nao executa (performed=False, MTBT intacto).
+    Com segment_actions, ela sempre executa -- so a leitura do KLD fica
+    marcada como nao capturada."""
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments  # directional = A-B-LD, Vazio por sufixo
+    directional.add_load(10.0)
+
+    assert sim.machine.global_direction == "VAZIO"  # facing B via A-B-LD
+    sim.machine.global_direction = "CARREGADO"  # forca desalinhamento com A-B-LD (Vazio)
+    sim.machine.second_kld_installed = False
+
+    result = sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "none", "A-B-LD": "completa"},
+    )
+
+    assert result["performed"] is True
+    assert directional.load_curva == 0.0 and directional.load_tangente == 0.0  # MTBT reseta igual
+    assert sim.steps[-1]["kld_reading"] == {"A-B-LD": False}  # sem leitura, mas o servico ocorreu
+
+
+def test_move_to_with_segment_actions_records_true_when_aligned(tmp_path):
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+
+    assert sim.machine.global_direction == "VAZIO"  # A-B-LD e Vazio por sufixo: alinhado
+    result = sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "none", "A-B-LD": "completa"},
+    )
+
+    assert result["performed"] is True
+    assert sim.steps[-1]["kld_reading"] == {"A-B-LD": True}
+
+
+def test_move_to_with_segment_actions_rejects_unknown_segment_name(tmp_path):
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+
+    with pytest.raises(ValueError, match="unknown segment"):
+        sim.move_to(
+            segments, destination, action=ACTION_MOVE,
+            segment_actions={"NOT-A-REAL-SEGMENT": "completa"},
+        )
+
+
+def test_move_to_with_segment_actions_rejects_invalid_token(tmp_path):
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+
+    with pytest.raises(ValueError, match="must be one of"):
+        sim.move_to(
+            segments, destination, action=ACTION_MOVE,
+            segment_actions={"A-B-LD": "tangente"},
+        )

@@ -285,7 +285,7 @@ class Simulator:
         )
         return True
 
-    def move_to(self, segments: Union[Segment, Sequence[Segment]], next_station: Station, action: str = "v", duration_override: Optional[int] = None, maintain_segments: Optional[Sequence[Segment]] = None) -> Dict[str, object]:
+    def move_to(self, segments: Union[Segment, Sequence[Segment]], next_station: Station, action: str = "v", duration_override: Optional[int] = None, maintain_segments: Optional[Sequence[Segment]] = None, segment_actions: Optional[Dict[str, str]] = None) -> Dict[str, object]:
         """Execute a move or maintenance action on one or more segments.
 
         Args:
@@ -361,7 +361,30 @@ class Simulator:
 
         maintained: Tuple[Segment, ...] = ()
         performed = False
-        if action in (ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES):
+        kld_reading: Dict[str, bool] = {}
+        if segment_actions is not None:
+            valid_tokens = ("none", "curva", "completa")
+            segment_names = {s.name for s in segments}
+            unknown = set(segment_actions) - segment_names
+            if unknown:
+                raise ValueError(f"segment_actions has unknown segment name(s): {sorted(unknown)!r}")
+            maintained_list = []
+            for component_seg in segments:
+                token = segment_actions.get(component_seg.name, "none")
+                if token not in valid_tokens:
+                    raise ValueError(f"segment_actions[{component_seg.name!r}] must be one of {valid_tokens!r}, got {token!r}")
+                if token == "none":
+                    continue
+                component = "curva" if token == "curva" else "both"
+                seg_edge_dir = _classify_directional_segment(component_seg, current_station.name)
+                kld_reading[component_seg.name] = bool(
+                    machine.second_kld_installed or seg_edge_dir == machine.global_direction
+                )
+                machine.perform_maintenance(component_seg, component=component)
+                maintained_list.append(component_seg)
+                performed = True
+            maintained = tuple(maintained_list)
+        elif action in (ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES):
             component = "curva" if action == ACTION_MAINTAIN_CURVES else "both"
             maintain_set = list(maintain_segments) if maintain_segments is not None else list(segments)
             if machine.second_kld_installed or edge_dir == machine.global_direction:
@@ -396,6 +419,7 @@ class Simulator:
                 "segment": seg.name,
                 "segments": [s.name for s in segments],
                 "maintained_segments": [s.name for s in maintained],
+                "kld_reading": kld_reading,
                 "action": (
                     "maintenance"
                     if action == ACTION_MAINTAIN and performed
