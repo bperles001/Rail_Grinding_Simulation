@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -270,11 +270,13 @@ class Simulator:
         )
         return True
 
-    def move_to(self, seg: Segment, next_station: Station, action: str = "v", duration_override: Optional[int] = None) -> Dict[str, object]:
-        """Execute a move or maintenance action on a segment.
+    def move_to(self, segments: Union[Segment, Sequence[Segment]], next_station: Station, action: str = "v", duration_override: Optional[int] = None) -> Dict[str, object]:
+        """Execute a move or maintenance action on one or more segments.
 
         Args:
-            seg: Target segment to traverse or maintain.
+            segments: Target segment (or segments — Singela + directional
+                LP/LD leg, when the corridor has one) to traverse or
+                maintain. A bare Segment is treated as a 1-element sequence.
             next_station: Destination station.
             action: Action type — use ACTION_MAINTAIN or ACTION_MOVE constants.
                 Legacy single-char values 'm' and 'v' are also accepted.
@@ -287,8 +289,15 @@ class Simulator:
             TypeError: If arguments have incorrect types.
             ValueError: If action is invalid or stations don't match segment.
         """
-        if not isinstance(seg, Segment):
-            raise TypeError(f"seg must be Segment, got {type(seg).__name__}")
+        if isinstance(segments, Segment):
+            segments = (segments,)
+        else:
+            try:
+                segments = tuple(segments)
+            except TypeError:
+                raise TypeError(f"segments must be a Segment or a sequence of Segment, got {type(segments).__name__}")
+        if not segments or not all(isinstance(s, Segment) for s in segments):
+            raise TypeError(f"segments must contain only Segment instances, got {[type(s).__name__ for s in segments]!r}")
         if not isinstance(next_station, Station):
             raise TypeError(f"next_station must be Station, got {type(next_station).__name__}")
         if not isinstance(action, str) or action not in VALID_ACTIONS:
@@ -299,6 +308,10 @@ class Simulator:
         elif action == "v":
             action = ACTION_MOVE
 
+        # seg is the directional/most-specific segment (last in the tuple, see
+        # _get_possible_moves) -- it's the one that determines endpoints,
+        # direction classification, and the machine's resting position.
+        seg = segments[-1]
         # Validate next_station is an endpoint of seg
         if next_station not in (seg.start_station, seg.end_station):
             raise ValueError(
@@ -323,7 +336,7 @@ class Simulator:
                     seg = candidate
                     break
 
-        edge_dir = self._direction_model.classify(current_station.name, next_station.name)
+        edge_dir = _classify_directional_segment(seg, current_station.name)
         movement_dir = "forward" if edge_dir == machine.global_direction else "reverse"
         machine.direction = movement_dir
         machine.front_car_position = seg
@@ -334,21 +347,22 @@ class Simulator:
         performed = False
         if action in (ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES):
             component = "curva" if action == ACTION_MAINTAIN_CURVES else "both"
-            if machine.second_kld_installed:
-                performed = machine.perform_maintenance(seg, component=component)
-            elif edge_dir == machine.global_direction:
-                performed = machine.perform_maintenance(seg, component=component)
+            if machine.second_kld_installed or edge_dir == machine.global_direction:
+                for component_seg in segments:
+                    machine.perform_maintenance(component_seg, component=component)
+                performed = True
 
         if performed:
-            duration = duration_override if duration_override is not None else seg.maintenance_time_days
+            duration = duration_override if duration_override is not None else sum(s.maintenance_time_days for s in segments)
             self.maintenance_days_total += duration
             self.maintenance_count += 1
             self.maintenance_log.append((seg.name, None, duration))
         else:
-            duration = duration_override if duration_override is not None else seg.move_time_days
+            duration = duration_override if duration_override is not None else sum(s.move_time_days for s in segments)
             self.movement_days_total += duration
             if not self.daily_map:
-                seg.increment_mtbt()
+                for component_seg in segments:
+                    component_seg.increment_mtbt()
 
         start = simulation_date
         self._apply_daily_mtbt_for_period(duration)
@@ -359,6 +373,7 @@ class Simulator:
         self.steps.append(
             {
                 "segment": seg.name,
+                "segments": [s.name for s in segments],
                 "action": (
                     "maintenance"
                     if action == ACTION_MAINTAIN and performed

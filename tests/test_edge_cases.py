@@ -66,6 +66,46 @@ def test_get_possible_moves_no_singela_still_returns_single_segment():
         assert len(segments) == 1  # default.json has no Singela+LP/LD trios
 
 
+def test_move_to_with_segment_tuple_applies_effects_to_both_and_sums_duration(tmp_path):
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    assert len(segments) == 2
+
+    before = sim.simulation_date
+    sim.move_to(segments, destination, action="v")
+    # move_time_days: 2 (Singela) + 1 (directional) = 3
+    assert (sim.simulation_date - before).days == 3
+    assert sim.steps[-1]["days"] == 3
+    assert sim.steps[-1]["segments"] == ["A-B", "A-B-LD"]
+    assert sim.steps[-1]["segment"] == "A-B-LD"
+
+
+def test_move_to_maintenance_with_segment_tuple_resets_both(tmp_path):
+    from src.models import ACTION_MAINTAIN
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments
+    singela.mtbt_threshold_curva = 5.0
+    singela.mtbt_threshold_tangente = 5.0
+    singela.add_load(10.0)
+    directional.add_load(10.0)
+    assert singela.maintenance_due is True
+    assert directional.maintenance_due is True
+
+    sim.machine.second_kld_installed = True  # force perform_maintenance regardless of direction
+    sim.move_to(segments, destination, action=ACTION_MAINTAIN)
+
+    assert singela.load_curva == 0.0 and singela.load_tangente == 0.0
+    assert directional.load_curva == 0.0 and directional.load_tangente == 0.0
+    # maintenance_time_days: 3 (Singela) + 1 (directional) = 4
+    assert sim.steps[-1]["days"] == 4
+
+
 def test_auto_plan_config_validation_catches_invalid_csv_path(tmp_path):
     """AutoPlanConfig validation rejects nonexistent CSV files."""
     missing_csv = tmp_path / "missing.csv"
@@ -168,7 +208,7 @@ def test_simulator_move_to_validates_inputs():
         sim.move_to(segment, station, action="invalid")
     
     # Should reject non-Segment
-    with pytest.raises(TypeError, match="seg must be Segment"):
+    with pytest.raises(TypeError, match="segments must contain only Segment instances"):
         sim.move_to("not_a_segment", station, action="v")  # type: ignore[arg-type]
     
     # Should reject non-Station
