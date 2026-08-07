@@ -64,6 +64,19 @@ def _open_network_editor(tmp_path: Path) -> AppTest:
     return at
 
 
+def _open_manual_route(tmp_path: Path) -> AppTest:
+    network_path = tmp_path / "network.json"
+    _write_network(network_path)
+
+    at = AppTest.from_file(str(REPO_ROOT / "streamlit_app.py"), default_timeout=60)
+    at.run()
+    at.session_state["active_network_path"] = str(network_path)
+    at.session_state["navigation_page"] = "Manual Route"
+    at.run()
+    assert not at.exception
+    return at
+
+
 def test_layout_table_accumulates_two_edits_before_submit(tmp_path: Path) -> None:
     """Regression test: editing a second cell used to wipe out the first
     (and the second) because the data_editor was fed a `data=` argument
@@ -213,3 +226,12 @@ def test_segment_role_label_classifies_by_suffix() -> None:
     assert _segment_role_label("A-B-C") == "Pátio Carregado (LP)"
     assert _segment_role_label("A-B-LD") == "Pátio Vazio (LD)"
     assert _segment_role_label("A-B-V") == "Pátio Vazio (LD)"
+
+
+def test_manual_route_add_move_form_has_one_radio_per_segment(tmp_path: Path) -> None:
+    at = _open_manual_route(tmp_path)
+
+    radios = [r for r in at.radio if r.label.startswith(("Singela", "Pátio"))]
+    assert len(radios) >= 1  # ao menos 1 segmento na primeira opcao de movimento disponivel
+    for r in radios:
+        assert set(r.options) == {"Nada", "Só curva", "Completa"}

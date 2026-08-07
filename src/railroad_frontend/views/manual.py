@@ -448,47 +448,31 @@ def render_manual_route_page(
                     note = "sem leitura KLD"
                 return f"{opt.destination} via {via} ({note})"
 
+            _ACTION_TOKENS = {"Nada": "none", "Só curva": "curva", "Completa": "completa"}
+
             with st.form("manual_move_form", clear_on_submit=True):
                 selected_option = st.selectbox("Next station", move_options, format_func=_format_option)
-                action_choice = st.radio(
-                    "Action",
-                    ("Move", "Maintenance", "Curves only"),
-                    horizontal=True,
-                )
-                # Widgets inside st.form don't rerun the script on change (only
-                # on submit), so this can't be conditioned on action_choice's
-                # in-progress value -- that would still reflect the *previous*
-                # submission, and the picker would never exist yet for the
-                # very click that first switches away from "Move". Always
-                # show it whenever the corridor has 2 segments; whether it's
-                # used depends only on the action actually submitted, below.
-                maintain_choice = None
-                if len(selected_option.segments) == 2:
-                    singela_name, directional_name = selected_option.segments
-                    maintain_choice = st.radio(
-                        "Manutenção (se a ação for Manutenção ou Só curvas)",
-                        ("Ambos", f"Só a Singela ({singela_name})", f"Só o pátio ({directional_name})"),
+                segment_choices: Dict[str, str] = {}
+                for seg_name in selected_option.segments:
+                    aligned = selected_option.segment_alignment.get(seg_name, False)
+                    warning = "" if aligned else " — ⚠ sem leitura KLD se manutenido"
+                    choice = st.radio(
+                        f"{_segment_role_label(seg_name)} ({seg_name}){warning}",
+                        ("Nada", "Só curva", "Completa"),
                         horizontal=True,
-                        help="Se a Singela já foi feita numa passada anterior, escolha só o pátio (ou vice-versa). Ignorado se a ação for Move.",
+                        key=f"manual_move_action_{seg_name}",
                     )
+                    segment_choices[seg_name] = choice
                 submitted_move = st.form_submit_button("Add move")
             if submitted_move:
-                from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
-                action_code = (
-                    ACTION_MAINTAIN if action_choice == "Maintenance"
-                    else ACTION_MAINTAIN_CURVES if action_choice == "Curves only"
-                    else ACTION_MOVE
-                )
                 new_step = {
                     "mode": "move",
                     "segments": list(selected_option.segments),
                     "destination": selected_option.destination,
-                    "action": action_code,
+                    "segment_actions": {
+                        seg_name: _ACTION_TOKENS[choice] for seg_name, choice in segment_choices.items()
+                    },
                 }
-                if action_code != ACTION_MOVE and maintain_choice and maintain_choice != "Ambos":
-                    singela_name, directional_name = selected_option.segments
-                    chosen_name = singela_name if maintain_choice.startswith("Só a Singela") else directional_name
-                    new_step["maintain_segments"] = [chosen_name]
                 new_plan = plan + [new_step]
                 callbacks.update_manual_plan(new_plan)
                 plan = new_plan
