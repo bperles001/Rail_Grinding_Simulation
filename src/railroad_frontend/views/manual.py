@@ -277,8 +277,11 @@ def render_manual_route_page(
                         _new_plan[_i] = _step
                         _changed = True
                     _is_maintenance = _step.get("action") in ("m", "maintain", "maintain_curves")
-                    _seg_obj = _segments_by_name.get(_step.get("segment"))
-                    _base_days = (_seg_obj.maintenance_time_days if _is_maintenance else _seg_obj.move_time_days) if _seg_obj else None
+                    _step_segment_names = _step.get("segments") or ([_step["segment"]] if "segment" in _step else [])
+                    _step_seg_objs = [_segments_by_name[name] for name in _step_segment_names if name in _segments_by_name]
+                    _base_days = sum(
+                        (o.maintenance_time_days if _is_maintenance else o.move_time_days) for o in _step_seg_objs
+                    ) if _step_seg_objs else None
                     try:
                         _edited_days = int(_row.get("Days")) if _row.get("Days") is not None else _base_days
                     except (TypeError, ValueError):
@@ -452,7 +455,8 @@ def render_manual_route_page(
             def _format_option(opt: ManualMoveOption) -> str:
                 maintenance_allowed = opt.maintenance_aligned or second_kld_installed
                 maintenance_note = "maintenance allowed" if maintenance_allowed else "move only"
-                return f"{opt.destination} via {opt.segment} ({maintenance_note})"
+                via = " + ".join(opt.segments)
+                return f"{opt.destination} via {via} ({maintenance_note})"
 
             with st.form("manual_move_form", clear_on_submit=True):
                 selected_option = st.selectbox("Next station", move_options, format_func=_format_option)
@@ -472,7 +476,7 @@ def render_manual_route_page(
                 new_plan = plan + [
                     {
                         "mode": "move",
-                        "segment": selected_option.segment,
+                        "segments": list(selected_option.segments),
                         "destination": selected_option.destination,
                         "action": action_code,
                     }
@@ -576,12 +580,16 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any], s
                 capability = "Move only"
             _act = step.get("action")
             is_maintenance = _act in ("m", "maintain", "maintain_curves")
-            seg_obj = segments_by_name.get(step.get("segment"))
-            base_days = (seg_obj.maintenance_time_days if is_maintenance else seg_obj.move_time_days) if seg_obj else None
+            step_segment_names = step.get("segments") or ([step["segment"]] if "segment" in step else [])
+            step_seg_objs = [segments_by_name[name] for name in step_segment_names if name in segments_by_name]
+            base_days = sum(
+                (seg_obj.maintenance_time_days if is_maintenance else seg_obj.move_time_days)
+                for seg_obj in step_seg_objs
+            ) if step_seg_objs else None
             rows.append({
                 "Step": idx,
                 "Type": "Traverse",
-                "Segment": step.get("segment", ""),
+                "Segment": " + ".join(step_segment_names),
                 "Destination": step.get("destination", ""),
                 "Action": (
                     "Maintenance" if _act in ("m", "maintain")

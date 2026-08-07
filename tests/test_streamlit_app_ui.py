@@ -186,3 +186,15 @@ def test_manual_plan_dataframe_shows_segment_base_days_for_traverse() -> None:
     plan_override = [{"mode": "move", "segment": "A-B", "destination": "B", "action": "v", "days_override": 9}]
     df_override = _manual_plan_dataframe(plan_override, {}, [seg])
     assert df_override.loc[0, "Days"] == 9
+
+
+def test_manual_plan_dataframe_shows_joined_segment_names_for_corridor_step() -> None:
+    a = Station("A")
+    b = Station("B")
+    singela = Segment(name="A-B", start_station=a, end_station=b, length=10.0, move_time_days=2, maintenance_time_days=3)
+    directional = Segment(name="A-B-LD", start_station=a, end_station=b, length=1.0, move_time_days=1, maintenance_time_days=1)
+
+    plan = [{"mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B", "action": "v"}]
+    df = _manual_plan_dataframe(plan, {}, [singela, directional])
+    assert df.loc[0, "Segment"] == "A-B + A-B-LD"
+    assert df.loc[0, "Days"] == 3  # 2 (Singela) + 1 (directional)
