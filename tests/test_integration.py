@@ -239,7 +239,7 @@ def test_manual_plan_with_available_moves(tmp_path):
     # Validate moves
     assert len(moves) > 0
     for move in moves:
-        assert hasattr(move, "segment")
+        assert hasattr(move, "segments")
         assert hasattr(move, "destination")
         assert hasattr(move, "maintenance_aligned")
 
@@ -270,6 +270,78 @@ def test_manual_plan_step_days_override_changes_duration(tmp_path):
         assert result.simulator.steps[-1]["days"] == 9
     finally:
         seg.reset_maintenance()  # segments come from the cached default network, shared across tests
+
+
+def test_manual_plan_move_step_with_segments_list_traverses_trio(tmp_path):
+    """A move step using the new 'segments' (list) field should apply to both
+    the Singela and the directional leg."""
+    import json
+
+    network_payload = {
+        "name": "trio",
+        "stations": [{"name": "A", "can_turn": True}, {"name": "B", "can_turn": True}],
+        "segments": [
+            {
+                "name": "A-B", "start": "A", "end": "B", "length_km": 10.0,
+                "mtbt_threshold_curva": 100.0, "mtbt_threshold_tangente": 100.0,
+                "move_time_days": 2, "maintenance_time_days": 3,
+                "allowed_movements": [["A", "B"], ["B", "A"]],
+            },
+            {
+                "name": "A-B-LD", "start": "A", "end": "B", "length_km": 1.0,
+                "mtbt_threshold_curva": 5.0, "mtbt_threshold_tangente": 20.0,
+                "move_time_days": 1, "maintenance_time_days": 1,
+                "allowed_movements": [["A", "B"]],
+            },
+            {
+                "name": "A-B-LP", "start": "B", "end": "A", "length_km": 1.0,
+                "mtbt_threshold_curva": 5.0, "mtbt_threshold_tangente": 20.0,
+                "move_time_days": 1, "maintenance_time_days": 1,
+                "allowed_movements": [["B", "A"]],
+            },
+        ],
+    }
+    network_path = tmp_path / "trio_network.json"
+    network_path.write_text(json.dumps(network_payload), encoding="utf-8")
+
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,2025-01\nA-B,1.0\nA-B-LD,1.0\nA-B-LP,1.0\n")
+
+    config = ManualPlanConfig(
+        csv_path=csv_path,
+        start_station="A",
+        facing_station="B",
+        start_year=2025,
+        end_year=2025,
+        second_kld=False,
+        network_source=network_path,
+    )
+
+    plan = [{"mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B", "action": "v"}]
+    result = replay_manual_plan(config, plan)
+    assert result.errors == []
+    assert result.simulator.steps[-1]["days"] == 3  # 2 (Singela) + 1 (directional)
+    assert result.simulator.steps[-1]["segments"] == ["A-B", "A-B-LD"]
+
+
+def test_manual_plan_move_step_with_legacy_segment_key_still_works(tmp_path):
+    """Plans saved before this change use a singular 'segment' string; must
+    still replay correctly on a network with no Singela trios (default.json)."""
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,2025-01\nTRO-TMI,5.0\n")
+
+    config = ManualPlanConfig(
+        csv_path=csv_path,
+        start_station="TRO",
+        facing_station="TMI",
+        start_year=2025,
+        end_year=2025,
+        second_kld=False,
+    )
+
+    plan = [{"mode": "move", "segment": "TRO-TMI", "destination": "TMI", "action": "v"}]
+    result = replay_manual_plan(config, plan)
+    assert result.errors == []
 
 
 def test_manual_plan_error_handling(tmp_path):

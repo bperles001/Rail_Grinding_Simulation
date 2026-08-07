@@ -129,6 +129,16 @@ def test_auto_planner_needs_maintenance_and_action_over_segment_tuple(tmp_path):
     assert _maintenance_action_for(segments) == ACTION_MAINTAIN_CURVES
 
 
+def test_list_available_moves_reports_segment_tuple_for_trio(tmp_path):
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    options = list_available_moves(sim)
+    assert len(options) == 1
+    assert options[0].segments == ("A-B", "A-B-LD")
+    assert options[0].destination == "B"
+
+
 def test_auto_plan_config_validation_catches_invalid_csv_path(tmp_path):
     """AutoPlanConfig validation rejects nonexistent CSV files."""
     missing_csv = tmp_path / "missing.csv"

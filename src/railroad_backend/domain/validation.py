@@ -85,8 +85,8 @@ def validate_manual_plan_step(step: Dict[str, Any], step_idx: int) -> List[str]:
         errors.append(f"Step {step_idx}: mode must be 'move', 'turn', or 'wait', got '{mode}'")
     
     if mode == "move":
-        if "segment" not in step:
-            errors.append(f"Step {step_idx}: 'move' mode requires 'segment' field")
+        if "segment" not in step and "segments" not in step:
+            errors.append(f"Step {step_idx}: 'move' mode requires a 'segment' or 'segments' field")
         if "destination" not in step:
             errors.append(f"Step {step_idx}: 'move' mode requires 'destination' field")
         if "action" not in step:

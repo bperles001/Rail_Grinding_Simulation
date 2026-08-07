@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -86,29 +86,31 @@ class ManualPlanReplay:
 
 @dataclass(frozen=True)
 class ManualMoveOption:
-    segment: str
+    segments: Tuple[str, ...]
     destination: str
     maintenance_aligned: bool
 
 
-def _find_segment_for_move(sim: Simulator, segment_name: str, destination: str):
-    """Locate segment object matching segment name and destination.
+def _find_segments_for_move(sim: Simulator, segment_names: Sequence[str], destination: str):
+    """Locate the segment tuple matching segment_names that connects the
+    current station to destination.
 
     Args:
         sim: Simulator instance.
-        segment_name: Name of segment to traverse.
+        segment_names: Names of the segments to traverse, in the order
+            returned by get_possible_moves()/get_all_moves_any_direction()
+            (Singela first when present, directional last).
         destination: Name of destination station.
 
     Returns:
-        Segment object or None if not found.
+        Tuple of Segment objects (same order as segment_names) or None if
+        no matching option is currently available.
     """
-    for seg in sim.segments:
-        if seg.name != segment_name:
+    for segments, station in sim.get_all_moves_any_direction():
+        if station.name != destination:
             continue
-        if seg.start_station == sim.current_station and seg.end_station.name == destination:
-            return seg
-        if seg.end_station == sim.current_station and seg.start_station.name == destination:
-            return seg
+        if tuple(s.name for s in segments) == tuple(segment_names):
+            return segments
     return None
 
 
@@ -158,23 +160,25 @@ def _handle_move_step(simulator: Simulator, step: Dict[str, Any], step_idx: int)
         Error message if step failed, None if successful.
     """
     dest_name = step.get("destination")  # Changed from next_station
-    segment_name = step.get("segment")
-    if not dest_name or not segment_name:
+    segment_names = step.get("segments")
+    if segment_names is None and "segment" in step:
+        segment_names = [step["segment"]]  # plans saved before the corridor change
+    if not dest_name or not segment_names:
         return f"Step {step_idx}: incomplete move definition."
 
     destination = simulator.stations.get(dest_name)
     if destination is None:
         return f"Step {step_idx}: destination {dest_name} is unknown."
 
-    segment = _find_segment_for_move(simulator, segment_name, dest_name)
-    if segment is None:
+    segments = _find_segments_for_move(simulator, segment_names, dest_name)
+    if segments is None:
         current = simulator.current_station.name if simulator.current_station else "unknown"
-        return f"Step {step_idx}: segment {segment_name} cannot reach {dest_name} from {current}."
+        return f"Step {step_idx}: segment(s) {segment_names} cannot reach {dest_name} from {current}."
 
     action_code = step.get("action", ACTION_MOVE)
     duration_override = step.get("days_override")
     try:
-        simulator.move_to(segment, destination, action=action_code, duration_override=duration_override)
+        simulator.move_to(segments, destination, action=action_code, duration_override=duration_override)
     except (RuntimeError, TypeError, ValueError) as exc:
         logger.warning("Manual plan step %d failed: %s", step_idx, exc)
         return f"Step {step_idx}: failed to execute ({exc})."
@@ -227,15 +231,19 @@ def list_available_moves(sim: Simulator) -> List[ManualMoveOption]:
     Returns:
         List of ManualMoveOption sorted by alignment and destination.
     """
-    aligned_pairs = {(seg.name, dest.name) for seg, dest in sim.get_possible_moves()}
+    aligned_pairs = {
+        (tuple(seg.name for seg in segments), dest.name)
+        for segments, dest in sim.get_possible_moves()
+    }
     options: List[ManualMoveOption] = []
     seen = set()
-    for seg, dest in sim.get_all_moves_any_direction():
-        key = (seg.name, dest.name)
+    for segments, dest in sim.get_all_moves_any_direction():
+        names = tuple(seg.name for seg in segments)
+        key = (names, dest.name)
         if key in seen:
             continue
         seen.add(key)
-        options.append(ManualMoveOption(segment=seg.name, destination=dest.name, maintenance_aligned=key in aligned_pairs))
+        options.append(ManualMoveOption(segments=names, destination=dest.name, maintenance_aligned=key in aligned_pairs))
     options.sort(key=lambda item: (0 if item.maintenance_aligned else 1, item.destination))
     return options
 
