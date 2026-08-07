@@ -563,10 +563,28 @@ def render_manual_route_page(
         )
 
 
+_ACTION_LABELS = {"none": "Nada", "curva": "Curva", "completa": "Completa"}
+
+
+def _segment_role_label(name: str) -> str:
+    if name.endswith(("-LP", "-C")):
+        return "Pátio Carregado (LP)"
+    if name.endswith(("-LD", "-V")):
+        return "Pátio Vazio (LD)"
+    return "Singela"
+
+
+def _segment_actions_summary(segment_actions: Mapping[str, str]) -> str:
+    parts = [
+        f"{_segment_role_label(name)}: {_ACTION_LABELS.get(token, token)}"
+        for name, token in segment_actions.items()
+    ]
+    return " · ".join(parts) if parts else "—"
+
+
 def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any], segments: Sequence[Any]) -> pd.DataFrame:
     if not plan:
         return pd.DataFrame(columns=["Step", "Type", "Segment", "Destination", "Action", "Days", "Capability"])
-    second_kld = bool(config.get("second_kld", False))
     segments_by_name = {seg.name: seg for seg in segments}
     rows = []
     for idx, step in enumerate(plan, start=1):
@@ -592,19 +610,15 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any], s
                 "Capability": "Hold position",
             })
         else:
-            aligned = step.get("aligned")
-            if aligned:
-                capability = "Maintenance allowed"
-            elif second_kld:
-                capability = "Maintenance allowed (2nd KLD)"
-            else:
-                capability = "Move only"
-            _act = step.get("action")
-            is_maintenance = _act in ("m", "maintain", "maintain_curves")
+            segment_actions = step.get("segment_actions", {})
             step_segment_names = step.get("segments") or ([step["segment"]] if "segment" in step else [])
             step_seg_objs = [segments_by_name[name] for name in step_segment_names if name in segments_by_name]
             base_days = sum(
-                (seg_obj.maintenance_time_days if is_maintenance else seg_obj.move_time_days)
+                (
+                    seg_obj.maintenance_time_days
+                    if segment_actions.get(seg_obj.name, "none") != "none"
+                    else seg_obj.move_time_days
+                )
                 for seg_obj in step_seg_objs
             ) if step_seg_objs else None
             rows.append({
@@ -612,13 +626,9 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any], s
                 "Type": "Traverse",
                 "Segment": " + ".join(step_segment_names),
                 "Destination": step.get("destination", ""),
-                "Action": (
-                    "Maintenance" if _act in ("m", "maintain")
-                    else "Curves only" if _act == "maintain_curves"
-                    else "Move"
-                ),
+                "Action": _segment_actions_summary(segment_actions),
                 "Days": step.get("days_override", base_days),
-                "Capability": capability,
+                "Capability": "—",
             })
     return pd.DataFrame(rows)
 

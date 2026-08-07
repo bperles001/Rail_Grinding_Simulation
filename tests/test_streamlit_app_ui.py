@@ -175,15 +175,16 @@ def test_manual_plan_dataframe_shows_segment_base_days_for_traverse() -> None:
     b = Station("B")
     seg = Segment(name="A-B", start_station=a, end_station=b, length=1.0, move_time_days=3, maintenance_time_days=6)
 
-    plan = [{"mode": "move", "segment": "A-B", "destination": "B", "action": "v"}]
+    plan = [{"mode": "move", "segment": "A-B", "destination": "B", "segment_actions": {"A-B": "none"}}]
     df = _manual_plan_dataframe(plan, {}, [seg])
     assert df.loc[0, "Days"] == 3
 
-    plan_maint = [{"mode": "move", "segment": "A-B", "destination": "B", "action": "m"}]
+    plan_maint = [{"mode": "move", "segment": "A-B", "destination": "B", "segment_actions": {"A-B": "completa"}}]
     df_maint = _manual_plan_dataframe(plan_maint, {}, [seg])
     assert df_maint.loc[0, "Days"] == 6
+    assert df_maint.loc[0, "Action"] == "Singela: Completa"
 
-    plan_override = [{"mode": "move", "segment": "A-B", "destination": "B", "action": "v", "days_override": 9}]
+    plan_override = [{"mode": "move", "segment": "A-B", "destination": "B", "segment_actions": {"A-B": "none"}, "days_override": 9}]
     df_override = _manual_plan_dataframe(plan_override, {}, [seg])
     assert df_override.loc[0, "Days"] == 9
 
@@ -194,7 +195,21 @@ def test_manual_plan_dataframe_shows_joined_segment_names_for_corridor_step() ->
     singela = Segment(name="A-B", start_station=a, end_station=b, length=10.0, move_time_days=2, maintenance_time_days=3)
     directional = Segment(name="A-B-LD", start_station=a, end_station=b, length=1.0, move_time_days=1, maintenance_time_days=1)
 
-    plan = [{"mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B", "action": "v"}]
+    plan = [{
+        "mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B",
+        "segment_actions": {"A-B": "curva", "A-B-LD": "completa"},
+    }]
     df = _manual_plan_dataframe(plan, {}, [singela, directional])
     assert df.loc[0, "Segment"] == "A-B + A-B-LD"
-    assert df.loc[0, "Days"] == 3  # 2 (Singela) + 1 (directional)
+    assert df.loc[0, "Days"] == 4  # maintenance_time_days dos dois: 3 (Singela) + 1 (Patio Vazio)
+    assert df.loc[0, "Action"] == "Singela: Curva · Pátio Vazio (LD): Completa"
+
+
+def test_segment_role_label_classifies_by_suffix() -> None:
+    from railroad_frontend.views.manual import _segment_role_label
+
+    assert _segment_role_label("A-B") == "Singela"
+    assert _segment_role_label("A-B-LP") == "Pátio Carregado (LP)"
+    assert _segment_role_label("A-B-C") == "Pátio Carregado (LP)"
+    assert _segment_role_label("A-B-LD") == "Pátio Vazio (LD)"
+    assert _segment_role_label("A-B-V") == "Pátio Vazio (LD)"
