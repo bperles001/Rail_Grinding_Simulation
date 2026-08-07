@@ -139,7 +139,7 @@ class Simulator:
             start_segment = self.segments[0]
             facing_station_name = start_segment.end_station.name
 
-        init_global = self._direction_model.classify(start_station_name, facing_station_name) or "CARREGADO"
+        init_global = self._classify_station_pair(start_station_name, facing_station_name) or "CARREGADO"
         self.machine = GrinderMachine(
             front_car_position=start_segment,
             rear_car_position=start_segment,
@@ -419,9 +419,23 @@ class Simulator:
 
         return {"performed": performed, "duration": duration}
 
+    def _classify_station_pair(self, a_name: str, b_name: str) -> Optional[str]:
+        """CARREGADO/VAZIO for traveling a_name -> b_name, resolved the same
+        way a move option is (see _get_possible_moves): among every segment
+        that allows this exact direction, the most specific one (a
+        directional LP/LD/Carregado/Vazio leg, when present) determines the
+        classification. Used by init_machine() and classify_edge_direction()
+        so the initial facing and every later move agree.
+        """
+        matching = [seg for seg in self.segments if (a_name, b_name) in seg.allowed_movements]
+        if not matching:
+            return None
+        matching.sort(key=lambda seg: len(seg.allowed_movements), reverse=True)
+        return _classify_directional_segment(matching[-1], a_name)
+
     def classify_edge_direction(self, start_station: str, end_station: str) -> Optional[str]:
-        """Expose the simulator's direction model for tests and tooling."""
-        return self._direction_model.classify(start_station, end_station)
+        """Expose the simulator's direction classification for tests and tooling."""
+        return self._classify_station_pair(start_station, end_station)
 
 
 __all__ = ["Simulator", "DailyMap"]

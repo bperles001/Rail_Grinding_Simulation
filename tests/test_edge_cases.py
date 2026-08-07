@@ -147,23 +147,46 @@ def test_directional_segment_classifies_by_name_suffix_not_departure_station(tmp
     assert directional.name == "A-B-LD"
     assert _classify_directional_segment(directional, "A") == "VAZIO"
 
-    # Move to B, then turn: the corridor back to A (via A-B-LP) must now be
-    # maintenance-aligned, since LP is Carregado by identity and the machine
-    # is now facing Carregado after the turn.
+    # Facing B from A travels via A-B-LD (Vazio), so init_machine sets
+    # global_direction accordingly -- move_to() itself never changes it,
+    # only flip_global_direction() (Turn) does.
     sim.move_to(segments, destination, action="v")
     assert sim.current_station.name == "B"
-    assert sim.machine.global_direction == "CARREGADO"
-    sim.flip_global_direction()
     assert sim.machine.global_direction == "VAZIO"
 
-    options = list_available_moves(sim)
-    back_to_a = next(o for o in options if o.destination == "A")
-    assert back_to_a.maintenance_aligned is False  # LP is Carregado, machine now faces Vazio
+    # Turn: the corridor back to A (via A-B-LP) must now be
+    # maintenance-aligned, since LP is Carregado by identity and the machine
+    # is now facing Carregado after the turn.
+    sim.flip_global_direction()
+    assert sim.machine.global_direction == "CARREGADO"
 
-    sim.flip_global_direction()  # turn back to Carregado
     options = list_available_moves(sim)
     back_to_a = next(o for o in options if o.destination == "A")
-    assert back_to_a.maintenance_aligned is True  # LP is Carregado, machine faces Carregado
+    assert back_to_a.maintenance_aligned is True  # LP is Carregado, machine now faces Carregado
+
+    sim.flip_global_direction()  # turn back to Vazio
+    options = list_available_moves(sim)
+    back_to_a = next(o for o in options if o.destination == "A")
+    assert back_to_a.maintenance_aligned is False  # LP is Carregado, machine faces Vazio
+
+
+def test_init_machine_facing_agrees_with_move_time_classification(tmp_path):
+    """init_machine's initial global_direction must be classified the same
+    way move_to()/get_possible_moves() classify it later, or the machine can
+    start out facing a direction that never matches its own facing segment
+    (regression reported 2026-08-07: starting with facing set toward a -LD
+    leg showed the corridor back as 'move only', maintenance never aligned,
+    because init used the old start-station heuristic while moves used the
+    new name-suffix one)."""
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    # Facing B from A travels the corridor via A-B-LD (Vazio by suffix).
+    sim.init_machine("A", "B", start_year=2025)
+    assert sim.machine.global_direction == "VAZIO"
+    options = list_available_moves(sim)
+    to_b = next(o for o in options if o.destination == "B")
+    assert to_b.segments[-1] == "A-B-LD"
+    assert to_b.maintenance_aligned is True
 
 
 def test_list_available_moves_reports_segment_tuple_for_trio(tmp_path):
