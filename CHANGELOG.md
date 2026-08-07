@@ -9,6 +9,17 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+- Manual Route: cada passo "move" agora escolhe uma ação independente
+  (Nada/Só curva/Completa) por segmento físico do trecho (Singela, Pátio
+  Carregado-LP, Pátio Vazio-LD) em vez de uma única ação pro trecho
+  inteiro — permite, por exemplo, curva só na Singela e manutenção
+  completa no pátio no mesmo passo. Manutenção via `segment_actions`
+  sempre executa e reseta o MTBT, mesmo desalinhada com o facing sem 2º
+  KLD; o alinhamento vira uma flag informativa ("Leitura KLD") na tabela
+  de resultados em vez de bloquear o serviço. Escopo só Manual Route — o
+  Auto Planner não muda.
+
 ### Fixed
 - Trechos com Singela + Linha Principal/Desviada (LP/LD) agora são tratados
   como um único passo lógico de deslocamento/manutenção que afeta os dois
