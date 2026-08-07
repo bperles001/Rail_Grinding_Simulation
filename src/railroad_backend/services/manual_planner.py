@@ -88,7 +88,7 @@ class ManualPlanReplay:
 class ManualMoveOption:
     segments: Tuple[str, ...]
     destination: str
-    maintenance_aligned: bool
+    segment_alignment: Dict[str, bool]
 
 
 def _find_segments_for_move(sim: Simulator, segment_names: Sequence[str], destination: str):
@@ -235,12 +235,13 @@ def list_available_moves(sim: Simulator) -> List[ManualMoveOption]:
         sim: Simulator instance.
 
     Returns:
-        List of ManualMoveOption sorted by alignment and destination.
+        List of ManualMoveOption sorted by alignment (mais segmentos
+        alinhados primeiro) e destino.
     """
-    aligned_pairs = {
-        (tuple(seg.name for seg in segments), dest.name)
-        for segments, dest in sim.get_possible_moves()
-    }
+    from src.simulator.core import _classify_directional_segment
+
+    machine = sim.machine
+    current_name = sim.current_station.name if sim.current_station else ""
     options: List[ManualMoveOption] = []
     seen = set()
     for segments, dest in sim.get_all_moves_any_direction():
@@ -249,8 +250,19 @@ def list_available_moves(sim: Simulator) -> List[ManualMoveOption]:
         if key in seen:
             continue
         seen.add(key)
-        options.append(ManualMoveOption(segments=names, destination=dest.name, maintenance_aligned=key in aligned_pairs))
-    options.sort(key=lambda item: (0 if item.maintenance_aligned else 1, item.destination))
+        segment_alignment = {}
+        for seg in segments:
+            edge_dir = _classify_directional_segment(seg, current_name)
+            segment_alignment[seg.name] = bool(
+                machine and (machine.second_kld_installed or edge_dir == machine.global_direction)
+            )
+        options.append(ManualMoveOption(segments=names, destination=dest.name, segment_alignment=segment_alignment))
+    options.sort(
+        key=lambda item: (
+            0 if all(item.segment_alignment.values()) else 1,
+            item.destination,
+        )
+    )
     return options
 
 

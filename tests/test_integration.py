@@ -241,7 +241,7 @@ def test_manual_plan_with_available_moves(tmp_path):
     for move in moves:
         assert hasattr(move, "segments")
         assert hasattr(move, "destination")
-        assert hasattr(move, "maintenance_aligned")
+        assert hasattr(move, "segment_alignment")
 
 
 def test_manual_plan_step_days_override_changes_duration(tmp_path):

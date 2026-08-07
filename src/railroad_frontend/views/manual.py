@@ -450,13 +450,15 @@ def render_manual_route_page(
         if not move_options:
             st.warning("No moves are available from the current station. Consider adding a turn, waiting, or clearing the plan.")
         else:
-            second_kld_installed = bool(getattr(getattr(sim_preview, "machine", None), "second_kld_installed", False))
-
             def _format_option(opt: ManualMoveOption) -> str:
-                maintenance_allowed = opt.maintenance_aligned or second_kld_installed
-                maintenance_note = "maintenance allowed" if maintenance_allowed else "move only"
                 via = " + ".join(opt.segments)
-                return f"{opt.destination} via {via} ({maintenance_note})"
+                if all(opt.segment_alignment.values()):
+                    note = "leitura OK"
+                elif any(opt.segment_alignment.values()):
+                    note = "leitura parcial"
+                else:
+                    note = "sem leitura KLD"
+                return f"{opt.destination} via {via} ({note})"
 
             with st.form("manual_move_form", clear_on_submit=True):
                 selected_option = st.selectbox("Next station", move_options, format_func=_format_option)

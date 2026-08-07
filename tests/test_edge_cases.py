@@ -162,12 +162,12 @@ def test_directional_segment_classifies_by_name_suffix_not_departure_station(tmp
 
     options = list_available_moves(sim)
     back_to_a = next(o for o in options if o.destination == "A")
-    assert back_to_a.maintenance_aligned is True  # LP is Carregado, machine now faces Carregado
+    assert back_to_a.segment_alignment["A-B-LP"] is True  # LP is Carregado, machine now faces Carregado
 
     sim.flip_global_direction()  # turn back to Vazio
     options = list_available_moves(sim)
     back_to_a = next(o for o in options if o.destination == "A")
-    assert back_to_a.maintenance_aligned is False  # LP is Carregado, machine faces Vazio
+    assert back_to_a.segment_alignment["A-B-LP"] is False  # LP is Carregado, machine faces Vazio
 
 
 def test_move_to_maintain_segments_resets_only_the_chosen_leg(tmp_path):
@@ -234,7 +234,10 @@ def test_init_machine_facing_agrees_with_move_time_classification(tmp_path):
     options = list_available_moves(sim)
     to_b = next(o for o in options if o.destination == "B")
     assert to_b.segments[-1] == "A-B-LD"
-    assert to_b.maintenance_aligned is True
+    # A-B (Singela, sem sufixo) classifica por heuristica start/end: partindo
+    # de A, isso da CARREGADO -- que nao bate com o global_direction VAZIO
+    # setado pelo facing inicial. A-B-LD classifica VAZIO por sufixo, que bate.
+    assert to_b.segment_alignment == {"A-B": False, "A-B-LD": True}
 
 
 def test_list_available_moves_reports_segment_tuple_for_trio(tmp_path):
