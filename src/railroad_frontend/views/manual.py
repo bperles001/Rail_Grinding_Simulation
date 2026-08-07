@@ -465,14 +465,21 @@ def render_manual_route_page(
                     ("Move", "Maintenance", "Curves only"),
                     horizontal=True,
                 )
+                # Widgets inside st.form don't rerun the script on change (only
+                # on submit), so this can't be conditioned on action_choice's
+                # in-progress value -- that would still reflect the *previous*
+                # submission, and the picker would never exist yet for the
+                # very click that first switches away from "Move". Always
+                # show it whenever the corridor has 2 segments; whether it's
+                # used depends only on the action actually submitted, below.
                 maintain_choice = None
-                if len(selected_option.segments) == 2 and action_choice != "Move":
+                if len(selected_option.segments) == 2:
                     singela_name, directional_name = selected_option.segments
                     maintain_choice = st.radio(
-                        "Manutenção",
+                        "Manutenção (se a ação for Manutenção ou Só curvas)",
                         ("Ambos", f"Só a Singela ({singela_name})", f"Só o pátio ({directional_name})"),
                         horizontal=True,
-                        help="Se a Singela já foi feita numa passada anterior, escolha só o pátio (ou vice-versa).",
+                        help="Se a Singela já foi feita numa passada anterior, escolha só o pátio (ou vice-versa). Ignorado se a ação for Move.",
                     )
                 submitted_move = st.form_submit_button("Add move")
             if submitted_move:
@@ -488,7 +495,7 @@ def render_manual_route_page(
                     "destination": selected_option.destination,
                     "action": action_code,
                 }
-                if maintain_choice and maintain_choice != "Ambos":
+                if action_code != ACTION_MOVE and maintain_choice and maintain_choice != "Ambos":
                     singela_name, directional_name = selected_option.segments
                     chosen_name = singela_name if maintain_choice.startswith("Só a Singela") else directional_name
                     new_step["maintain_segments"] = [chosen_name]
