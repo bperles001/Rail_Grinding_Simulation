@@ -9,6 +9,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Fixed
+- Trechos com Singela + Linha Principal/Desviada (LP/LD) agora são tratados
+  como um único passo lógico de deslocamento/manutenção que afeta os dois
+  segmentos físicos juntos (MTBT, vencimento e duração somados), em vez de
+  serem oferecidos como rotas alternativas independentes. Trechos sem
+  Singela (só Carregado/Vazio) não mudam. `get_possible_moves()`/
+  `Simulator.move_to()` agora trabalham com tuplas de 1-2 segmentos;
+  `Simulator.move_to()` continua aceitando um único `Segment` normalmente.
+
 ### Added
 - Manual Route plan steps can now override the day-count of a single
   move/maintenance step (`days_override`) without changing the segment's
