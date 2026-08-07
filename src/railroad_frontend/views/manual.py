@@ -229,69 +229,77 @@ def render_manual_route_page(
             "Maintenance": ACTION_MAINTAIN,
             "Curves only": ACTION_MAINTAIN_CURVES,
         }
-        st.caption("Click **Action** or **Days** cells to edit directly.")
-        edited_df = st.data_editor(
-            plan_df,
-            key="plan_step_editor",
-            use_container_width=True,
-            hide_index=True,
-            num_rows="fixed",
-            column_config={
-                "Step": st.column_config.NumberColumn(disabled=True),
-                "Type": st.column_config.TextColumn(disabled=True),
-                "Segment": st.column_config.TextColumn(disabled=True),
-                "Destination": st.column_config.TextColumn(disabled=True),
-                "Action": st.column_config.SelectboxColumn(
-                    "Action",
-                    options=_ACTION_OPTIONS,
-                    required=True,
-                ),
-                "Days": st.column_config.NumberColumn(
-                    "Days",
-                    min_value=1,
-                    max_value=365,
-                    step=1,
-                ),
-                "Capability": st.column_config.TextColumn(disabled=True),
-            },
-        )
-        # Apply changes made directly in the table
-        _segments_by_name = {seg.name: seg for seg in callbacks.network_segments_provider()}
-        _new_plan = list(plan)
-        _changed = False
-        for _i, _row in edited_df.iterrows():
-            _step = _new_plan[_i]
-            _mode = _step.get("mode")
-            if _mode == "move":
-                _new_code = _ACTION_MAP.get(str(_row.get("Action", "Move")), ACTION_MOVE)
-                if _new_code != _step.get("action"):
-                    _step = {**_step, "action": _new_code}
-                    _new_plan[_i] = _step
-                    _changed = True
-                _is_maintenance = _step.get("action") in ("m", "maintain", "maintain_curves")
-                _seg_obj = _segments_by_name.get(_step.get("segment"))
-                _base_days = (_seg_obj.maintenance_time_days if _is_maintenance else _seg_obj.move_time_days) if _seg_obj else None
-                try:
-                    _edited_days = int(_row.get("Days")) if _row.get("Days") is not None else _base_days
-                except (TypeError, ValueError):
-                    _edited_days = _base_days
-                if _edited_days is not None and _edited_days != _base_days:
-                    if _step.get("days_override") != _edited_days:
-                        _new_plan[_i] = {**_step, "days_override": _edited_days}
+        st.caption("Edit **Action** or **Days**, then click Apply to save changes.")
+        # Wrapped in a form (matches the Network Editor's Stations/Segments/Layout
+        # tables): a bare data_editor reruns on every keystroke and rebuilds its
+        # own `data=` baseline from the state the previous keystroke just wrote,
+        # which makes Streamlit discard the edit buffer (same bug fixed for the
+        # layout table on 2026-08-04). Gating behind an explicit submit avoids it.
+        with st.form("plan_step_editor_form", clear_on_submit=False):
+            edited_df = st.data_editor(
+                plan_df,
+                key="plan_step_editor",
+                use_container_width=True,
+                hide_index=True,
+                num_rows="fixed",
+                column_config={
+                    "Step": st.column_config.NumberColumn(disabled=True),
+                    "Type": st.column_config.TextColumn(disabled=True),
+                    "Segment": st.column_config.TextColumn(disabled=True),
+                    "Destination": st.column_config.TextColumn(disabled=True),
+                    "Action": st.column_config.SelectboxColumn(
+                        "Action",
+                        options=_ACTION_OPTIONS,
+                        required=True,
+                    ),
+                    "Days": st.column_config.NumberColumn(
+                        "Days",
+                        min_value=1,
+                        max_value=365,
+                        step=1,
+                    ),
+                    "Capability": st.column_config.TextColumn(disabled=True),
+                },
+            )
+            step_changes_submitted = st.form_submit_button("Apply step changes")
+
+        if step_changes_submitted:
+            _segments_by_name = {seg.name: seg for seg in callbacks.network_segments_provider()}
+            _new_plan = list(plan)
+            _changed = False
+            for _i, _row in edited_df.iterrows():
+                _step = _new_plan[_i]
+                _mode = _step.get("mode")
+                if _mode == "move":
+                    _new_code = _ACTION_MAP.get(str(_row.get("Action", "Move")), ACTION_MOVE)
+                    if _new_code != _step.get("action"):
+                        _step = {**_step, "action": _new_code}
+                        _new_plan[_i] = _step
                         _changed = True
-                elif "days_override" in _step:
-                    _new_plan[_i] = {k: v for k, v in _step.items() if k != "days_override"}
-                    _changed = True
-            elif _mode == "wait":
-                try:
-                    _new_days = max(1, min(365, int(_row.get("Days") or _step.get("days", 1))))
-                except (TypeError, ValueError):
-                    _new_days = _step.get("days", 1)
-                if _new_days != _step.get("days"):
-                    _new_plan[_i] = {**_step, "days": _new_days}
-                    _changed = True
-        if _changed:
-            callbacks.update_manual_plan(_new_plan)
+                    _is_maintenance = _step.get("action") in ("m", "maintain", "maintain_curves")
+                    _seg_obj = _segments_by_name.get(_step.get("segment"))
+                    _base_days = (_seg_obj.maintenance_time_days if _is_maintenance else _seg_obj.move_time_days) if _seg_obj else None
+                    try:
+                        _edited_days = int(_row.get("Days")) if _row.get("Days") is not None else _base_days
+                    except (TypeError, ValueError):
+                        _edited_days = _base_days
+                    if _edited_days is not None and _edited_days != _base_days:
+                        if _step.get("days_override") != _edited_days:
+                            _new_plan[_i] = {**_step, "days_override": _edited_days}
+                            _changed = True
+                    elif "days_override" in _step:
+                        _new_plan[_i] = {k: v for k, v in _step.items() if k != "days_override"}
+                        _changed = True
+                elif _mode == "wait":
+                    try:
+                        _new_days = max(1, min(365, int(_row.get("Days") or _step.get("days", 1))))
+                    except (TypeError, ValueError):
+                        _new_days = _step.get("days", 1)
+                    if _new_days != _step.get("days"):
+                        _new_plan[_i] = {**_step, "days": _new_days}
+                        _changed = True
+            if _changed:
+                callbacks.update_manual_plan(_new_plan)
             callbacks.force_rerun()
 
         st.markdown('<div class="button-group">', unsafe_allow_html=True)
