@@ -324,6 +324,64 @@ def test_manual_plan_move_step_with_segments_list_traverses_trio(tmp_path):
     assert result.simulator.steps[-1]["segments"] == ["A-B", "A-B-LD"]
 
 
+def test_manual_plan_move_step_with_maintain_segments_resets_only_that_leg(tmp_path):
+    import json
+    from src.models import ACTION_MAINTAIN
+
+    network_payload = {
+        "name": "trio",
+        "stations": [{"name": "A", "can_turn": True}, {"name": "B", "can_turn": True}],
+        "segments": [
+            {
+                "name": "A-B", "start": "A", "end": "B", "length_km": 10.0,
+                "mtbt_threshold_curva": 5.0, "mtbt_threshold_tangente": 5.0,
+                "move_time_days": 2, "maintenance_time_days": 3,
+                "allowed_movements": [["A", "B"], ["B", "A"]],
+            },
+            {
+                "name": "A-B-LD", "start": "A", "end": "B", "length_km": 1.0,
+                "mtbt_threshold_curva": 5.0, "mtbt_threshold_tangente": 5.0,
+                "move_time_days": 1, "maintenance_time_days": 1,
+                "allowed_movements": [["A", "B"]],
+            },
+            {
+                "name": "A-B-LP", "start": "B", "end": "A", "length_km": 1.0,
+                "mtbt_threshold_curva": 5.0, "mtbt_threshold_tangente": 5.0,
+                "move_time_days": 1, "maintenance_time_days": 1,
+                "allowed_movements": [["B", "A"]],
+            },
+        ],
+    }
+    network_path = tmp_path / "trio_network.json"
+    network_path.write_text(json.dumps(network_payload), encoding="utf-8")
+
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,Initial Load,2025-01\nA-B,10.0,1.0\nA-B-LD,10.0,1.0\nA-B-LP,0.0,1.0\n")
+
+    config = ManualPlanConfig(
+        csv_path=csv_path,
+        start_station="A",
+        facing_station="B",
+        start_year=2025,
+        end_year=2025,
+        second_kld=True,
+        network_source=network_path,
+    )
+
+    plan = [{
+        "mode": "move", "segments": ["A-B", "A-B-LD"], "destination": "B",
+        "action": ACTION_MAINTAIN, "maintain_segments": ["A-B-LD"],
+    }]
+    result = replay_manual_plan(config, plan)
+    assert result.errors == []
+    sim = result.simulator
+    singela = next(s for s in sim.segments if s.name == "A-B")
+    directional = next(s for s in sim.segments if s.name == "A-B-LD")
+    assert directional.load_curva < 1.0  # reset (small accrual from the days spent afterward is fine)
+    assert singela.load_curva > 9.0  # untouched, kept its initial load
+    assert sim.steps[-1]["maintained_segments"] == ["A-B-LD"]
+
+
 def test_manual_plan_move_step_with_legacy_segment_key_still_works(tmp_path):
     """Plans saved before this change use a singular 'segment' string; must
     still replay correctly on a network with no Singela trios (default.json)."""

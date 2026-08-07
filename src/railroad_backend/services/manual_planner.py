@@ -177,8 +177,14 @@ def _handle_move_step(simulator: Simulator, step: Dict[str, Any], step_idx: int)
 
     action_code = step.get("action", ACTION_MOVE)
     duration_override = step.get("days_override")
+    maintain_segment_names = step.get("maintain_segments")
+    maintain_segments = (
+        tuple(s for s in segments if s.name in maintain_segment_names)
+        if maintain_segment_names is not None
+        else None
+    )
     try:
-        simulator.move_to(segments, destination, action=action_code, duration_override=duration_override)
+        simulator.move_to(segments, destination, action=action_code, duration_override=duration_override, maintain_segments=maintain_segments)
     except (RuntimeError, TypeError, ValueError) as exc:
         logger.warning("Manual plan step %d failed: %s", step_idx, exc)
         return f"Step {step_idx}: failed to execute ({exc})."
