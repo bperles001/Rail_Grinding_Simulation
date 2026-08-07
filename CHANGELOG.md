@@ -29,6 +29,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   passo. Os dois pontos agora usam a mesma lógica.
 
 ### Added
+- Manual Route: ao adicionar um passo de Manutenção/Só curvas num trecho
+  com Singela + LP/LD, dá pra escolher manter só a Singela, só o pátio
+  (LP/LD), ou os dois — útil quando um dos dois já foi esmerilhado numa
+  passada anterior e não precisa repetir. Auto Simulation não muda.
 - Manual Route plan steps can now override the day-count of a single
   move/maintenance step (`days_override`) without changing the segment's
   base `move_time_days`/`maintenance_time_days` — the Days cell in the plan
