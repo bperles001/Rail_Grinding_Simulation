@@ -22,6 +22,21 @@ from src.simulator.network_utils import (
 DailyMap = Dict[str, Dict[str, float]]
 
 
+def _classify_directional_segment(segment: Segment, from_station_name: str) -> Optional[str]:
+    """CARREGADO/VAZIO for a single segment, derived directly from its own
+    start/end — no dependency on DirectionModel's (origin, destination) ->
+    segment dict, which silently picks one arbitrary winner when more than
+    one segment (Singela + a directional leg) covers the same station pair.
+    Only ever called with the directional (most-specific) segment of a move,
+    so there's no ambiguity to resolve here.
+    """
+    if segment.start_station.name == from_station_name:
+        return "CARREGADO"
+    if segment.end_station.name == from_station_name:
+        return "VAZIO"
+    return None
+
+
 class Simulator:
     """Programmatic simulator used by Streamlit and tests."""
 
@@ -130,7 +145,7 @@ class Simulator:
         self.current_station = self.stations[start_station_name]
         self.previous_station = None
 
-    def get_possible_moves(self) -> List[Tuple[Segment, Station]]:
+    def get_possible_moves(self) -> List[Tuple[Tuple[Segment, ...], Station]]:
         station = self.current_station
         if station is None:
             return []
@@ -139,13 +154,14 @@ class Simulator:
         if not machine:
             return pairs
         filtered = []
-        for seg, other in pairs:
-            edge_dir = self._direction_model.classify(station.name, other.name)
+        for segments, other in pairs:
+            directional = segments[-1]
+            edge_dir = _classify_directional_segment(directional, station.name)
             if edge_dir is None or edge_dir == machine.global_direction:
-                filtered.append((seg, other))
+                filtered.append((segments, other))
         return filtered
 
-    def get_all_moves_any_direction(self) -> List[Tuple[Segment, Station]]:
+    def get_all_moves_any_direction(self) -> List[Tuple[Tuple[Segment, ...], Station]]:
         station = self.current_station
         if station is None:
             return []

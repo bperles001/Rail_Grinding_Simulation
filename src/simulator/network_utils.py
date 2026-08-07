@@ -35,22 +35,43 @@ def _get_adjacent(segments: List[Segment], station: Station) -> Tuple[List[Segme
     return adjacent_segments, adjacent_stations
 
 
-def _get_possible_moves(segments: List[Segment], station: Station) -> List[Tuple[Segment, Station]]:
-    """Return list of (segment, other_station) respecting allowed movements.
+def _get_possible_moves(segments: List[Segment], station: Station) -> List[Tuple[Tuple[Segment, ...], Station]]:
+    """Return list of (segment_tuple, other_station) for each reachable neighbor.
+
+    Every segment whose `allowed_movements` covers this exact direction is
+    included in the tuple, ordered with the most specific segment last
+    (`len(allowed_movements) == 1`, i.e. a directional LP/LD/Carregado/Vazio
+    segment) — most-restrictive-last means the caller can always treat
+    `segment_tuple[-1]` as "the segment nearest the destination". Where a
+    station pair has a Singela shared trunk plus a directional LP/LD leg,
+    both come back together in one tuple (a single logical move); where
+    there's no Singela (plain Carregado/Vazio pair, or an ordinary single
+    segment), the tuple has exactly 1 element, unchanged from before.
 
     Args:
         segments: List of all network segments.
         station: Current station to find valid moves from.
 
     Returns:
-        List of (segment, destination_station) tuples for legal moves.
+        List of (segment_tuple, destination_station) tuples for legal moves.
     """
-    adjacent_segments, _ = _get_adjacent(segments, station)
-    possible: List[Tuple[Segment, Station]] = []
-    for seg in adjacent_segments:
-        other_station = seg.end_station if seg.start_station == station else seg.start_station
-        if (station.name, other_station.name) in seg.allowed_movements:
-            possible.append((seg, other_station))
+    adjacent_segments, adjacent_stations = _get_adjacent(segments, station)
+    by_destination: Dict[str, List[Segment]] = {}
+    destination_station_by_name: Dict[str, Station] = {}
+    for seg, other in zip(adjacent_segments, adjacent_stations):
+        by_destination.setdefault(other.name, []).append(seg)
+        destination_station_by_name[other.name] = other
+
+    possible: List[Tuple[Tuple[Segment, ...], Station]] = []
+    for other_name, candidates in by_destination.items():
+        matching = [
+            seg for seg in candidates
+            if (station.name, other_name) in seg.allowed_movements
+        ]
+        if not matching:
+            continue
+        matching.sort(key=lambda seg: len(seg.allowed_movements), reverse=True)
+        possible.append((tuple(matching), destination_station_by_name[other_name]))
     return possible
 
 

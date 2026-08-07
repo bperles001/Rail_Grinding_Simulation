@@ -11,6 +11,61 @@ from src.models import Segment, Station
 from src.simulator import Simulator
 
 
+def _write_trio_network(tmp_path):
+    """Two stations linked by Singela + LP (B->A) + LD (A->B), like TAG-TRO."""
+    payload = {
+        "name": "trio",
+        "stations": [{"name": "A", "can_turn": True}, {"name": "B", "can_turn": True}],
+        "segments": [
+            {
+                "name": "A-B", "start": "A", "end": "B", "length_km": 10.0,
+                "mtbt_threshold_curva": 100.0, "mtbt_threshold_tangente": 100.0,
+                "move_time_days": 2, "maintenance_time_days": 3,
+                "allowed_movements": [["A", "B"], ["B", "A"]],
+            },
+            {
+                "name": "A-B-LD", "start": "A", "end": "B", "length_km": 1.0,
+                "mtbt_threshold_curva": 5.0, "mtbt_threshold_tangente": 20.0,
+                "move_time_days": 1, "maintenance_time_days": 1,
+                "allowed_movements": [["A", "B"]],
+            },
+            {
+                "name": "A-B-LP", "start": "B", "end": "A", "length_km": 1.0,
+                "mtbt_threshold_curva": 5.0, "mtbt_threshold_tangente": 20.0,
+                "move_time_days": 1, "maintenance_time_days": 1,
+                "allowed_movements": [["B", "A"]],
+            },
+        ],
+    }
+    path = tmp_path / "trio_network.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def test_get_possible_moves_pairs_singela_with_directional_segment(tmp_path):
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    moves = sim.get_all_moves_any_direction()
+    assert len(moves) == 1
+    segments, destination = moves[0]
+    assert destination.name == "B"
+    names = {s.name for s in segments}
+    assert names == {"A-B", "A-B-LD"}
+    # directional segment (the one with a single allowed direction) is last
+    assert len(segments[-1].allowed_movements) == 1
+    assert segments[-1].name == "A-B-LD"
+
+
+def test_get_possible_moves_no_singela_still_returns_single_segment():
+    sim = Simulator()
+    sim.init_machine("TRO", "TMI", start_year=2025)
+    moves = sim.get_all_moves_any_direction()
+    assert moves, "expected at least one move on the default network"
+    for segments, _station in moves:
+        assert len(segments) == 1  # default.json has no Singela+LP/LD trios
+
+
 def test_auto_plan_config_validation_catches_invalid_csv_path(tmp_path):
     """AutoPlanConfig validation rejects nonexistent CSV files."""
     missing_csv = tmp_path / "missing.csv"

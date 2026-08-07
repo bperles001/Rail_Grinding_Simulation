@@ -19,9 +19,9 @@ def test_simulator_possible_moves_respect_global_direction():
     moves = sim.get_possible_moves()
     assert moves, "Expected at least one allowable move"
     direction = sim.machine.global_direction
-    for segment, station in moves:
+    for segments, station in moves:
         assert sim.classify_edge_direction(sim.current_station.name, station.name) == direction
-        assert segment in sim.segments
+        assert all(segment in sim.segments for segment in segments)
 
 
 def _write_network_with_segments(tmp_path: Path, stations: list[str], segments: list[dict]) -> Path:
