@@ -106,6 +106,29 @@ def test_move_to_maintenance_with_segment_tuple_resets_both(tmp_path):
     assert sim.steps[-1]["days"] == 4
 
 
+def test_auto_planner_needs_maintenance_and_action_over_segment_tuple(tmp_path):
+    from railroad_backend.services.auto_planner import _maintenance_action_for, _needs_maintenance
+    from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, _destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments
+
+    assert _needs_maintenance(segments) is False
+
+    directional.add_load(20.0)  # only the directional's tangente threshold (20.0) is hit
+    assert _needs_maintenance(segments) is True
+    assert _maintenance_action_for(segments) == ACTION_MAINTAIN  # tangente due -> full maintain
+
+    directional.reset_maintenance()
+    singela.mtbt_threshold_curva = 5.0
+    singela.add_load(5.0)  # only curva due, on the Singela this time
+    assert _needs_maintenance(segments) is True
+    assert _maintenance_action_for(segments) == ACTION_MAINTAIN_CURVES
+
+
 def test_auto_plan_config_validation_catches_invalid_csv_path(tmp_path):
     """AutoPlanConfig validation rejects nonexistent CSV files."""
     missing_csv = tmp_path / "missing.csv"

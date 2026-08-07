@@ -145,26 +145,31 @@ def _component_due(seg, component: str) -> bool:
         return False
 
 
-def _needs_maintenance(seg) -> bool:
-    """Check if the segment's curva or tangente load exceeds its threshold.
+def _needs_maintenance(segments) -> bool:
+    """Check if any of the segments in this move (Singela + directional, or
+    just the one segment where there's no Singela) has a component due.
 
     Args:
-        seg: Segment object with load_curva/load_tangente and
-            mtbt_threshold_curva/mtbt_threshold_tangente attributes.
+        segments: A single Segment, or a sequence of Segment (a move option
+            from get_possible_moves() carries 1-2 physical segments).
 
     Returns:
-        True if either component needs maintenance.
+        True if any segment/component combination needs maintenance.
     """
-    return _component_due(seg, "curva") or _component_due(seg, "tangente")
+    seq = (segments,) if not isinstance(segments, (tuple, list)) else segments
+    return any(_component_due(seg, "curva") or _component_due(seg, "tangente") for seg in seq)
 
 
-def _maintenance_action_for(seg) -> str:
-    """Pick maintain_curves when only curva is due, full maintain otherwise.
+def _maintenance_action_for(segments) -> str:
+    """Pick maintain_curves when only curva is due across all segments in
+    this move, full maintain when any segment's tangente is due.
 
-    There is no "tangente only" action: a full grind covers both components,
-    so it's the correct choice whenever tangente is due (curva or not).
+    There is no "tangente only" action: a full grind covers both
+    components, so it's the correct choice whenever tangente is due on
+    either the Singela or the directional segment.
     """
-    if _component_due(seg, "tangente"):
+    seq = (segments,) if not isinstance(segments, (tuple, list)) else segments
+    if any(_component_due(seg, "tangente") for seg in seq):
         return ACTION_MAINTAIN
     return ACTION_MAINTAIN_CURVES
 
@@ -243,13 +248,17 @@ def _move_priority(pair) -> Tuple[int, float, str]:
     Returns:
         Tuple of (urgency, negative_load, segment_name) for sorting.
     """
-    seg, _ = pair
-    urgent = 0 if _needs_maintenance(seg) else 1
+    segments, _ = pair
+    urgent = 0 if _needs_maintenance(segments) else 1
     load = max(
-        float(getattr(seg, "load_curva", 0.0) or 0.0),
-        float(getattr(seg, "load_tangente", 0.0) or 0.0),
+        max(
+            float(getattr(seg, "load_curva", 0.0) or 0.0),
+            float(getattr(seg, "load_tangente", 0.0) or 0.0),
+        )
+        for seg in segments
     )
-    return (urgent, -load, seg.name)
+    name = "+".join(seg.name for seg in segments)
+    return (urgent, -load, name)
 
 
 def _perform_next_step(sim: Simulator) -> bool:
@@ -272,9 +281,9 @@ def _perform_next_step(sim: Simulator) -> bool:
             options = sim.get_all_moves_any_direction()
             if not options:
                 return False
-        seg, next_station = sorted(options, key=_move_priority)[0]
-        action = _maintenance_action_for(seg) if _needs_maintenance(seg) else ACTION_MOVE
-        sim.move_to(seg, next_station, action=action)
+        segments, next_station = sorted(options, key=_move_priority)[0]
+        action = _maintenance_action_for(segments) if _needs_maintenance(segments) else ACTION_MOVE
+        sim.move_to(segments, next_station, action=action)
         return True
 
     wait_days = _days_until_next_threshold(sim)
