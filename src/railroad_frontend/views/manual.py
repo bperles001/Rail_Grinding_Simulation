@@ -465,6 +465,15 @@ def render_manual_route_page(
                     ("Move", "Maintenance", "Curves only"),
                     horizontal=True,
                 )
+                maintain_choice = None
+                if len(selected_option.segments) == 2 and action_choice != "Move":
+                    singela_name, directional_name = selected_option.segments
+                    maintain_choice = st.radio(
+                        "Manutenção",
+                        ("Ambos", f"Só a Singela ({singela_name})", f"Só o pátio ({directional_name})"),
+                        horizontal=True,
+                        help="Se a Singela já foi feita numa passada anterior, escolha só o pátio (ou vice-versa).",
+                    )
                 submitted_move = st.form_submit_button("Add move")
             if submitted_move:
                 from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
@@ -473,14 +482,17 @@ def render_manual_route_page(
                     else ACTION_MAINTAIN_CURVES if action_choice == "Curves only"
                     else ACTION_MOVE
                 )
-                new_plan = plan + [
-                    {
-                        "mode": "move",
-                        "segments": list(selected_option.segments),
-                        "destination": selected_option.destination,
-                        "action": action_code,
-                    }
-                ]
+                new_step = {
+                    "mode": "move",
+                    "segments": list(selected_option.segments),
+                    "destination": selected_option.destination,
+                    "action": action_code,
+                }
+                if maintain_choice and maintain_choice != "Ambos":
+                    singela_name, directional_name = selected_option.segments
+                    chosen_name = singela_name if maintain_choice.startswith("Só a Singela") else directional_name
+                    new_step["maintain_segments"] = [chosen_name]
+                new_plan = plan + [new_step]
                 callbacks.update_manual_plan(new_plan)
                 plan = new_plan
                 callbacks.force_rerun()
