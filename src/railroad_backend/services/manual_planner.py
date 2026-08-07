@@ -172,8 +172,9 @@ def _handle_move_step(simulator: Simulator, step: Dict[str, Any], step_idx: int)
         return f"Step {step_idx}: segment {segment_name} cannot reach {dest_name} from {current}."
 
     action_code = step.get("action", ACTION_MOVE)
+    duration_override = step.get("days_override")
     try:
-        simulator.move_to(segment, destination, action=action_code)
+        simulator.move_to(segment, destination, action=action_code, duration_override=duration_override)
     except (RuntimeError, TypeError, ValueError) as exc:
         logger.warning("Manual plan step %d failed: %s", step_idx, exc)
         return f"Step {step_idx}: failed to execute ({exc})."

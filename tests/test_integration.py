@@ -244,6 +244,34 @@ def test_manual_plan_with_available_moves(tmp_path):
         assert hasattr(move, "maintenance_aligned")
 
 
+def test_manual_plan_step_days_override_changes_duration(tmp_path):
+    """A move step with days_override should advance the date by that many days."""
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,2025-01\nTRO-TMI,5.0\n")
+
+    config = ManualPlanConfig(
+        csv_path=csv_path,
+        start_station="TRO",
+        facing_station="TMI",
+        start_year=2025,
+        end_year=2025,
+        second_kld=False,
+    )
+
+    result = replay_manual_plan(config, [])
+    sim = result.simulator
+    seg = next(s for s in sim.segments if s.start_station.name == "TRO" and s.end_station.name == "TMI")
+    assert seg.move_time_days != 9
+
+    plan = [{"mode": "move", "segment": seg.name, "destination": "TMI", "action": "v", "days_override": 9}]
+    try:
+        result = replay_manual_plan(config, plan)
+        assert result.errors == []
+        assert result.simulator.steps[-1]["days"] == 9
+    finally:
+        seg.reset_maintenance()  # segments come from the cached default network, shared across tests
+
+
 def test_manual_plan_error_handling(tmp_path):
     """Test manual planning error detection and reporting."""
     csv_path = tmp_path / "schedule.csv"
