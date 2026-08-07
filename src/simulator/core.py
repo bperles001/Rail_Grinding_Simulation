@@ -22,14 +22,29 @@ from src.simulator.network_utils import (
 DailyMap = Dict[str, Dict[str, float]]
 
 
+_CARREGADO_SUFFIXES = ("-LP", "-C")
+_VAZIO_SUFFIXES = ("-LD", "-V")
+
+
 def _classify_directional_segment(segment: Segment, from_station_name: str) -> Optional[str]:
-    """CARREGADO/VAZIO for a single segment, derived directly from its own
-    start/end — no dependency on DirectionModel's (origin, destination) ->
-    segment dict, which silently picks one arbitrary winner when more than
-    one segment (Singela + a directional leg) covers the same station pair.
-    Only ever called with the directional (most-specific) segment of a move,
-    so there's no ambiguity to resolve here.
+    """CARREGADO/VAZIO for a single segment.
+
+    A unidirectional segment (LP/Carregado or LD/Vazio) only ever has one
+    legal travel direction — its own start station — so classifying it by
+    "am I departing from its start" always returns CARREGADO, never VAZIO,
+    regardless of which physical direction (import/export) it actually
+    represents. LP is always Carregado and LD is always Vazio by identity,
+    not by which way you currently happen to be facing, so the segment's own
+    name suffix (the established convention across every network file) is
+    checked first. Only falls back to the start/end heuristic for segments
+    without that suffix — the Singela (bidirectional, ida=Carregado/
+    volta=Vazio is a meaningful distinction there) and plain single-segment
+    corridors (e.g. the simplified default.json test network).
     """
+    if segment.name.endswith(_CARREGADO_SUFFIXES):
+        return "CARREGADO"
+    if segment.name.endswith(_VAZIO_SUFFIXES):
+        return "VAZIO"
     if segment.start_station.name == from_station_name:
         return "CARREGADO"
     if segment.end_station.name == from_station_name:

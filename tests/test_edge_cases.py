@@ -129,6 +129,43 @@ def test_auto_planner_needs_maintenance_and_action_over_segment_tuple(tmp_path):
     assert _maintenance_action_for(segments) == ACTION_MAINTAIN_CURVES
 
 
+def test_directional_segment_classifies_by_name_suffix_not_departure_station(tmp_path):
+    """LP/LD (and C/V) segments are always Carregado/Vazio by identity, not
+    by which station you're departing from -- a unidirectional segment can
+    only ever be traveled from its own start, so the old start-station
+    heuristic always returned CARREGADO for it, meaning global_direction
+    could never match VAZIO after a Turn (regression reported 2026-08-07:
+    maintenance became unavailable, everything showed 'move only')."""
+    from railroad_backend.services.manual_planner import list_available_moves
+    from src.simulator.core import _classify_directional_segment
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    directional = segments[-1]
+    assert directional.name == "A-B-LD"
+    assert _classify_directional_segment(directional, "A") == "VAZIO"
+
+    # Move to B, then turn: the corridor back to A (via A-B-LP) must now be
+    # maintenance-aligned, since LP is Carregado by identity and the machine
+    # is now facing Carregado after the turn.
+    sim.move_to(segments, destination, action="v")
+    assert sim.current_station.name == "B"
+    assert sim.machine.global_direction == "CARREGADO"
+    sim.flip_global_direction()
+    assert sim.machine.global_direction == "VAZIO"
+
+    options = list_available_moves(sim)
+    back_to_a = next(o for o in options if o.destination == "A")
+    assert back_to_a.maintenance_aligned is False  # LP is Carregado, machine now faces Vazio
+
+    sim.flip_global_direction()  # turn back to Carregado
+    options = list_available_moves(sim)
+    back_to_a = next(o for o in options if o.destination == "A")
+    assert back_to_a.maintenance_aligned is True  # LP is Carregado, machine faces Carregado
+
+
 def test_list_available_moves_reports_segment_tuple_for_trio(tmp_path):
     path = _write_trio_network(tmp_path)
     sim = Simulator(path)
