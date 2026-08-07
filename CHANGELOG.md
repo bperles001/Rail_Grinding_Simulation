@@ -10,6 +10,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ## [Unreleased]
 
 ### Added
+- Manual Route plan steps can now override the day-count of a single
+  move/maintenance step (`days_override`) without changing the segment's
+  base `move_time_days`/`maintenance_time_days` — the Days cell in the plan
+  table is editable for Traverse rows too, not just Wait rows. Auto
+  Simulation is unaffected.
 - Segment now tracks `curve_length_km` / `tangent_length_km` (extensão em curva x
   tangente dentro do segmento) and `move_billed_days` / `maintenance_billed_days`
   (diárias pagas, distintas dos dias corridos) — novas colunas no Network Editor.
