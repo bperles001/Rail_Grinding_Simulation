@@ -213,7 +213,7 @@ def render_manual_route_page(
 
     render_section_header("📋 Planned Steps")
     st.caption("Plans execute automatically after every change.")
-    plan_df = _manual_plan_dataframe(plan, config)
+    plan_df = _manual_plan_dataframe(plan, config, callbacks.network_segments_provider())
     if plan_df.empty:
         render_empty_state(
             icon="📋",
@@ -256,6 +256,7 @@ def render_manual_route_page(
             },
         )
         # Apply changes made directly in the table
+        _segments_by_name = {seg.name: seg for seg in callbacks.network_segments_provider()}
         _new_plan = list(plan)
         _changed = False
         for _i, _row in edited_df.iterrows():
@@ -264,7 +265,22 @@ def render_manual_route_page(
             if _mode == "move":
                 _new_code = _ACTION_MAP.get(str(_row.get("Action", "Move")), ACTION_MOVE)
                 if _new_code != _step.get("action"):
-                    _new_plan[_i] = {**_step, "action": _new_code}
+                    _step = {**_step, "action": _new_code}
+                    _new_plan[_i] = _step
+                    _changed = True
+                _is_maintenance = _step.get("action") in ("m", "maintain", "maintain_curves")
+                _seg_obj = _segments_by_name.get(_step.get("segment"))
+                _base_days = (_seg_obj.maintenance_time_days if _is_maintenance else _seg_obj.move_time_days) if _seg_obj else None
+                try:
+                    _edited_days = int(_row.get("Days")) if _row.get("Days") is not None else _base_days
+                except (TypeError, ValueError):
+                    _edited_days = _base_days
+                if _edited_days is not None and _edited_days != _base_days:
+                    if _step.get("days_override") != _edited_days:
+                        _new_plan[_i] = {**_step, "days_override": _edited_days}
+                        _changed = True
+                elif "days_override" in _step:
+                    _new_plan[_i] = {k: v for k, v in _step.items() if k != "days_override"}
                     _changed = True
             elif _mode == "wait":
                 try:
@@ -514,10 +530,11 @@ def render_manual_route_page(
         )
 
 
-def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any]) -> pd.DataFrame:
+def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any], segments: Sequence[Any]) -> pd.DataFrame:
     if not plan:
         return pd.DataFrame(columns=["Step", "Type", "Segment", "Destination", "Action", "Days", "Capability"])
     second_kld = bool(config.get("second_kld", False))
+    segments_by_name = {seg.name: seg for seg in segments}
     rows = []
     for idx, step in enumerate(plan, start=1):
         if step.get("mode") == "turn":
@@ -550,6 +567,9 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any]) -
             else:
                 capability = "Move only"
             _act = step.get("action")
+            is_maintenance = _act in ("m", "maintain", "maintain_curves")
+            seg_obj = segments_by_name.get(step.get("segment"))
+            base_days = (seg_obj.maintenance_time_days if is_maintenance else seg_obj.move_time_days) if seg_obj else None
             rows.append({
                 "Step": idx,
                 "Type": "Traverse",
@@ -560,7 +580,7 @@ def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any]) -
                     else "Curves only" if _act == "maintain_curves"
                     else "Move"
                 ),
-                "Days": None,
+                "Days": step.get("days_override", base_days),
                 "Capability": capability,
             })
     return pd.DataFrame(rows)

@@ -11,6 +11,9 @@ from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
+from railroad_frontend.views.manual import _manual_plan_dataframe
+from src.models import Segment, Station
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -165,3 +168,21 @@ def test_gps_import_reports_unknown_station(tmp_path: Path) -> None:
     assert any("NOPE" in w for w in warnings)
     state = at.session_state["network_editor_state"]
     assert state["layout_settings"]["table_overrides"] == {}
+
+
+def test_manual_plan_dataframe_shows_segment_base_days_for_traverse() -> None:
+    a = Station("A")
+    b = Station("B")
+    seg = Segment(name="A-B", start_station=a, end_station=b, length=1.0, move_time_days=3, maintenance_time_days=6)
+
+    plan = [{"mode": "move", "segment": "A-B", "destination": "B", "action": "v"}]
+    df = _manual_plan_dataframe(plan, {}, [seg])
+    assert df.loc[0, "Days"] == 3
+
+    plan_maint = [{"mode": "move", "segment": "A-B", "destination": "B", "action": "m"}]
+    df_maint = _manual_plan_dataframe(plan_maint, {}, [seg])
+    assert df_maint.loc[0, "Days"] == 6
+
+    plan_override = [{"mode": "move", "segment": "A-B", "destination": "B", "action": "v", "days_override": 9}]
+    df_override = _manual_plan_dataframe(plan_override, {}, [seg])
+    assert df_override.loc[0, "Days"] == 9
