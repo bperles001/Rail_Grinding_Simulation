@@ -170,6 +170,54 @@ def test_directional_segment_classifies_by_name_suffix_not_departure_station(tmp
     assert back_to_a.maintenance_aligned is False  # LP is Carregado, machine faces Vazio
 
 
+def test_move_to_maintain_segments_resets_only_the_chosen_leg(tmp_path):
+    from src.models import ACTION_MAINTAIN
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments
+    singela.mtbt_threshold_curva = 5.0
+    singela.mtbt_threshold_tangente = 5.0
+    singela.add_load(10.0)
+    directional.add_load(10.0)
+    assert singela.maintenance_due is True
+    assert directional.maintenance_due is True
+
+    sim.machine.second_kld_installed = True
+    sim.move_to(segments, destination, action=ACTION_MAINTAIN, maintain_segments=[directional])
+
+    assert directional.load_curva == 0.0 and directional.load_tangente == 0.0
+    assert singela.load_curva == pytest.approx(10.0)  # untouched -- only the directional was chosen
+    assert sim.steps[-1]["maintained_segments"] == [directional.name]
+    # duration: maintenance_time_days (directional, 1) + move_time_days (Singela, 2) = 3
+    assert sim.steps[-1]["days"] == 3
+
+
+def test_move_to_maintain_segments_none_still_resets_everything(tmp_path):
+    from src.models import ACTION_MAINTAIN
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments
+    singela.mtbt_threshold_curva = 5.0
+    singela.mtbt_threshold_tangente = 5.0
+    singela.add_load(10.0)
+    directional.add_load(10.0)
+
+    sim.machine.second_kld_installed = True
+    sim.move_to(segments, destination, action=ACTION_MAINTAIN)  # maintain_segments omitted
+
+    assert singela.load_curva == 0.0
+    assert directional.load_curva == 0.0
+    assert set(sim.steps[-1]["maintained_segments"]) == {"A-B", "A-B-LD"}
+    # duration: maintenance_time_days for both: 3 (Singela) + 1 (directional) = 4
+    assert sim.steps[-1]["days"] == 4
+
+
 def test_init_machine_facing_agrees_with_move_time_classification(tmp_path):
     """init_machine's initial global_direction must be classified the same
     way move_to()/get_possible_moves() classify it later, or the machine can

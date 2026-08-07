@@ -285,7 +285,7 @@ class Simulator:
         )
         return True
 
-    def move_to(self, segments: Union[Segment, Sequence[Segment]], next_station: Station, action: str = "v", duration_override: Optional[int] = None) -> Dict[str, object]:
+    def move_to(self, segments: Union[Segment, Sequence[Segment]], next_station: Station, action: str = "v", duration_override: Optional[int] = None, maintain_segments: Optional[Sequence[Segment]] = None) -> Dict[str, object]:
         """Execute a move or maintenance action on one or more segments.
 
         Args:
@@ -359,16 +359,22 @@ class Simulator:
         mtbt_before_curva = getattr(seg, "load_curva", None)
         mtbt_before_tangente = getattr(seg, "load_tangente", None)
 
+        maintained: Tuple[Segment, ...] = ()
         performed = False
         if action in (ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES):
             component = "curva" if action == ACTION_MAINTAIN_CURVES else "both"
+            maintain_set = list(maintain_segments) if maintain_segments is not None else list(segments)
             if machine.second_kld_installed or edge_dir == machine.global_direction:
                 for component_seg in segments:
-                    machine.perform_maintenance(component_seg, component=component)
+                    if component_seg in maintain_set:
+                        machine.perform_maintenance(component_seg, component=component)
+                maintained = tuple(s for s in segments if s in maintain_set)
                 performed = True
 
         if performed:
-            duration = duration_override if duration_override is not None else sum(s.maintenance_time_days for s in segments)
+            duration = duration_override if duration_override is not None else sum(
+                s.maintenance_time_days if s in maintained else s.move_time_days for s in segments
+            )
             self.maintenance_days_total += duration
             self.maintenance_count += 1
             self.maintenance_log.append((seg.name, None, duration))
@@ -389,6 +395,7 @@ class Simulator:
             {
                 "segment": seg.name,
                 "segments": [s.name for s in segments],
+                "maintained_segments": [s.name for s in maintained],
                 "action": (
                     "maintenance"
                     if action == ACTION_MAINTAIN and performed
