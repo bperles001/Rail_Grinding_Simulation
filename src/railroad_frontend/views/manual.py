@@ -453,14 +453,22 @@ def render_manual_route_page(
             with st.form("manual_move_form", clear_on_submit=True):
                 selected_option = st.selectbox("Next station", move_options, format_func=_format_option)
                 segment_choices: Dict[str, str] = {}
-                for seg_name in selected_option.segments:
+                # Chave por POSICAO (nao pelo nome do segmento): widgets dentro
+                # de um st.form nao rerenderizam quando o selectbox muda (so no
+                # submit). Se a chave dependesse do nome do segmento, trocar o
+                # destino sem antes recarregar o formulario faria o Streamlit
+                # tratar o radio como nunca visto (chave nova) e voltar pro
+                # default "Nada" -- perdendo a escolha do usuario em silencio.
+                # Chave estavel por posicao preserva o valor que o usuario
+                # marcou, mesmo que o destino tenha mudado nesse meio-tempo.
+                for idx, seg_name in enumerate(selected_option.segments):
                     aligned = selected_option.segment_alignment.get(seg_name, False)
                     warning = "" if aligned else " — ⚠ sem leitura KLD se manutenido"
                     choice = st.radio(
                         f"{_segment_role_label(seg_name)} ({seg_name}){warning}",
                         ("Nada", "Só curva", "Completa"),
                         horizontal=True,
-                        key=f"manual_move_action_{seg_name}",
+                        key=f"manual_move_action_{idx}",
                     )
                     segment_choices[seg_name] = choice
                 submitted_move = st.form_submit_button("Add move")

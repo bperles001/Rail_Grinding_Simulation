@@ -237,6 +237,22 @@ def test_manual_route_add_move_form_has_one_radio_per_segment(tmp_path: Path) ->
         assert set(r.options) == {"Nada", "Só curva", "Completa"}
 
 
+def test_manual_route_segment_radio_keys_are_positional_not_segment_name(tmp_path: Path) -> None:
+    """Regressao: dentro de um st.form, o selectbox de destino nao rerenderiza
+    ate o submit -- se a chave do radio dependesse do NOME do segmento (que
+    muda conforme o destino escolhido), trocar o destino sem antes recarregar
+    o formulario faria o Streamlit tratar o radio como nunca visto (chave
+    nova) e voltar pro default "Nada" no submit, perdendo a escolha do
+    usuario em silencio (reportado pelo Bruno: plano gerado "so com
+    movimento"). Chave por posicao (0, 1, ...) e estavel entre destinos."""
+    at = _open_manual_route(tmp_path)
+
+    radios = [r for r in at.radio if r.label.startswith(("Singela", "Pátio"))]
+    assert radios, "esperava pelo menos 1 radio de segmento"
+    for idx, r in enumerate(radios):
+        assert r.key == f"manual_move_action_{idx}"
+
+
 def test_kld_reading_label_summarizes_step() -> None:
     from railroad_frontend.views.manual import _kld_reading_label
 
