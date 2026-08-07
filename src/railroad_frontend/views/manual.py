@@ -518,8 +518,10 @@ def render_manual_route_page(
         col_b.metric("Maintenance actions", f"{manual_result['maintenance_count']}")
         col_c.metric("Idle days", f"{idle_days}")
         col_d.metric("Total days elapsed", f"{total_days}")
-        steps_df = pd.DataFrame(manual_result.get("steps", []))
+        result_steps = manual_result.get("steps", [])
+        steps_df = pd.DataFrame(result_steps)
         if not steps_df.empty:
+            steps_df["Leitura KLD"] = [_kld_reading_label(s) for s in result_steps]
             st.dataframe(steps_df, use_container_width=True)
         manual_render = render_timeline(
             steps=manual_result.get("steps", []),
@@ -552,6 +554,13 @@ def _segment_actions_summary(segment_actions: Mapping[str, str]) -> str:
         for name, token in segment_actions.items()
     ]
     return " · ".join(parts) if parts else "—"
+
+
+def _kld_reading_label(step: Dict[str, Any]) -> str:
+    kld_reading = step.get("kld_reading") or {}
+    if not kld_reading:
+        return "—"
+    return "OK" if all(kld_reading.values()) else "⚠ sem leitura"
 
 
 def _manual_plan_dataframe(plan: List[Dict[str, Any]], config: Dict[str, Any], segments: Sequence[Any]) -> pd.DataFrame:

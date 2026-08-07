@@ -235,3 +235,12 @@ def test_manual_route_add_move_form_has_one_radio_per_segment(tmp_path: Path) ->
     assert len(radios) >= 1  # ao menos 1 segmento na primeira opcao de movimento disponivel
     for r in radios:
         assert set(r.options) == {"Nada", "Só curva", "Completa"}
+
+
+def test_kld_reading_label_summarizes_step() -> None:
+    from railroad_frontend.views.manual import _kld_reading_label
+
+    assert _kld_reading_label({"kld_reading": {}}) == "—"
+    assert _kld_reading_label({"kld_reading": {"A-B": True}}) == "OK"
+    assert _kld_reading_label({"kld_reading": {"A-B": True, "A-B-LD": False}}) == "⚠ sem leitura"
+    assert _kld_reading_label({"kld_reading": {"A-B": False}}) == "⚠ sem leitura"
