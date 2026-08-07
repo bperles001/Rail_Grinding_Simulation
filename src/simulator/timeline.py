@@ -75,7 +75,8 @@ def prepare_timeline_rows(
     timeline_rows: List[Dict[str, Any]] = []
     last_step_label: Optional[str] = None
     for step in report_data:
-        seg = step.get("segment", "")
+        step_segments = step.get("segments") or ([step["segment"]] if step.get("segment") else [])
+        seg = " + ".join(step_segments) if step_segments else step.get("segment", "")
         action = step.get("action", "move")
         if action in ("move", "maintenance", "maintenance_curves"):
             label = _base_label(seg)

@@ -72,6 +72,16 @@ def test_prepare_timeline_rows_and_generator():
     assert df is generator.df
 
 
+def test_prepare_timeline_rows_labels_corridor_step_with_both_segments():
+    report = [{
+        "segment": "A-B-LD", "segments": ["A-B", "A-B-LD"], "action": "move",
+        "mtbt_before_curva": 1.0, "mtbt_before_tangente": 1.0,
+        "start": "2026-01-01", "end": "2026-01-04",
+    }]
+    rows, _y_order, _alias = prepare_timeline_rows(report, segments=None, timeline_order=None)
+    assert rows[0]["step"] == "A-B + A-B-LD"
+
+
 def test_timeline_generator_returns_structured_plot():
     _, segments = build_network()
     steps = [
