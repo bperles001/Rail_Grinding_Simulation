@@ -260,3 +260,51 @@ def test_kld_reading_label_summarizes_step() -> None:
     assert _kld_reading_label({"kld_reading": {"A-B": True}}) == "OK"
     assert _kld_reading_label({"kld_reading": {"A-B": True, "A-B-LD": False}}) == "⚠ sem leitura"
     assert _kld_reading_label({"kld_reading": {"A-B": False}}) == "⚠ sem leitura"
+
+
+def test_manual_route_new_plan_is_default_mode(tmp_path: Path) -> None:
+    at = _open_manual_route(tmp_path)
+    radios = [r for r in at.radio if r.label == "Plano"]
+    assert radios, "esperava um radio 'Plano' no topo da pagina"
+    assert radios[0].value == "Novo plano"
+
+
+def test_manual_route_open_saved_plan_shows_empty_state_message(tmp_path: Path) -> None:
+    from railroad_frontend.state.session import MANUAL_SAVED_PLANS_KEY
+
+    at = _open_manual_route(tmp_path)
+    # o app carrega data/saved_plans.json real na sessao -- zera explicitamente
+    # pra testar o estado "sem plano salvo" independente do que existe em disco.
+    at.session_state[MANUAL_SAVED_PLANS_KEY] = {}
+    at.run()
+    plano_radio = [r for r in at.radio if r.label == "Plano"][0]
+    plano_radio.set_value("Abrir plano salvo").run()
+    captions = [c.value for c in at.caption]
+    assert any("Nenhum plano salvo ainda" in c for c in captions)
+
+
+def test_manual_route_load_saved_plan_applies_config_and_steps(tmp_path: Path) -> None:
+    from railroad_frontend.state.session import MANUAL_CONFIG_KEY, MANUAL_PLAN_KEY, MANUAL_SAVED_PLANS_KEY
+
+    at = _open_manual_route(tmp_path)
+    loaded_config = {
+        "start_station": "B", "facing_station": "C",
+        "start_year": 2030, "end_year": 2031, "second_kld": True,
+    }
+    at.session_state[MANUAL_SAVED_PLANS_KEY] = {
+        "Meu Plano": {"config": loaded_config, "steps": [{"mode": "turn"}]}
+    }
+    at.run()
+
+    plano_radio = [r for r in at.radio if r.label == "Plano"][0]
+    plano_radio.set_value("Abrir plano salvo").run()
+
+    select = [s for s in at.selectbox if s.label == "Plano salvo"][0]
+    select.set_value("Meu Plano").run()
+
+    load_btn = [b for b in at.button if b.label == "📂 Carregar"][0]
+    load_btn.click().run()
+
+    assert not at.exception
+    assert at.session_state[MANUAL_CONFIG_KEY] == loaded_config
+    assert at.session_state[MANUAL_PLAN_KEY] == [{"mode": "turn"}]

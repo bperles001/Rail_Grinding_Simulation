@@ -133,6 +133,28 @@ def render_manual_route_page(
     config = state.get(session_keys.config_key, {})
     plan: List[Dict[str, Any]] = list(state.get(session_keys.plan_key, []))
 
+    render_section_header("📂 Plano")
+    saved_plans = state.get(session_keys.saved_plans_key, {})
+    plan_mode = st.radio(
+        "Plano",
+        ("Novo plano", "Abrir plano salvo"),
+        horizontal=True,
+        label_visibility="collapsed",
+        key="manual_plan_mode",
+    )
+    if plan_mode == "Abrir plano salvo":
+        if saved_plans:
+            saved_names = sorted(saved_plans.keys())
+            open_selected = st.selectbox("Plano salvo", saved_names, key="manual_open_plan_select")
+            if st.button("📂 Carregar", type="primary", key="manual_open_plan_button"):
+                loaded_config, loaded_steps = load_manual_plan(saved_plans, open_selected)
+                state[session_keys.config_key] = loaded_config
+                callbacks.update_manual_plan(loaded_steps)
+                st.toast(f"✓ Plano '{open_selected}' carregado (config + passos)", icon="📂")
+                callbacks.force_rerun()
+        else:
+            st.caption("Nenhum plano salvo ainda.")
+
     render_section_header("⚙️ Configuration")
     
     # Wrap in form to prevent reload on every input
