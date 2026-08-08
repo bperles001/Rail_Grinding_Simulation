@@ -19,6 +19,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   KLD; o alinhamento vira uma flag informativa ("Leitura KLD") na tabela
   de resultados em vez de bloquear o serviço. Escopo só Manual Route — o
   Auto Planner não muda.
+- Manual Route: cada plano salvo agora guarda também a configuração com
+  que foi construído (estação inicial, facing, anos, 2º KLD), não só os
+  passos. Um bloco novo no topo da página ("Novo plano"/"Abrir plano
+  salvo") aplica essa configuração automaticamente ao carregar — corrige
+  o erro que ocorria ao carregar um plano salvo enquanto a tela estava
+  configurada para outra estação/direção. Formato de armazenamento muda
+  de lista de passos para `{"config": ..., "steps": [...]}`; os 2 planos
+  já salvos foram migrados.
 
 ### Fixed
 - Trechos com Singela + Linha Principal/Desviada (LP/LD) agora são tratados
