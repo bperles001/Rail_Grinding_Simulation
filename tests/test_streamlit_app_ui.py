@@ -308,3 +308,27 @@ def test_manual_route_load_saved_plan_applies_config_and_steps(tmp_path: Path) -
     assert not at.exception
     assert at.session_state[MANUAL_CONFIG_KEY] == loaded_config
     assert at.session_state[MANUAL_PLAN_KEY] == [{"mode": "turn"}]
+
+
+def test_manual_route_plan_presets_has_no_load_button(tmp_path: Path) -> None:
+    at = _open_manual_route(tmp_path)
+    assert not [b for b in at.button if b.label == "📂 Load plan"]
+
+
+def test_manual_route_save_plan_includes_current_config(tmp_path: Path) -> None:
+    from railroad_frontend.state.session import MANUAL_SAVED_PLANS_KEY
+
+    at = _open_manual_route(tmp_path)
+    wait_btn = [b for b in at.button if b.label == "Add idle period"][0]
+    wait_btn.click().run()
+
+    name_input = [t for t in at.text_input if t.label == "Save current plan as"][0]
+    name_input.set_value("Teste Save").run()
+    save_btn = [b for b in at.button if b.label == "💾 Save plan"][0]
+    save_btn.click().run()
+
+    assert not at.exception
+    saved = at.session_state[MANUAL_SAVED_PLANS_KEY]
+    assert "Teste Save" in saved
+    assert set(saved["Teste Save"].keys()) == {"config", "steps"}
+    assert saved["Teste Save"]["steps"] == [{"mode": "wait", "days": 3}]

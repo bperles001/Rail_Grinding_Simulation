@@ -335,7 +335,7 @@ def render_manual_route_page(
 
     render_section_header("💾 Plan Presets", subtitle=True)
     saved_plans = state.get(session_keys.saved_plans_key, {})
-    save_col, load_col = st.columns([2, 3])
+    save_col, delete_col = st.columns([2, 3])
     with save_col:
         save_name = st.text_input("Save current plan as", key="manual_save_name")
         disabled = not plan
@@ -344,11 +344,11 @@ def render_manual_route_page(
             if not name:
                 st.warning("Please provide a name before saving the plan. Enter a descriptive name in the input field above.")
             else:
-                saved = save_manual_plan(saved_plans, name, plan)
+                saved = save_manual_plan(saved_plans, name, plan, config)
                 state[session_keys.saved_plans_key] = saved
                 callbacks.persist_plan_storage()
                 st.toast(f"✓ Saved plan '{name}'", icon="💾")
-    with load_col:
+    with delete_col:
         if saved_plans:
             saved_names = sorted(saved_plans.keys())
             selected_plan = st.selectbox(
@@ -356,23 +356,14 @@ def render_manual_route_page(
                 saved_names,
                 key="manual_load_select",
             )
-            col_load, col_delete = st.columns(2)
-            with col_load:
-                if st.button("📂 Load plan", use_container_width=True, type="primary"):
-                    loaded_plan = load_manual_plan(saved_plans, selected_plan)
-                    callbacks.update_manual_plan(loaded_plan)
-                    plan = loaded_plan
-                    st.toast(f"✓ Loaded plan '{selected_plan}'", icon="📂")
-                    callbacks.force_rerun()
-            with col_delete:
-                st.markdown('<div class="button-danger">', unsafe_allow_html=True)
-                if st.button("🗑️ Delete", use_container_width=True, key="delete_plan_btn"):
-                    saved_plans.pop(selected_plan, None)
-                    state[session_keys.saved_plans_key] = saved_plans
-                    callbacks.persist_plan_storage()
-                    st.toast(f"✓ Deleted plan '{selected_plan}'", icon="🗑️")
-                    callbacks.force_rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('<div class="button-danger">', unsafe_allow_html=True)
+            if st.button("🗑️ Delete", use_container_width=True, key="delete_plan_btn"):
+                saved_plans.pop(selected_plan, None)
+                state[session_keys.saved_plans_key] = saved_plans
+                callbacks.persist_plan_storage()
+                st.toast(f"✓ Deleted plan '{selected_plan}'", icon="🗑️")
+                callbacks.force_rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.caption("No saved plans yet.")
 
