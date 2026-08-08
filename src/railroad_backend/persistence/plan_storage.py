@@ -60,7 +60,7 @@ def plan_storage_snapshot(
     """Build storage snapshot from manual and auto plan data.
 
     Args:
-        manual_saved: Dictionary of manual plans.
+        manual_saved: Dictionary mapping plan name to {"config": ..., "steps": [...]}.
         auto_saved: Dictionary of auto run results.
 
     Returns:
@@ -69,8 +69,12 @@ def plan_storage_snapshot(
     snapshot = storage_defaults()
     if isinstance(manual_saved, dict):
         snapshot["manual"] = {
-            name: [dict(step) for step in steps if isinstance(step, dict)]
-            for name, steps in manual_saved.items()
+            name: {
+                "config": dict(entry.get("config") or {}),
+                "steps": [dict(step) for step in (entry.get("steps") or []) if isinstance(step, dict)],
+            }
+            for name, entry in manual_saved.items()
+            if isinstance(entry, dict)
         }
     if isinstance(auto_saved, dict):
         snapshot["auto"] = {name: dict(entry) for name, entry in auto_saved.items() if isinstance(entry, dict)}
@@ -152,16 +156,22 @@ def save_manual_plan(
     saved_plans: Optional[Dict[str, Any]],
     name: str,
     plan: List[Dict[str, Any]],
+    config: Dict[str, Any],
 ) -> Dict[str, Any]:
     new_plans = dict(saved_plans or {})
-    new_plans[name] = [dict(step) for step in plan]
+    new_plans[name] = {
+        "config": dict(config),
+        "steps": [dict(step) for step in plan],
+    }
     return new_plans
 
 
-def load_manual_plan(saved_plans: Optional[Dict[str, Any]], name: str) -> List[Dict[str, Any]]:
+def load_manual_plan(saved_plans: Optional[Dict[str, Any]], name: str) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     plans = saved_plans or {}
-    entries = plans.get(name, [])
-    return [dict(step) for step in entries if isinstance(step, dict)]
+    entry = plans.get(name) or {}
+    config = dict(entry.get("config") or {})
+    steps = entry.get("steps") or []
+    return config, [dict(step) for step in steps if isinstance(step, dict)]
 
 
 def import_manual_plan_payload(
@@ -175,10 +185,16 @@ def import_manual_plan_payload(
         raise ValueError("Manual plan file must include a 'manual' object or be a mapping of plan names.")
     new_plans = dict(saved_plans or {})
     imported = 0
-    for name, steps in manual_section.items():
-        if not isinstance(name, str) or not isinstance(steps, list):
+    for name, entry in manual_section.items():
+        if not isinstance(name, str) or not isinstance(entry, dict):
             continue
-        new_plans[name] = [dict(step) for step in steps if isinstance(step, dict)]
+        steps = entry.get("steps")
+        if not isinstance(steps, list):
+            continue
+        new_plans[name] = {
+            "config": dict(entry.get("config") or {}),
+            "steps": [dict(step) for step in steps if isinstance(step, dict)],
+        }
         imported += 1
     return new_plans, imported
 
