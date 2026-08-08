@@ -7,6 +7,7 @@ exist in how the script wires widgets together.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
@@ -65,6 +66,11 @@ def _open_network_editor(tmp_path: Path) -> AppTest:
 
 
 def _open_manual_route(tmp_path: Path) -> AppTest:
+    # Isola o arquivo de plano salvo num caminho temporario -- sem isso,
+    # AppTest roda o streamlit_app.py real, e Save/Delete gravariam direto
+    # no data/saved_plans.json de producao (aconteceu: um "Teste Save"
+    # vazou pro arquivo real numa sessao de testes anterior).
+    os.environ["MANUAL_PLAN_STORAGE_FILE"] = str(tmp_path / "test_saved_plans.json")
     network_path = tmp_path / "network.json"
     _write_network(network_path)
 

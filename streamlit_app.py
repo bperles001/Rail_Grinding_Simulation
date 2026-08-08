@@ -16,6 +16,7 @@ import hashlib
 import io
 import json
 import math
+import os
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -129,7 +130,7 @@ from railroad_frontend.components.ui_components import (
 PROJECT_ROOT = Path(__file__).parent
 DATA_DIR = PROJECT_ROOT / "data"
 NETWORK_DIR = DATA_DIR / "networks"
-PLAN_STORAGE_FILE = DATA_DIR / "saved_plans.json"
+PLAN_STORAGE_FILE = Path(os.environ.get("MANUAL_PLAN_STORAGE_FILE") or (DATA_DIR / "saved_plans.json"))
 DEFAULT_SCHEDULE = DATA_DIR / "mtbt_schedule.csv"
 
 NETWORK_LAYOUT_SCALE = 1.0
