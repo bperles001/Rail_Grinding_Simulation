@@ -104,20 +104,15 @@ motor rejeita corretamente:
   (`ValueError`, sem corromper `sim.steps`).
 - `wait_days` ≤ 0 (`ValueError`).
 
-## Gap aberto — decisão de negócio, não bug de código
+## Gap fechado — `wait_days` agora limitado a 365 no motor e na validação
 
-`Simulator.wait_days()` **não tem limite superior** no motor nem na
+`Simulator.wait_days()` não tinha limite superior no motor nem na
 validação de plano salvo (`validate_manual_plan_step`) — só o widget da UI
-(`st.number_input(..., max_value=365)`) restringe a 365 dias, e só quando
-o passo é criado interativamente pelo formulário. Um plano importado via
-JSON (import de planos salvos) poderia ter `wait_days` arbitrariamente
-grande sem ser rejeitado.
-
-**Recomendação**: espelhar o limite de 365 dias também no motor
-(`wait_days()`) e na validação (`validate_manual_plan_step`), como defesa
-em profundidade. **Não implementei isso** porque é uma regra de negócio
-(qual o limite operacional real de espera num único passo) que cabe ao
-Bruno confirmar, não uma correção de código com resposta óbvia.
+restringia a 365 dias. Bruno confirmou o limite de 365 (mesmo valor da
+UI); implementado em `wait_days()` (`ValueError` acima de 365) e em
+`validate_manual_plan_step` (mesma mensagem), como defesa em profundidade
+— um plano importado via JSON não consegue mais burlar o limite do
+formulário. Commit `4a116b7`.
 
 ## O que esta campanha NÃO cobre (limitações conhecidas)
 
@@ -133,10 +128,11 @@ Bruno confirmar, não uma correção de código com resposta óbvia.
 ## Conclusão
 
 Depois de ~12.000 cenários (realistas + deliberadamente extremos/ilógicos)
-e a correção dos 2 bugs reais encontrados, o motor do Manual Route não
-apresentou nenhuma exceção não tratada nem violação de invariante nos
-lotes de confirmação finais. O único item aberto é uma decisão de negócio
-(limite de `wait_days`), não um defeito de código. Do ponto de vista de
-robustez de engine, o Manual Route parece pronto para ser considerado
-fechado — pendente a confirmação do Bruno sobre o ponto acima e sobre as
-limitações de escopo listadas.
+e a correção dos 3 bugs/gaps reais encontrados (giro sem movimento
+anterior, `MonthLocator` sem escala, `wait_days` sem limite superior), o
+motor do Manual Route não apresentou nenhuma exceção não tratada nem
+violação de invariante nos lotes de confirmação finais. Do ponto de vista
+de robustez de engine, o Manual Route está pronto para ser considerado
+fechado — pendente só a confirmação do Bruno sobre as limitações de
+escopo listadas (UI Streamlit, `days_override`, persistência de planos
+não fuzzados).
