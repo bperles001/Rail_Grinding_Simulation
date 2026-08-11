@@ -114,25 +114,64 @@ UI); implementado em `wait_days()` (`ValueError` acima de 365) e em
 — um plano importado via JSON não consegue mais burlar o limite do
 formulário. Commit `4a116b7`.
 
-## O que esta campanha NÃO cobre (limitações conhecidas)
+## Limitações de escopo — investigadas e fechadas (2026-08-12)
 
-- Camada de UI Streamlit (formulários, botões, `AppTest`) — só o motor
-  (`core.py`/`manual_planner.py`) e o pipeline de timeline foram
-  exercitados diretamente.
-- Edição de `days_override` de um passo já criado.
-- Fuzzing da persistência de planos salvos (import/export/roundtrip de
-  `saved_plans.json`).
-- Auto Planner — fora de escopo desta rodada, por pedido explícito do
-  Bruno (fechar o Manual antes de seguir).
+As 3 limitações deixadas em aberto pela campanha original foram investigadas
+uma a uma, a pedido do Bruno, antes de seguir pro Auto Planner:
+
+### `days_override` — gap real encontrado e corrigido
+
+Mesma classe de problema do `wait_days`: `duration_override`
+(`Simulator.move_to()`) e `days_override` (edição manual de duração de um
+passo "move" já criado) não tinham **nenhuma** validação. Confirmado por
+reprodução direta: `0`, `-5` e `366` eram aceitos em silêncio (com `0`/`-5`
+a data nem avançava — `end == start` no passo gravado); `100000` empurrava
+a simulação pro ano **2298**. Corrigido espelhando o limite de `wait_days`
+(1-365) tanto em `move_to()` quanto em `validate_manual_plan_step`.
+Commit `c562d76`.
+
+### Persistência de planos salvos — fuzzada, nenhum bug encontrado
+
+Testes novos cobrindo `import_manual_plan_payload`/`import_auto_run_payload`
+com payloads deliberadamente malformados (não-dict, `manual`/`auto` não-dict,
+entradas mistas válidas/inválidas, chaves não-string, `steps` com itens
+não-dict misturados) e um roundtrip real save→`json.dumps`→arquivo→
+`json.load`→import→replay (simulando exatamente o fluxo de export/import da
+UI). Todas as checagens `isinstance()` já existentes se mostraram robustas —
+nenhum bug encontrado, só ganhou cobertura de regressão nova.
+Commit `0b653c4`.
+
+### Camada de UI Streamlit — fuzzada via `AppTest`, nenhum bug encontrado
+
+4 testes novos submetendo de fato os formulários mais arriscados do Manual
+Route (que antes só tinham testes de *presença*, nunca de *submissão*):
+"Add move" completo (radios + submit), botão "Add turn", "Apply step
+changes" (edição de `days_override` pela tabela), e uma sequência de 2
+submissões de "Add move" seguidas — a mesma classe do bug real já
+encontrado em 07/08 (radio perdendo a escolha do usuário entre reruns).
+Todos passaram sem achar bug novo nessas rotas.
+
+**Achado de técnica de teste** (não é bug do app): ao consultar
+`at.button`/`at.radio` do `AppTest` **depois** de um rerun, elementos com a
+mesma `key` de execuções anteriores continuam na lista junto com a
+instância nova — pegar o primeiro (`[0]`) em vez do último (`[-1]`) faz o
+clique/valor recair numa instância obsoleta, e a ação vira um no-op
+silencioso (foi exatamente isso que fez o 2º "Add move" de uma sequência
+parecer "não fazer nada" até eu perceber e trocar pra `[-1]`). Registrado
+como comentário no teste pra não repetir o mesmo entendimento errado numa
+sessão futura. Commit `e235f17`.
+
+Auto Planner continua fora de escopo desta rodada, por pedido explícito do
+Bruno (fechar o Manual antes de seguir).
 
 ## Conclusão
 
-Depois de ~12.000 cenários (realistas + deliberadamente extremos/ilógicos)
-e a correção dos 3 bugs/gaps reais encontrados (giro sem movimento
-anterior, `MonthLocator` sem escala, `wait_days` sem limite superior), o
-motor do Manual Route não apresentou nenhuma exceção não tratada nem
-violação de invariante nos lotes de confirmação finais. Do ponto de vista
-de robustez de engine, o Manual Route está pronto para ser considerado
-fechado — pendente só a confirmação do Bruno sobre as limitações de
-escopo listadas (UI Streamlit, `days_override`, persistência de planos
-não fuzzados).
+Depois de ~12.000 cenários de motor (realistas + deliberadamente
+extremos/ilógicos) mais a investigação direcionada das 3 limitações de
+escopo, a campanha encontrou e corrigiu **4 bugs/gaps reais**: giro sem
+movimento anterior quebrando o timeline, `MonthLocator` sem escala,
+`wait_days` sem limite superior, e `days_override`/`duration_override` sem
+limite superior. As outras duas frentes investigadas (persistência de
+planos, camada de UI) não revelaram bugs novos, só ganharam cobertura de
+regressão que não existia. Não há mais limitações de escopo conhecidas
+pendentes — o Manual Route está pronto para ser considerado fechado.
