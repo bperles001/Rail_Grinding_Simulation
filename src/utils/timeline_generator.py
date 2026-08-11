@@ -56,23 +56,37 @@ class TimelineGenerator:
         self._cid_release: Optional[int] = None
         self._cid_key: Optional[int] = None
 
+    def _measure_text_width_days(self, text: str, fontsize: int) -> float:
+        """Render text off-figure once to measure its actual width in data
+        units (days), using the real renderer/DPI/fontsize -- avoids a
+        hardcoded chars-per-day constant that drifts out of sync whenever
+        figsize changes (see create_timeline_plot, which scales width
+        with the plan's day span)."""
+        probe = self.ax.text(0, 0, text, fontsize=fontsize, fontweight='bold')
+        renderer = self.fig.canvas.get_renderer()
+        bbox = probe.get_window_extent(renderer=renderer)
+        bbox_data = bbox.transformed(self.ax.transData.inverted())
+        probe.remove()
+        return abs(bbox_data.x1 - bbox_data.x0)
+
     def _determine_label_placement(
         self,
         duration: float,
-        label_text: str,
+        label_width_days: float,
         seq_idx: int,
         seq_count: int,
     ) -> str:
-        """Small bars get their label pushed left by default -- consistent
-        reading direction instead of alternating sides. Exception: the
-        middle bar of a tight 3-in-a-row on the same line (typically
-        move+turn+move or move+idle+move) goes below instead, so it
-        doesn't collide with its two left-placed neighbors."""
-        small_threshold = 0.5 + 0.3 * len(label_text)
-        if duration >= small_threshold:
+        """Center the label inside the bar when it actually fits (measured
+        width, not a guessed threshold). Otherwise bracket a sequence of
+        short bars on the same line: first goes left (before), last goes
+        right (after), and a middle one (3-in-a-row, e.g. move+turn+move)
+        goes below so it doesn't collide with its two neighbors."""
+        if duration >= label_width_days:
             return 'center'
-        if seq_count == 3 and seq_idx == 1:
+        if seq_count >= 3 and 0 < seq_idx < seq_count - 1:
             return 'bottom'
+        if seq_count > 1 and seq_idx == seq_count - 1:
+            return 'right'
         return 'left'
 
     def _compute_label_position(
@@ -96,6 +110,12 @@ class TimelineGenerator:
             conn_x = [bar_left, x_text]
             conn_y = [y_pos, y_text]
             return x_text, y_text, 'right', 'center', conn_x, conn_y
+        elif placement == 'right':
+            x_text = bar_left + duration + side_pad
+            y_text = float(y_pos)
+            conn_x = [bar_left + duration, x_text]
+            conn_y = [y_pos, y_text]
+            return x_text, y_text, 'left', 'center', conn_x, conn_y
         else:  # 'bottom'
             # Y axis is inverted (position 0 renders at the top of the
             # screen -- see customize_plot), so "below the bar" on screen
@@ -121,16 +141,21 @@ class TimelineGenerator:
         seq_idx = int(row.get('row_seq_idx', 0))
         seq_count = int(row.get('row_seq_count', 1))
 
-        placement = self._determine_label_placement(duration, label_text, seq_idx, seq_count)
+        center_fontsize = 8
+        measured_width = self._measure_text_width_days(label_text, center_fontsize)
+        padding_days = self._measure_text_width_days("  ", center_fontsize)
+        label_width_days = measured_width + padding_days
+
+        placement = self._determine_label_placement(duration, label_width_days, seq_idx, seq_count)
         x_text, y_text, ha, va, conn_x, conn_y = self._compute_label_position(
             placement, bar_left, duration, x_center, y_pos
         )
 
         clip_on = placement == 'center'
         # Slightly smaller font for labels pushed off small bars (left/
-        # bottom placement) -- reduces overlap when many short steps
-        # cluster close together in time.
-        fontsize = 8 if placement == 'center' else 7
+        # right/bottom placement) -- reduces overlap when many short
+        # steps cluster close together in time.
+        fontsize = center_fontsize if placement == 'center' else 7
         txt = self.ax.text(
             x_text, y_text, label_text,
             va=va, ha=ha, fontsize=fontsize, fontweight='bold', color=label_color, clip_on=clip_on
@@ -256,7 +281,13 @@ class TimelineGenerator:
         # Create y-position mapping for labels
         step_positions: Dict[str, int] = {label: idx for idx, label in enumerate(labels)}
 
-        # Plot each step as a horizontal bar
+        # Pass 1: plot every bar, and collect label info for pass 2. Labels
+        # are added in a second pass because deciding whether one fits
+        # inside its bar requires measuring real text width against the
+        # axes' FINAL day-per-inch scale (see _measure_text_width_days) --
+        # that scale isn't settled until every bar (and the left margin
+        # below) has been plotted.
+        pending_labels: List[Tuple[str, str, float, float, float, float, Any]] = []
         for _, row in df.iterrows():
             step = str(row['step_label'])
             start_val = row['start_time']
@@ -301,15 +332,11 @@ class TimelineGenerator:
                 linewidth=0.5,
             )
 
-            # Add label text using helper methods
             try:
                 should_label, label_text = self._should_add_label(status, mtbt_before)
                 if should_label and label_text:
                     label_color = self._get_label_color(status, mtbt_before, row.get('mtbt_threshold'))
-                    self._add_bar_label(
-                        label_text, label_color, duration, bar_left, x_center, y_pos,
-                        row, interactive_labels,
-                    )
+                    pending_labels.append((label_text, label_color, duration, bar_left, x_center, y_pos, row))
             except Exception:
                 pass
 
@@ -324,6 +351,21 @@ class TimelineGenerator:
             span = max(data_max - data_min, 1.0)
             left_pad = max(span * 0.03, 3.0)
             self.ax.set_xlim(left=data_min - left_pad)
+
+        # Finalize the renderer at the axes' real, final scale before
+        # measuring any label -- text-width measurement needs a live
+        # renderer and a settled transData.
+        self.fig.canvas.draw()
+
+        # Pass 2: place every label now that the scale is final.
+        for label_text, label_color, duration, bar_left, x_center, y_pos, row in pending_labels:
+            try:
+                self._add_bar_label(
+                    label_text, label_color, duration, bar_left, x_center, y_pos,
+                    row, interactive_labels,
+                )
+            except Exception:
+                pass
 
         # Customize the plot
         self.customize_plot(labels)

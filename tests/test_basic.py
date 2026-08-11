@@ -306,27 +306,74 @@ def test_timeline_generator_figsize_stretches_with_time_span():
     assert short_plot.figure.get_figwidth() >= 15.0
 
 
-def test_timeline_generator_label_placement_defaults_to_left():
+def test_timeline_generator_label_placement_single_bar_goes_left_when_it_does_not_fit():
     generator = TimelineGenerator([], y_order=[])
     placement = generator._determine_label_placement(
-        duration=0.1, label_text="A 8", seq_idx=0, seq_count=1,
+        duration=0.1, label_width_days=5.0, seq_idx=0, seq_count=1,
     )
     assert placement == 'left'
 
 
-def test_timeline_generator_label_placement_middle_of_triple_goes_bottom():
-    """Sequencia de 3 passos curtos na mesma linha (ex: move + turn + move)
-    -- o do meio vai pra baixo da barra em vez de esquerda, pra nao colidir
-    com os rotulos-esquerda dos vizinhos dos dois lados."""
+def test_timeline_generator_label_placement_sequence_brackets_first_left_last_right_middle_bottom():
+    """Pedido do Bruno (mockup desenhado a mao): numa sequencia de passos
+    curtos na mesma linha, o primeiro rotulo fica antes da barra (left),
+    o ultimo fica depois (right), e quando ha um do meio (ex: move+turn+
+    move) ele vai embaixo -- nao colide com os vizinhos dos dois lados."""
     generator = TimelineGenerator([], y_order=[])
-    assert generator._determine_label_placement(0.1, "A 8", seq_idx=1, seq_count=3) == 'bottom'
-    assert generator._determine_label_placement(0.1, "A 8", seq_idx=0, seq_count=3) == 'left'
-    assert generator._determine_label_placement(0.1, "A 8", seq_idx=2, seq_count=3) == 'left'
+    # par (seq_count=2): primeiro left, ultimo right
+    assert generator._determine_label_placement(0.1, 5.0, seq_idx=0, seq_count=2) == 'left'
+    assert generator._determine_label_placement(0.1, 5.0, seq_idx=1, seq_count=2) == 'right'
+    # trio (seq_count=3): primeiro left, meio bottom, ultimo right
+    assert generator._determine_label_placement(0.1, 5.0, seq_idx=0, seq_count=3) == 'left'
+    assert generator._determine_label_placement(0.1, 5.0, seq_idx=1, seq_count=3) == 'bottom'
+    assert generator._determine_label_placement(0.1, 5.0, seq_idx=2, seq_count=3) == 'right'
 
 
-def test_timeline_generator_label_placement_center_for_wide_bar():
+def test_timeline_generator_label_placement_center_when_it_fits():
     generator = TimelineGenerator([], y_order=[])
-    assert generator._determine_label_placement(duration=50.0, label_text="A 8", seq_idx=0, seq_count=1) == 'center'
+    assert generator._determine_label_placement(duration=50.0, label_width_days=5.0, seq_idx=0, seq_count=1) == 'center'
+
+
+def test_timeline_generator_measures_wider_text_as_wider():
+    """A medicao real do texto renderizado deve refletir o tamanho do
+    label -- evita depender de um numero fixo de "dias" que desalinha
+    quando a largura do grafico (figsize) muda de plano pra plano."""
+    rows = [{
+        "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+        "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+    }]
+    generator = TimelineGenerator(rows, y_order=["A-B"])
+    generator.process_data()
+    generator.create_timeline_plot()  # inicializa fig/ax/renderer
+    short_width = generator._measure_text_width_days("A 1", fontsize=8)
+    long_width = generator._measure_text_width_days("A 123456789", fontsize=8)
+    assert long_width > short_width > 0
+
+
+def test_timeline_generator_short_bar_with_long_label_is_pushed_outside():
+    """Regressao do problema real que o Bruno reportou: quando o grafico
+    estica a largura pra acomodar um plano longo, "dias por polegada" fica
+    alto -- uma barra de 1 dia ocupa pouquissimo espaco visual, mesmo que
+    numericamente "1 dia" pudesse passar antigamente do threshold fixo.
+    O rotulo tem que ser medido de verdade e empurrado pra fora, nao
+    centralizado dentro da barra minuscula."""
+    rows = [
+        {
+            "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+            "status": "maintenance", "direction": "carregado",
+            "mtbt_before": 33.0, "mtbt_threshold": 100.0,
+        },
+        {
+            "step": "A-B", "start_time": "2026-01-02", "end_time": "2029-01-01",
+            "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+        },
+    ]
+    generator = TimelineGenerator(rows, y_order=["A-B"])
+    generator.process_data()
+    plot = generator.create_timeline_plot()
+    texts = [t for t in plot.axes.texts if t.get_text() == "A 33"]
+    assert texts
+    assert texts[0].get_ha() != 'center'
 
 
 def test_timeline_generator_bottom_placement_moves_toward_larger_y():
