@@ -39,6 +39,14 @@ class AutoPlanConfig:
     ilp_weight_travel: float = 1.0
     ilp_weight_proximity: float = 0.5
     ilp_time_limit_s: float = 20.0
+    sa_window_days: int = 90
+    sa_weight_coverage: float = 10.0
+    sa_weight_travel: float = 1.0
+    sa_weight_proximity: float = 0.5
+    sa_iterations: int = 2000
+    sa_initial_temperature: float = 100.0
+    sa_cooling_rate: float = 0.995
+    sa_seed: Optional[int] = None
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization.
@@ -142,6 +150,7 @@ from .auto_planner_strategies.greedy import maintenance_action_for as _maintenan
 from .auto_planner_strategies.greedy import needs_maintenance as _needs_maintenance
 from .auto_planner_strategies.greedy import segments_already_due as _segments_already_due
 from .auto_planner_strategies.rolling_horizon_ilp import RollingHorizonILPStrategy
+from .auto_planner_strategies.simulated_annealing_strategy import SimulatedAnnealingStrategy
 
 # NOTE: _component_due/_needs_maintenance/_maintenance_action_for/
 # _segments_already_due/_days_until_next_threshold are re-exported here
@@ -152,6 +161,7 @@ from .auto_planner_strategies.rolling_horizon_ilp import RollingHorizonILPStrate
 STRATEGY_REGISTRY: Dict[str, "type[AutoPlanStrategy]"] = {
     "greedy": GreedyUrgencyStrategy,
     "rolling_ilp": RollingHorizonILPStrategy,
+    "simulated_annealing": SimulatedAnnealingStrategy,
 }
 
 
@@ -166,6 +176,17 @@ def _resolve_strategy(config: "AutoPlanConfig") -> AutoPlanStrategy:
             weight_travel=config.ilp_weight_travel,
             weight_proximity=config.ilp_weight_proximity,
             time_limit_s=config.ilp_time_limit_s,
+        )
+    if config.strategy == "simulated_annealing":
+        return SimulatedAnnealingStrategy(
+            window_days=config.sa_window_days,
+            weight_coverage=config.sa_weight_coverage,
+            weight_travel=config.sa_weight_travel,
+            weight_proximity=config.sa_weight_proximity,
+            iterations=config.sa_iterations,
+            initial_temperature=config.sa_initial_temperature,
+            cooling_rate=config.sa_cooling_rate,
+            seed=config.sa_seed,
         )
     return strategy_cls()
 
@@ -249,6 +270,14 @@ def run_auto_plan_from_args(
     ilp_weight_travel: float = 1.0,
     ilp_weight_proximity: float = 0.5,
     ilp_time_limit_s: float = 20.0,
+    sa_window_days: int = 90,
+    sa_weight_coverage: float = 10.0,
+    sa_weight_travel: float = 1.0,
+    sa_weight_proximity: float = 0.5,
+    sa_iterations: int = 2000,
+    sa_initial_temperature: float = 100.0,
+    sa_cooling_rate: float = 0.995,
+    sa_seed: Optional[int] = None,
 ) -> AutoPlanResult:
     config = AutoPlanConfig(
         csv_path=Path(csv_path),
@@ -265,6 +294,14 @@ def run_auto_plan_from_args(
         ilp_weight_travel=ilp_weight_travel,
         ilp_weight_proximity=ilp_weight_proximity,
         ilp_time_limit_s=ilp_time_limit_s,
+        sa_window_days=sa_window_days,
+        sa_weight_coverage=sa_weight_coverage,
+        sa_weight_travel=sa_weight_travel,
+        sa_weight_proximity=sa_weight_proximity,
+        sa_iterations=sa_iterations,
+        sa_initial_temperature=sa_initial_temperature,
+        sa_cooling_rate=sa_cooling_rate,
+        sa_seed=sa_seed,
     )
     return run_auto_plan(config)
 

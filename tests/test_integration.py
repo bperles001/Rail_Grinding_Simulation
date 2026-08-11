@@ -117,6 +117,28 @@ def test_auto_plan_rolling_ilp_strategy_runs_end_to_end(tmp_path):
     assert isinstance(result, AutoPlanResult)
 
 
+def test_auto_plan_simulated_annealing_strategy_runs_end_to_end(tmp_path):
+    """Simulated Annealing strategy produces a valid result on a tiny network."""
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,2025-01\nTRO-TMI,8.0\n")
+
+    config = AutoPlanConfig(
+        csv_path=csv_path,
+        start_station="TRO",
+        facing_station="TMI",
+        start_year=2025,
+        end_year=2025,
+        second_kld=False,
+        steps=5,
+        strategy="simulated_annealing",
+        sa_iterations=200,
+        sa_seed=1,
+    )
+    result = run_auto_plan(config)
+    assert result.strategy_name == "simulated_annealing"
+    assert isinstance(result, AutoPlanResult)
+
+
 def test_auto_plan_with_persistence(tmp_path):
     """Test auto planning with result persistence and retrieval."""
     # Setup
