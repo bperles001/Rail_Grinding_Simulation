@@ -56,12 +56,9 @@ class RollingHorizonILPStrategy(AutoPlanStrategy):
             return self._fallback.decide_next_action(sim)
 
         target_station = plan.stops[0].station_name
-        target_segment_name = plan.stops[0].segment_name
-        return self._next_real_move_toward(sim, graph, target_station, target_segment_name)
+        return self._next_real_move_toward(sim, graph, target_station)
 
-    def _next_real_move_toward(
-        self, sim: "Simulator", graph, target_station: str, target_segment_name: str
-    ) -> StepDecision:
+    def _next_real_move_toward(self, sim: "Simulator", graph, target_station: str) -> StepDecision:
         options = sim.get_possible_moves()
         if not options:
             return self._fallback.decide_next_action(sim)
@@ -72,8 +69,15 @@ class RollingHorizonILPStrategy(AutoPlanStrategy):
             return float("inf") if distance is None else distance
 
         segments, next_station = min(options, key=remaining_distance)
-        on_target_segment = any(seg.name == target_segment_name for seg in segments)
-        if on_target_segment and needs_maintenance(segments):
+        # Maintain whenever the segments about to be crossed are due, full
+        # stop -- not only when this happens to be the modeled window's
+        # first-choice target. The model re-solves every step and its
+        # "first stop" can point further down the corridor than the very
+        # next physical hop; refusing a free, already-due maintenance along
+        # the way just to stay "on plan" left segments loaded at ~8x their
+        # threshold un-serviced while the machine drove straight through
+        # them (2026-08-11 diagnostic).
+        if needs_maintenance(segments):
             action = maintenance_action_for(segments)
         else:
             action = ACTION_MOVE
