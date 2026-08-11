@@ -164,3 +164,31 @@ def test_falls_back_to_any_direction_moves_instead_of_greedy_when_facing_blocks_
         f"toward the cached target C, got kind={decision.kind!r}"
     )
     assert any(seg.name == "B-C" for seg in decision.segments)
+
+
+def test_replans_when_cached_target_becomes_unreachable_from_current_position(tmp_path):
+    """Regression test: if the cached plan's target station is not reachable
+    from where the machine actually is (a directed-graph dead pocket), every
+    real option ties at "infinitely far" and _next_real_move_toward has no
+    signal to prefer forward progress over backtracking -- it just picks
+    whichever option happens to come first, alternating step to step.
+    Reproduced on the real network: the machine wandered into a pocket (ZQX/
+    ZIQ) from which the modeled target (a segment on a different branch) was
+    genuinely unreachable, and oscillated between the two stations for
+    dozens of steps with no forward progress (2026-08-11 diagnostic). The
+    fix: treat "cached target unreachable from here" as another replan
+    trigger, same spirit as the "new due candidate" safety valve."""
+    sim = _chain_sim(tmp_path, both_due=True)
+    # Plan targets an island station with no path from A or B at all.
+    plan = WindowPlan(
+        stops=[WindowStop(station_name="Island", segment_name="ghost-segment", arrival_day=99)],
+        feasible=True,
+    )
+    second_plan = WindowPlan(stops=[], feasible=True)
+    strategy = _RecordingStrategy([plan, second_plan])
+
+    strategy.decide_next_action(sim)
+    assert strategy.solve_calls == 1, "first call must solve once and cache the (unreachable) plan"
+
+    strategy.decide_next_action(sim)
+    assert strategy.solve_calls == 2, "an unreachable cached target must force a replan instead of flailing forever"

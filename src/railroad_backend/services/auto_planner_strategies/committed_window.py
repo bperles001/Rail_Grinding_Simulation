@@ -60,7 +60,7 @@ class CommittedWindowStrategy(AutoPlanStrategy, abc.ABC):
         candidates = project_due_candidates(sim, self.window_days)
         graph = build_travel_graph(sim.segments)
 
-        if self._should_replan(candidates):
+        if self._should_replan(candidates, graph, station.name):
             plan = self._solve_window(candidates, graph, station.name)
             self._cached_plan = plan
             self._cached_candidate_names = {c.segment_name for c in candidates}
@@ -77,11 +77,24 @@ class CommittedWindowStrategy(AutoPlanStrategy, abc.ABC):
             plan.stops.pop(0)
         return decision
 
-    def _should_replan(self, candidates: List[DueCandidate]) -> bool:
+    def _should_replan(self, candidates: List[DueCandidate], graph: "nx.DiGraph", current_station: str) -> bool:
         if self._cached_plan is None or not self._cached_plan.stops:
             return True
         newly_due = {c.segment_name for c in candidates if c.days_until_due == 0}
-        return not newly_due.issubset(self._cached_candidate_names)
+        if not newly_due.issubset(self._cached_candidate_names):
+            return True
+        # The travel graph is directed (CARREGADO/VAZIO facing is baked into
+        # segment direction) -- the machine's own hop-by-hop execution can
+        # wander into a pocket the cached target is no longer reachable
+        # from, even though it was reachable when the plan was solved. Once
+        # that happens every real option ties at "infinitely far" in
+        # _next_real_move_toward, which has no signal left to prefer
+        # forward progress over backtracking and just oscillates between
+        # whatever two stations connect that pocket (2026-08-11 diagnostic).
+        target_station = self._cached_plan.stops[0].station_name
+        if shortest_travel_days(graph, current_station, target_station) is None:
+            return True
+        return False
 
     def _next_real_move_toward(self, sim: "Simulator", graph, target_station: str) -> StepDecision:
         options = sim.get_possible_moves()
