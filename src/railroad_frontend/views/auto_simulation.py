@@ -146,10 +146,42 @@ def render_auto_simulation_page(
             steps = int(st.slider("Steps to simulate", min_value=5, max_value=80, value=steps_default))
 
             second_kld = bool(st.checkbox("Second KLD installed", value=bool(config.get("second_kld", False))))
-            
+
+            st.markdown("---")
+            st.markdown("**Strategy**")
+            strategy_choices = {"Greedy (atual)": "greedy", "Rolling-horizon ILP": "rolling_ilp"}
+            strategy_default_label = next(
+                (label for label, value in strategy_choices.items() if value == config.get("strategy", "greedy")),
+                "Greedy (atual)",
+            )
+            strategy_label = st.selectbox(
+                "Auto planning strategy",
+                list(strategy_choices.keys()),
+                index=list(strategy_choices.keys()).index(strategy_default_label),
+            )
+            strategy = strategy_choices[strategy_label]
+
+            ilp_window_days = int(config.get("ilp_window_days", 60))
+            ilp_weight_coverage = float(config.get("ilp_weight_coverage", 10.0))
+            ilp_weight_travel = float(config.get("ilp_weight_travel", 1.0))
+            ilp_weight_proximity = float(config.get("ilp_weight_proximity", 0.5))
+            if strategy == "rolling_ilp":
+                ilp_window_days = int(
+                    st.slider("Planning window (days)", min_value=14, max_value=180, value=ilp_window_days)
+                )
+                ilp_weight_coverage = float(
+                    st.slider("Weight: coverage (avoid missed MTBT)", min_value=0.0, max_value=50.0, value=ilp_weight_coverage, step=0.5)
+                )
+                ilp_weight_travel = float(
+                    st.slider("Weight: travel cost", min_value=0.0, max_value=10.0, value=ilp_weight_travel, step=0.1)
+                )
+                ilp_weight_proximity = float(
+                    st.slider("Weight: proximity to MTBT limit", min_value=0.0, max_value=5.0, value=ilp_weight_proximity, step=0.1)
+                )
+
             # Form submit button
             form_submitted = st.form_submit_button("✅ Update Configuration", use_container_width=True, type="primary")
-        
+
         # Only update config when form is submitted
         if form_submitted:
             config["start_station"] = start_station
@@ -158,6 +190,11 @@ def render_auto_simulation_page(
             config["end_year"] = end_year
             config["steps"] = steps
             config["second_kld"] = second_kld
+            config["strategy"] = strategy
+            config["ilp_window_days"] = ilp_window_days
+            config["ilp_weight_coverage"] = ilp_weight_coverage
+            config["ilp_weight_travel"] = ilp_weight_travel
+            config["ilp_weight_proximity"] = ilp_weight_proximity
 
         # Run button outside the form
         run_clicked = st.button("▶️ Run Auto Plan", type="primary", use_container_width=True)
@@ -193,6 +230,11 @@ def render_auto_simulation_page(
                 steps=config["steps"],
                 second_kld=config["second_kld"],
                 network_source=callbacks.network_file_path_provider(),
+                strategy=config.get("strategy", "greedy"),
+                ilp_window_days=config.get("ilp_window_days", 60),
+                ilp_weight_coverage=config.get("ilp_weight_coverage", 10.0),
+                ilp_weight_travel=config.get("ilp_weight_travel", 1.0),
+                ilp_weight_proximity=config.get("ilp_weight_proximity", 0.5),
             )
         
         # Step 4: Generating results
@@ -224,6 +266,7 @@ def render_auto_simulation_page(
                 "stop_details": dict(stop_details),
                 "config": dict(config),
                 "segment_status": callbacks.segment_status_builder(simulator),
+                "strategy": plan_result.strategy_name,
             }
             st.session_state[session_keys.result_key] = result_payload
             auto_result = result_payload
@@ -250,6 +293,7 @@ def render_auto_simulation_page(
 
 def _render_auto_run_details(auto_result: Dict[str, Any], callbacks: AutoSimulationCallbacks) -> None:
     st.markdown("### 🎯 Auto run results")
+    st.caption(f"Strategy: {auto_result.get('strategy', 'greedy')}")
     idle_days = auto_result.get("idle_days_total", 0)
     total_days = auto_result["movement_days_total"] + auto_result["maintenance_days_total"] + idle_days
     

@@ -258,6 +258,12 @@ def run_auto_plan(
     steps: int,
     second_kld: bool,
     network_path: Optional[Path] = None,
+    strategy: str = "greedy",
+    ilp_window_days: int = 60,
+    ilp_weight_coverage: float = 10.0,
+    ilp_weight_travel: float = 1.0,
+    ilp_weight_proximity: float = 0.5,
+    ilp_time_limit_s: float = 20.0,
 ) -> Simulator:
     """Convenience wrapper for tests and CLI usage."""
     result = run_auto_plan_from_args(
@@ -269,6 +275,12 @@ def run_auto_plan(
         steps=steps,
         second_kld=second_kld,
         network_source=network_path or DEFAULT_NETWORK_FILE,
+        strategy=strategy,
+        ilp_window_days=ilp_window_days,
+        ilp_weight_coverage=ilp_weight_coverage,
+        ilp_weight_travel=ilp_weight_travel,
+        ilp_weight_proximity=ilp_weight_proximity,
+        ilp_time_limit_s=ilp_time_limit_s,
     )
     return result.simulator
 
