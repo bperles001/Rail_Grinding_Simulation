@@ -33,6 +33,7 @@ class AutoPlanConfig:
     second_kld: bool
     steps: int = 0
     network_source: Optional[Union[str, Path]] = None
+    strategy: str = "greedy"
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization.
@@ -128,171 +129,42 @@ def _init_simulation(config: AutoPlanConfig) -> Simulator:
     return sim
 
 
-def _component_due(seg, component: str) -> bool:
-    """Check if a single component (curva or tangente) has reached its threshold.
+from .auto_planner_strategies.base import AutoPlanStrategy, StepDecision
+from .auto_planner_strategies.greedy import GreedyUrgencyStrategy
+from .auto_planner_strategies.greedy import component_due as _component_due
+from .auto_planner_strategies.greedy import days_until_next_threshold as _days_until_next_threshold
+from .auto_planner_strategies.greedy import maintenance_action_for as _maintenance_action_for
+from .auto_planner_strategies.greedy import needs_maintenance as _needs_maintenance
+from .auto_planner_strategies.greedy import segments_already_due as _segments_already_due
 
-    Mirrors the pre-split semantics: an explicit 0 threshold still counts as
-    "configured" (>= comparison applies); only a `None` threshold means "not
-    configured" and never triggers maintenance.
-    """
-    threshold = getattr(seg, f"mtbt_threshold_{component}", None)
-    load = getattr(seg, f"load_{component}", 0.0) or 0.0
-    if threshold is None:
-        return False
-    try:
-        return float(load) >= float(threshold)
-    except (TypeError, ValueError):  # pragma: no cover
-        return False
+# NOTE: _component_due/_needs_maintenance/_maintenance_action_for/
+# _segments_already_due/_days_until_next_threshold are re-exported here
+# (rather than only living in auto_planner_strategies/greedy.py) because
+# tests/test_edge_cases.py imports them directly from this module. The
+# strategy logic itself now lives in GreedyUrgencyStrategy.
 
-
-def _needs_maintenance(segments) -> bool:
-    """Check if any of the segments in this move (Singela + directional, or
-    just the one segment where there's no Singela) has a component due.
-
-    Args:
-        segments: A single Segment, or a sequence of Segment (a move option
-            from get_possible_moves() carries 1-2 physical segments).
-
-    Returns:
-        True if any segment/component combination needs maintenance.
-    """
-    seq = (segments,) if not isinstance(segments, (tuple, list)) else segments
-    return any(_component_due(seg, "curva") or _component_due(seg, "tangente") for seg in seq)
+STRATEGY_REGISTRY: Dict[str, "type[AutoPlanStrategy]"] = {
+    "greedy": GreedyUrgencyStrategy,
+}
 
 
-def _maintenance_action_for(segments) -> str:
-    """Pick maintain_curves when only curva is due across all segments in
-    this move, full maintain when any segment's tangente is due.
-
-    There is no "tangente only" action: a full grind covers both
-    components, so it's the correct choice whenever tangente is due on
-    either the Singela or the directional segment.
-    """
-    seq = (segments,) if not isinstance(segments, (tuple, list)) else segments
-    if any(_component_due(seg, "tangente") for seg in seq):
-        return ACTION_MAINTAIN
-    return ACTION_MAINTAIN_CURVES
+def _resolve_strategy(name: str) -> AutoPlanStrategy:
+    strategy_cls = STRATEGY_REGISTRY.get(name)
+    if strategy_cls is None:
+        raise ValueError(f"Unknown Auto Planner strategy: {name!r}. Known: {sorted(STRATEGY_REGISTRY)}")
+    return strategy_cls()
 
 
-def _segments_already_due(sim: Simulator) -> bool:
-    """Check if any segments require immediate maintenance.
-
-    Args:
-        sim: Simulator instance.
-
-    Returns:
-        True if any segment needs maintenance.
-    """
-    return any(_needs_maintenance(seg) for seg in sim.segments)
-
-
-def _days_until_next_threshold(sim: Simulator, *, scan_limit_days: int = 180) -> int:
-    """Calculate days until next segment reaches MTBT threshold.
-
-    Args:
-        sim: Simulator with daily_map and simulation_date.
-        scan_limit_days: Maximum days to scan ahead.
-
-    Returns:
-        Days until next threshold, or 0 if already due or no daily map.
-    """
-    if not sim.daily_map or not sim.simulation_date:
-        return 0
-    projected: Dict[str, float] = {}
-    thresholds: Dict[str, float] = {}
-    component_seg_name: Dict[str, str] = {}
-    for seg in sim.segments:
-        for component, threshold, load in (
-            (f"{seg.name}::curva", seg.mtbt_threshold_curva, seg.load_curva),
-            (f"{seg.name}::tangente", seg.mtbt_threshold_tangente, seg.load_tangente),
-        ):
-            if threshold in (None, 0):
-                continue
-            thresholds[component] = float(threshold)
-            projected[component] = float(load or 0.0)
-            component_seg_name[component] = seg.name
-    if not thresholds:
-        return 0
-    if _segments_already_due(sim):
-        return 0
-    # Cache daily values for all components to reduce dict lookups
-    cached_daily_vals = {
-        component: sim.daily_map.get(component_seg_name[component]) or {}
-        for component in thresholds
-    }
-    current = sim.simulation_date
-    for offset in range(1, scan_limit_days + 1):
-        date_str = (current + timedelta(days=offset - 1)).strftime("%Y-%m-%d")
-        progressed = False
-        for component, threshold in thresholds.items():
-            daily_values = cached_daily_vals[component]
-            increment = daily_values.get(date_str)
-            if increment:
-                projected[component] = projected.get(component, 0.0) + float(increment)
-                progressed = True
-            if projected.get(component, 0.0) >= threshold:
-                return offset
-        if not progressed:
-            # Early exit: if no component had data today, check if any future data exists
-            if not any(daily_vals.get(date_str) for daily_vals in cached_daily_vals.values()):
-                break
-    return 0
-
-
-def _move_priority(pair) -> Tuple[int, float, str]:
-    """Calculate move priority for sorting (urgent first, then by load).
-
-    Args:
-        pair: Tuple of (segment, destination_station).
-
-    Returns:
-        Tuple of (urgency, negative_load, segment_name) for sorting.
-    """
-    segments, _ = pair
-    urgent = 0 if _needs_maintenance(segments) else 1
-    load = max(
-        max(
-            float(getattr(seg, "load_curva", 0.0) or 0.0),
-            float(getattr(seg, "load_tangente", 0.0) or 0.0),
-        )
-        for seg in segments
-    )
-    name = "+".join(seg.name for seg in segments)
-    return (urgent, -load, name)
-
-
-def _perform_next_step(sim: Simulator) -> bool:
-    """Execute one simulation step (move or wait).
-
-    Args:
-        sim: Simulator instance.
-
-    Returns:
-        True if step was successful, False if no valid moves.
-    """
-    if _segments_already_due(sim):
-        options = sim.get_possible_moves()
-        if not options:
-            turned = False
-            if sim.current_station and sim.current_station.can_turn:
-                turned = sim.flip_global_direction()
-            if turned:
-                return True
-            options = sim.get_all_moves_any_direction()
-            if not options:
-                return False
-        segments, next_station = sorted(options, key=_move_priority)[0]
-        action = _maintenance_action_for(segments) if _needs_maintenance(segments) else ACTION_MOVE
-        sim.move_to(segments, next_station, action=action)
+def _execute_decision(sim: Simulator, decision: StepDecision) -> bool:
+    """Execute a StepDecision against the real simulator. Returns True if progress was made."""
+    if decision.kind == "move":
+        sim.move_to(decision.segments, decision.next_station, action=decision.action)
         return True
-
-    wait_days = _days_until_next_threshold(sim)
-    if wait_days <= 0:
-        if sim.daily_map:
-            wait_days = 1
-        else:
-            return False
-    return bool(sim.wait_days(wait_days))
+    if decision.kind == "wait":
+        return bool(sim.wait_days(decision.wait_days))
+    if decision.kind == "turn":
+        return sim.flip_global_direction()
+    return False
 
 
 @dataclass
@@ -307,14 +179,17 @@ class AutoPlanResult:
     simulator: Simulator
     stop_reason: str
     stop_details: Dict[str, str]
+    strategy_name: str = "greedy"
 
 
 def run_auto_plan(config: AutoPlanConfig) -> AutoPlanResult:
     sim = _init_simulation(config)
+    strategy = _resolve_strategy(config.strategy)
     limit_date = datetime(config.end_year, 12, 31)
     stop_reason = "steps_limit"
     for _ in range(config.steps):
-        progressed = _perform_next_step(sim)
+        decision = strategy.decide_next_action(sim)
+        progressed = _execute_decision(sim, decision)
         if not progressed:
             stop_reason = "stalled"
             break
@@ -335,7 +210,12 @@ def run_auto_plan(config: AutoPlanConfig) -> AutoPlanResult:
         "steps_requested": str(config.steps),
         "steps_completed": str(len(sim.steps)),
     }
-    return AutoPlanResult(simulator=sim, stop_reason=stop_reason, stop_details=stop_details_for_result)
+    return AutoPlanResult(
+        simulator=sim,
+        stop_reason=stop_reason,
+        stop_details=stop_details_for_result,
+        strategy_name=config.strategy,
+    )
 
 
 def run_auto_plan_from_args(
@@ -348,6 +228,7 @@ def run_auto_plan_from_args(
     steps: int,
     second_kld: bool,
     network_source: Optional[Union[str, Path]] = None,
+    strategy: str = "greedy",
 ) -> AutoPlanResult:
     config = AutoPlanConfig(
         csv_path=Path(csv_path),
@@ -358,6 +239,7 @@ def run_auto_plan_from_args(
         steps=steps,
         second_kld=second_kld,
         network_source=network_source,
+        strategy=strategy,
     )
     return run_auto_plan(config)
 
