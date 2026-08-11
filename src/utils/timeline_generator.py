@@ -25,6 +25,8 @@ class TimelinePlot:
     axes: Axes
 
 class TimelineGenerator:
+    _STATUS_LETTERS = {"maintenance": "A", "maintenance_curves": "C"}
+
     def __init__(
         self,
         report_data: Sequence[ReportRow],
@@ -194,7 +196,9 @@ class TimelineGenerator:
         if status == 'turn':
             return True, 'turn'
         elif isinstance(mtbt_before, (int, float)) and not pd.isna(mtbt_before):
-            return True, f"{mtbt_before:.0f}"
+            letter = self._STATUS_LETTERS.get(status)
+            text = f"{letter} {mtbt_before:.0f}" if letter else f"{mtbt_before:.0f}"
+            return True, text
         return False, None
 
     def _get_label_color(self, status: str, mtbt_before: Any, mtbt_threshold: Any) -> str:
@@ -306,17 +310,16 @@ class TimelineGenerator:
             bar_left = cast(float, mdates.date2num(start_time))
             x_center = bar_left + (duration / 2.0)
 
-            # Assign color based on status
-            if status == 'move':
-                color = '#81C3FF'  # blue for moves
-            elif status == 'maintenance':
-                color = '#4EA24E'  # green for maintenance
-            elif status == 'maintenance_curves':
-                color = '#9B59B6'  # purple for curves-only maintenance
+            # Assign color based on status + direction (carregado/vazio)
+            direction = row.get('direction')
+            if status == 'turn':
+                color = '#777777'  # gray for turns
             elif status == 'wait':
                 color = '#F2C744'  # yellow for idle periods
-            elif status == 'turn':
-                color = '#777777'  # gray for turns
+            elif status == 'move':
+                color = '#F97316'  # orange for pure movement
+            elif status in ('maintenance', 'maintenance_curves'):
+                color = '#22C55E' if direction == 'vazio' else '#3B82F6'  # green=Desviada, blue=Principal (default)
             else:
                 color = '#888888'
 
@@ -562,17 +565,24 @@ class TimelineGenerator:
         # Add grid
         self.ax.grid(True, alpha=0.3, axis='x')
 
-        # Dynamic legend for statuses present (outside the plot area on the right)
+        # Dynamic legend for statuses+directions present (outside the plot area on the right)
+        maintenance_mask = df['status'].isin(['maintenance', 'maintenance_curves'])
+        has_carregado = bool((maintenance_mask & (df['direction'] != 'vazio')).any())
+        has_vazio = bool((maintenance_mask & (df['direction'] == 'vazio')).any())
         present = set(df['status'].unique().tolist())
         handles = []
+        if has_carregado:
+            handles.append(mpatches.Patch(color='#3B82F6', label='Manutenção Principal/Carregado'))
+        if has_vazio:
+            handles.append(mpatches.Patch(color='#22C55E', label='Manutenção Desviada/Vazio'))
         if 'move' in present:
-            handles.append(mpatches.Patch(color='#333399', label='Move'))
-        if 'maintenance' in present:
-            handles.append(mpatches.Patch(color='#4EA24E', label='Maintenance'))
-        if 'maintenance_curves' in present:
-            handles.append(mpatches.Patch(color='#9B59B6', label='Maintenance (curves)'))
+            handles.append(mpatches.Patch(color='#F97316', label='Movimento'))
+        if 'wait' in present:
+            handles.append(mpatches.Patch(color='#F2C744', label='Espera'))
         if 'turn' in present:
-            handles.append(mpatches.Patch(color='#777777', label='Turn'))
+            handles.append(mpatches.Patch(color='#777777', label='Giro'))
+        if has_carregado or has_vazio:
+            handles.append(mpatches.Patch(facecolor='none', edgecolor='none', label='C = só curva · A = completa'))
         if handles:
             self.ax.legend(handles=handles, loc='upper left', bbox_to_anchor=(1.02, 1.0), frameon=True, borderaxespad=0.0)
 

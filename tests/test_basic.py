@@ -171,6 +171,95 @@ def test_prepare_timeline_rows_y_order_dedupes_by_sb_key():
     assert y_order == ["A-B"]
 
 
+def test_timeline_generator_colors_maintenance_by_direction():
+    rows = [
+        {
+            "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+            "status": "maintenance", "direction": "carregado",
+            "mtbt_before": 8.0, "mtbt_threshold": 100.0,
+        },
+        {
+            "step": "C-D", "start_time": "2026-01-02", "end_time": "2026-01-03",
+            "status": "maintenance", "direction": "vazio",
+            "mtbt_before": 5.0, "mtbt_threshold": 100.0,
+        },
+    ]
+    generator = TimelineGenerator(rows, y_order=["A-B", "C-D"])
+    generator.process_data()
+    plot = generator.create_timeline_plot()
+    import matplotlib.colors as mcolors
+    colors = sorted(patch.get_facecolor() for patch in plot.axes.patches)
+    expected = sorted([
+        mcolors.to_rgba('#3B82F6', alpha=0.8),
+        mcolors.to_rgba('#22C55E', alpha=0.8),
+    ])
+    assert colors == expected
+
+
+def test_timeline_generator_colors_move_and_turn_and_wait():
+    rows = [
+        {
+            "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+            "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+        },
+        {
+            "step": "A-B", "start_time": "2026-01-02", "end_time": "2026-01-03",
+            "status": "wait", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+        },
+        {
+            "step": "A-B", "start_time": "2026-01-03", "end_time": "2026-01-04",
+            "status": "turn", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+        },
+    ]
+    generator = TimelineGenerator(rows, y_order=["A-B"])
+    generator.process_data()
+    plot = generator.create_timeline_plot()
+    import matplotlib.colors as mcolors
+    colors = sorted(patch.get_facecolor() for patch in plot.axes.patches)
+    expected = sorted([
+        mcolors.to_rgba('#F97316', alpha=0.8),
+        mcolors.to_rgba('#F2C744', alpha=0.8),
+        mcolors.to_rgba('#777777', alpha=0.8),
+    ])
+    assert colors == expected
+
+
+def test_timeline_generator_label_combines_letter_and_mtbt():
+    rows = [
+        {
+            "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+            "status": "maintenance", "direction": "carregado",
+            "mtbt_before": 8.0, "mtbt_threshold": 100.0,
+        },
+        {
+            "step": "C-D", "start_time": "2026-01-01", "end_time": "2026-01-02",
+            "status": "maintenance_curves", "direction": "carregado",
+            "mtbt_before": 5.0, "mtbt_threshold": 100.0,
+        },
+    ]
+    generator = TimelineGenerator(rows, y_order=["A-B", "C-D"])
+    generator.process_data()
+    plot = generator.create_timeline_plot()
+    texts = {t.get_text() for t in plot.axes.texts}
+    assert "A 8" in texts
+    assert "C 5" in texts
+
+
+def test_timeline_generator_legend_shows_direction_and_letter_note():
+    rows = [{
+        "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+        "status": "maintenance", "direction": "vazio",
+        "mtbt_before": 8.0, "mtbt_threshold": 100.0,
+    }]
+    generator = TimelineGenerator(rows, y_order=["A-B"])
+    generator.process_data()
+    plot = generator.create_timeline_plot()
+    legend = plot.axes.get_legend()
+    labels = {t.get_text() for t in legend.get_texts()}
+    assert 'Manutenção Desviada/Vazio' in labels
+    assert 'C = só curva · A = completa' in labels
+
+
 def test_timeline_generator_returns_structured_plot():
     _, segments = build_network()
     steps = [
