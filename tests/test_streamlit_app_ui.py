@@ -321,6 +321,110 @@ def test_manual_route_plan_presets_has_no_load_button(tmp_path: Path) -> None:
     assert not [b for b in at.button if b.label == "📂 Load plan"]
 
 
+def test_manual_route_add_move_form_submission_appends_step_with_segment_actions(tmp_path: Path) -> None:
+    """Limitacao de escopo fechada apos a campanha de fuzz de 2026-08-11:
+    nenhum teste de UI submetia de fato o formulario "Add move" (so
+    verificavam a presenca dos radios). Marca "Completa" no radio do
+    segmento e confere que o passo salvo em MANUAL_PLAN_KEY reflete essa
+    escolha -- exatamente a classe de bug ja vista uma vez (07/08: radio
+    voltava pro default "Nada" em silencio)."""
+    from railroad_frontend.state.session import MANUAL_PLAN_KEY
+
+    at = _open_manual_route(tmp_path)
+    radios = [r for r in at.radio if r.key and r.key.startswith("manual_move_action_")]
+    assert radios, "esperava pelo menos 1 radio de segmento no formulario Add move"
+    for r in radios:
+        r.set_value("Completa")
+
+    submit_btn = [b for b in at.button if b.label == "Add move"][0]
+    submit_btn.click().run()
+
+    assert not at.exception
+    plan = at.session_state[MANUAL_PLAN_KEY]
+    assert len(plan) == 1
+    step = plan[0]
+    assert step["mode"] == "move"
+    assert set(step["segment_actions"].values()) == {"completa"}
+
+
+def test_manual_route_two_sequential_move_submissions_both_persist(tmp_path: Path) -> None:
+    """Sequencia de 2 submissoes do formulario Add move -- confere que o
+    plano acumula os 2 passos (sessao/rerun nao perde o primeiro) e que a
+    escolha de segment_actions do PRIMEIRO passo nao e' afetada pela
+    troca de destino disponivel no segundo (classe do bug de 07/08).
+
+    Nota de tecnica de teste: apos um rerun, elementos com a mesma key
+    (ex. o FormSubmitter do botao "Add move") continuam aparecendo em
+    at.button/at.radio junto com a instancia nova -- pegar sempre a
+    ULTIMA ocorrencia ([-1]), nao a primeira, senao o clique/valor se
+    aplica numa instancia obsoleta e a acao vira um no-op silencioso."""
+    from railroad_frontend.state.session import MANUAL_PLAN_KEY
+
+    at = _open_manual_route(tmp_path)
+    first_radios = [r for r in at.radio if r.key and r.key.startswith("manual_move_action_")]
+    for r in first_radios:
+        r.set_value("Completa")
+    [b for b in at.button if b.label == "Add move"][-1].click().run()
+    assert len(at.session_state[MANUAL_PLAN_KEY]) == 1
+    first_step = at.session_state[MANUAL_PLAN_KEY][0]
+
+    second_radios = [r for r in at.radio if r.key and r.key.startswith("manual_move_action_")]
+    assert second_radios, "esperava opcoes de movimento disponiveis a partir da nova posicao"
+    for r in second_radios:
+        r.set_value(r.options[1])  # "Só curva" -- indexado pra evitar mojibake no literal
+    [b for b in at.button if b.label == "Add move"][-1].click().run()
+
+    assert not at.exception
+    plan = at.session_state[MANUAL_PLAN_KEY]
+    assert len(plan) == 2
+    assert plan[0] == first_step  # primeiro passo intacto
+    assert set(plan[1]["segment_actions"].values()) == {"curva"}
+
+
+def test_manual_route_add_turn_button_appends_turn_step(tmp_path: Path) -> None:
+    """Nenhum teste de UI clicava de fato o botao de giro."""
+    from railroad_frontend.state.session import MANUAL_PLAN_KEY
+
+    at = _open_manual_route(tmp_path)
+    turn_btn = [b for b in at.button if "Add turn" in b.label]
+    assert turn_btn, "estacao inicial do fixture (A) tem can_turn=True, botao deveria aparecer"
+    turn_btn[0].click().run()
+
+    assert not at.exception
+    plan = at.session_state[MANUAL_PLAN_KEY]
+    assert plan == [{"mode": "turn"}]
+
+
+def test_manual_route_apply_step_changes_stores_days_override(tmp_path: Path) -> None:
+    """Nenhum teste de UI submetia o formulario "Apply step changes" (edicao
+    de dias na tabela de passos) -- caminho que grava days_override, cujo
+    limite (1-365) foi adicionado nesta mesma rodada de fechamento de
+    gaps."""
+    from railroad_frontend.state.session import MANUAL_PLAN_KEY
+
+    at = _open_manual_route(tmp_path)
+    radios = [r for r in at.radio if r.key and r.key.startswith("manual_move_action_")]
+    for r in radios:
+        r.set_value("Completa")
+    submit_btn = [b for b in at.button if b.label == "Add move"][0]
+    submit_btn.click().run()
+
+    base_days = at.session_state[MANUAL_PLAN_KEY][0].get("days_override")
+    assert base_days is None  # sem override ainda -- usa a duracao calculada
+
+    # Mesmo padrao de test_layout_table_apply_commits_all_pending_edits:
+    # semantica real de form -- o navegador manda a edicao da grade junto
+    # com o clique de submit, num unico round trip (sem .run() no meio).
+    at.session_state["plan_step_editor"] = {
+        "edited_rows": {0: {"Days": 30}}, "added_rows": [], "deleted_rows": [],
+    }
+    apply_btn = [b for b in at.button if b.label == "Apply step changes"][0]
+    apply_btn.click().run()
+
+    assert not at.exception
+    assert at.session_state[MANUAL_PLAN_KEY][0]["days_override"] == 30
+
+
 def test_manual_route_save_plan_includes_current_config(tmp_path: Path) -> None:
     from railroad_frontend.state.session import MANUAL_SAVED_PLANS_KEY
 
