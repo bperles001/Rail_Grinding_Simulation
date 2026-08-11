@@ -420,6 +420,25 @@ def test_timeline_generator_reserves_left_margin_before_first_bar():
     assert left_limit < first_bar_x
 
 
+def test_timeline_generator_month_locator_scales_for_huge_time_span(caplog):
+    """Achado da campanha de fuzz overnight (2026-08-11): um plano com
+    muitas esperas longas em sequencia (cenario extremo pedido pelo
+    Bruno) pode cobrir centenas de anos -- o MonthLocator(interval=1)
+    fixo tentava gerar milhares de ticks e estourava
+    Locator.MAXTICKS (matplotlib registra isso via logging.warning, nao
+    levanta excecao, entao passava batido em silencio). O intervalo do
+    locator agora escala com o espaco de tempo do grafico."""
+    rows = [{
+        "step": "A-B", "start_time": "2026-01-01", "end_time": "2226-01-01",
+        "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+    }]
+    generator = TimelineGenerator(rows, y_order=["A-B"])
+    generator.process_data()
+    with caplog.at_level("WARNING", logger="matplotlib"):
+        generator.create_timeline_plot()
+    assert not any("MAXTICKS" in rec.message for rec in caplog.records)
+
+
 def test_timeline_generator_returns_structured_plot():
     _, segments = build_network()
     steps = [

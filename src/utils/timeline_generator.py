@@ -570,8 +570,19 @@ class TimelineGenerator:
         # first row of y_order (main corridor start) reads at the top.
         self.ax.invert_yaxis()
 
-        # Set x-axis (dates) with monthly locator/formatter as requested
-        self.ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+        # Set x-axis (dates) with a monthly locator whose interval scales
+        # with the plotted time span -- a fixed interval=1 tries to
+        # generate one tick per month regardless of span, which blows
+        # past matplotlib's Locator.MAXTICKS (1000) for extreme plans
+        # (found via the 2026-08-11 fuzz campaign: hundreds of years from
+        # many long "wait" steps chained together). MAXTICKS overflow
+        # doesn't raise -- it only logs a warning and leaves the axis
+        # unreadable, so this must be capped proactively, not caught.
+        span_days = 0.0
+        if not df.empty:
+            span_days = (df['end_time'].max() - df['start_time'].min()).total_seconds() / 86400.0
+        month_interval = max(1, int(span_days / 30.0 / 30) + 1)  # aim for ~30 ticks
+        self.ax.xaxis.set_major_locator(mdates.MonthLocator(interval=month_interval))
         self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 
         # Disable minor ticks to avoid extremely dense tick generation
