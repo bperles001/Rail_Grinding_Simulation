@@ -87,6 +87,7 @@ def solve_window(
     model.Add(arrival_day[0] == 0)
 
     earliness_terms = []
+    lateness_terms = []
     for (i, j), lit in arc_literal.items():
         if j == 0:
             # Fictitious return-to-depot arc, only present to let AddCircuit
@@ -100,16 +101,43 @@ def solve_window(
         model.Add(earliness >= due_day - arrival_day[j]).OnlyEnforceIf(lit)
         model.Add(earliness >= 0)
         earliness_terms.append(earliness)
+        # Lateness: for an already-due candidate (due_day == 0, the common
+        # case), earliness alone is always satisfiable at 0 regardless of
+        # when it's visited — it carries no urgency signal once a segment
+        # has crossed its MTBT threshold. Without this term the solver
+        # minimizes pure travel distance and happily defers already-overdue
+        # segments indefinitely (confirmed on the real network: segments at
+        # ~8x their threshold left unvisited while the machine looped
+        # between two cheap nearby stations — 2026-08-11 diagnostic).
+        lateness = model.NewIntVar(0, _BIG_HORIZON, f"lateness_{j}")
+        model.Add(lateness >= arrival_day[j] - due_day).OnlyEnforceIf(lit)
+        model.Add(lateness >= 0)
+        lateness_terms.append(lateness)
 
     coverage_term = sum(skip_literal.values())
     travel_term = sum(
         arc_travel_days[(i, j)] * lit for (i, j), lit in arc_literal.items() if j != 0
     )
     proximity_term = sum(earliness_terms) if earliness_terms else 0
+    lateness_term = sum(lateness_terms) if lateness_terms else 0
+
+    # A candidate left unvisited for the rest of the window (skip) is
+    # mathematically equivalent to "visited with infinite lateness" — nothing
+    # in the model forces every candidate to be reached, so skip is always an
+    # option the solver could pick. It must never be cheaper than the worst
+    # lateness achievable by actually visiting: bound it above the largest
+    # due_day plus the longest possible tour (all nodes, each hop at the most
+    # expensive edge in the graph), so skipping a reachable candidate is
+    # never the minimizing choice.
+    max_edge_weight = max(arc_travel_days.values()) if arc_travel_days else 1
+    worst_case_tour_length = len(nodes) * max_edge_weight
+    max_due_day = max((c.days_until_due for c in candidates), default=0)
+    skip_penalty_bound = max(1, max_due_day + worst_case_tour_length)
 
     scale = 1000  # CP-SAT objective coefficients must be integers
     model.Minimize(
-        int(weight_coverage * scale) * coverage_term
+        int(weight_coverage * scale * skip_penalty_bound) * coverage_term
+        + int(weight_coverage * scale) * lateness_term
         + int(weight_travel * scale) * travel_term
         + int(weight_proximity * scale) * proximity_term
     )
