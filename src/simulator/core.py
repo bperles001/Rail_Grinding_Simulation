@@ -255,12 +255,14 @@ class Simulator:
 
         Raises:
             TypeError: If days is not an integer.
-            ValueError: If days is less than 1.
+            ValueError: If days is outside 1-365.
         """
         if not isinstance(days, int):
             raise TypeError(f"days must be int, got {type(days).__name__}")
         if days < 1:
             raise ValueError(f"days must be at least 1, got {days}")
+        if days > 365:
+            raise ValueError(f"days must be at most 365, got {days}")
 
         simulation_date = self.simulation_date
         if simulation_date is None:

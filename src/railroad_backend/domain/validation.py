@@ -120,6 +120,8 @@ def validate_manual_plan_step(step: Dict[str, Any], step_idx: int) -> List[str]:
                 errors.append(f"Step {step_idx}: days must be int, got {type(days).__name__}")
             elif days < 1:
                 errors.append(f"Step {step_idx}: days must be at least 1, got {days}")
+            elif days > 365:
+                errors.append(f"Step {step_idx}: days must be at most 365, got {days}")
     
     # 'turn' mode has no additional required fields
     

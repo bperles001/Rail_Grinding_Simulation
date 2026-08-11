@@ -129,6 +129,23 @@ def test_validate_manual_plan_step_rejects_wait_with_negative_days():
     assert "at least 1" in errors[0]
 
 
+def test_validate_manual_plan_step_rejects_wait_above_365_days():
+    """Regressao da campanha de fuzz (2026-08-11): so o widget da UI
+    limitava wait_days a 365 -- um plano importado via JSON podia ter
+    dias arbitrariamente grandes e estourar o eixo do timeline. Validacao
+    de plano agora espelha o mesmo limite do motor."""
+    step = {"mode": "wait", "days": 366}
+    errors = validate_manual_plan_step(step, 1)
+    assert len(errors) == 1
+    assert "at most 365" in errors[0]
+
+
+def test_validate_manual_plan_step_accepts_wait_at_365_days():
+    step = {"mode": "wait", "days": 365}
+    errors = validate_manual_plan_step(step, 1)
+    assert errors == []
+
+
 def test_validate_manual_plan_step_rejects_invalid_segment_action_value():
     """Plan step validation rejects an unknown segment_actions token."""
     step = {

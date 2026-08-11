@@ -338,6 +338,16 @@ def test_simulator_wait_days_validates_input():
     with pytest.raises(ValueError, match="at least 1"):
         sim.wait_days(0)
 
+    # Should reject above the 365-day cap (mirrors the UI widget's
+    # max_value=365 -- found via the 2026-08-11 fuzz campaign: the engine
+    # had no upper bound, only the form widget did, so an imported plan
+    # could set an arbitrarily large wait and blow up timeline rendering)
+    with pytest.raises(ValueError, match="at most 365"):
+        sim.wait_days(366)
+
+    # 365 itself is still valid (boundary)
+    assert sim.wait_days(365) is True
+
 
 def test_simulator_move_to_validates_inputs():
     """Simulator.move_to validates segment, station, and action."""
