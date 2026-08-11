@@ -145,6 +145,21 @@ def test_prepare_timeline_rows_direction_carregado_when_lp_maintained():
     assert rows[0]["direction"] == "carregado"
 
 
+def test_prepare_timeline_rows_keeps_turn_with_no_prior_move():
+    """Achado da campanha de fuzz overnight (2026-08-11): um plano que
+    comeca com giro (maquina inicia numa estacao can_turn e gira antes de
+    qualquer movimento) fazia prepare_timeline_rows devolver lista vazia
+    -- o "elif action == 'turn' and last_step_label" descartava o passo
+    inteiro porque last_step_label so e' setado dentro dos ramos
+    move/wait. TimelineGenerator.process_data() quebrava com ValueError
+    ao tentar montar um DataFrame sem nenhuma linha."""
+    report = [{"segment": "ZTO", "action": "turn", "start": "2026-01-01", "end": "2026-01-02"}]
+    rows, _y_order, _alias = prepare_timeline_rows(report, segments=None, timeline_order=None)
+    assert len(rows) == 1
+    assert rows[0]["step"] == "ZTO"
+    assert rows[0]["status"] == "turn"
+
+
 def test_prepare_timeline_rows_direction_none_when_no_maintenance():
     report = [{
         "segment": "A-B-LD", "segments": ["A-B", "A-B-LD"], "action": "move",

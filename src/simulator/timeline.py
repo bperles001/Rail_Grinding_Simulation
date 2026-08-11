@@ -164,8 +164,17 @@ def prepare_timeline_rows(
             row = _create_timeline_row(action, label, step, segment_thresholds, None)
             if row:
                 timeline_rows.append(row)
-        elif action == "turn" and last_step_label:
-            row = _create_timeline_row(action, last_step_label, step, segment_thresholds, None)
+        elif action == "turn":
+            # Normally reuses the last SB visited. If the plan turns
+            # before ever moving (machine starts at a can_turn station),
+            # last_step_label is still None -- fall back to the turn's
+            # own station name instead of silently dropping the row
+            # (found via the 2026-08-11 fuzz campaign: an all-turn plan
+            # produced zero timeline rows, which crashed
+            # TimelineGenerator.process_data() on an empty DataFrame).
+            label = last_step_label or _sb_key(step.get("segment", "")) or "Idle"
+            last_step_label = label
+            row = _create_timeline_row(action, label, step, segment_thresholds, None)
             if row:
                 timeline_rows.append(row)
 
