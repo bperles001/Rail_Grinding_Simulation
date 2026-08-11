@@ -260,6 +260,67 @@ def test_timeline_generator_legend_shows_direction_and_letter_note():
     assert 'C = só curva · A = completa' in labels
 
 
+def test_timeline_generator_y_axis_is_inverted_so_first_row_is_on_top():
+    """Regressao: barh do matplotlib desenha a posicao 0 embaixo por
+    padrao -- sem inverter o eixo, a ordem geografica configurada em
+    y_order aparece de baixo pra cima na tela, ao contrario do que o
+    Bruno espera lendo de cima pra baixo."""
+    rows = [
+        {
+            "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+            "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+        },
+        {
+            "step": "C-D", "start_time": "2026-01-01", "end_time": "2026-01-02",
+            "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+        },
+    ]
+    generator = TimelineGenerator(rows, y_order=["A-B", "C-D"])
+    generator.process_data()
+    plot = generator.create_timeline_plot()
+    bottom, top = plot.axes.get_ylim()
+    assert bottom > top  # eixo invertido: 0 (A-B, primeiro do y_order) no topo
+
+
+def test_timeline_generator_figsize_stretches_with_time_span():
+    """Plano curto (poucos dias) usa a largura minima; plano longo (varios
+    meses) estica o eixo X, em vez de espremer tudo no mesmo tamanho fixo
+    de sempre -- pedido do Bruno pra reduzir o embaralhamento de rotulos."""
+    short_rows = [{
+        "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+        "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+    }]
+    long_rows = [{
+        "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-12-01",
+        "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+    }]
+    short_gen = TimelineGenerator(short_rows, y_order=["A-B"])
+    short_gen.process_data()
+    short_plot = short_gen.create_timeline_plot()
+
+    long_gen = TimelineGenerator(long_rows, y_order=["A-B"])
+    long_gen.process_data()
+    long_plot = long_gen.create_timeline_plot()
+
+    assert long_plot.figure.get_figwidth() > short_plot.figure.get_figwidth()
+    assert short_plot.figure.get_figwidth() >= 15.0
+
+
+def test_timeline_generator_top_label_placement_moves_toward_smaller_y():
+    """Com o eixo Y invertido (posicao 0 no topo da tela), rotulo "top" tem
+    que ir pra um y_data MENOR que o da barra -- senao a pilha de rotulos
+    de barras pequenas passa a empilhar por cima da linha de baixo (SB
+    seguinte), piorando o embaralhamento em vez de resolver."""
+    from collections import defaultdict
+
+    generator = TimelineGenerator([], y_order=[])
+    placed_above = defaultdict(list)
+    _x_text, y_text, _ha, _va, _conn_x, _conn_y = generator._compute_label_position(
+        'top', bar_left=0.0, duration=0.1, x_center=0.05, y_pos=2.0, placed_above=placed_above,
+    )
+    assert y_text < 2.0
+
+
 def test_timeline_generator_returns_structured_plot():
     _, segments = build_network()
     steps = [

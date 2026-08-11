@@ -136,14 +136,17 @@ class TimelineGenerator:
             conn_y = [y_pos, y_text]
             return x_text, y_text, 'left', 'center', conn_x, conn_y
         else:  # 'top'
+            # Y axis is inverted (position 0 renders at the top of the
+            # screen -- see customize_plot), so "above the bar" on screen
+            # means a SMALLER y_data value, not larger.
             x_text = x_center
             idx_row = int(y_pos)
-            base_y = y_pos + bar_half
+            base_y = y_pos - bar_half
             min_dx = 1.2
             existing = placed_above[idx_row]
             close_count = sum(1 for xv in existing if abs(x_center - xv) < min_dx)
             lane_step = 0.18
-            y_text = base_y + (vert_pad + lane_step * (close_count + 1))
+            y_text = base_y - (vert_pad + lane_step * (close_count + 1))
             placed_above[idx_row].append(x_center)
             conn_x = [x_center, x_text]
             conn_y = [y_pos, y_text]
@@ -177,9 +180,13 @@ class TimelineGenerator:
         )
 
         clip_on = placement == 'center'
+        # Slightly smaller font for labels pushed off small bars (left/
+        # right/top placement) -- reduces overlap when many short steps
+        # cluster close together in time.
+        fontsize = 8 if placement == 'center' else 7
         txt = self.ax.text(
             x_text, y_text, label_text,
-            va=va, ha=ha, fontsize=8, fontweight='bold', color=label_color, clip_on=clip_on
+            va=va, ha=ha, fontsize=fontsize, fontweight='bold', color=label_color, clip_on=clip_on
         )
 
         if interactive_labels:
@@ -260,7 +267,7 @@ class TimelineGenerator:
 
     def create_timeline_plot(
         self,
-        figsize: Tuple[float, float] = (15.0, 10.0),
+        figsize: Optional[Tuple[float, float]] = None,
         interactive_labels: bool = False,
         save_key: str = 's',
         reset_key: str = 'r',
@@ -282,6 +289,20 @@ class TimelineGenerator:
             labels = ordered + extras
         else:
             labels = unique_labels
+
+        if figsize is None:
+            # Stretch the time (x) axis with the plan's span instead of a
+            # fixed size for every plan -- long plans (many months) were
+            # cramming short steps into a few pixels, jumbling their
+            # letter+MTBT labels. ~8 days per inch, floor at the old
+            # default so short plans don't shrink below what worked before.
+            span_days = 0.0
+            if not df.empty:
+                span_days = (df['end_time'].max() - df['start_time'].min()).total_seconds() / 86400.0
+            width = max(15.0, span_days / 8.0)
+            height = max(10.0, 0.5 * len(labels))
+            figsize = (width, height)
+
         # Create figure and axis
         self.fig, self.ax = plt.subplots(figsize=figsize)
 
@@ -546,6 +567,9 @@ class TimelineGenerator:
         self.ax.set_yticks(range(len(unique_steps)))
         self.ax.set_yticklabels(list(unique_steps))
         self.ax.set_ylabel('Steps', fontsize=12, fontweight='bold')
+        # barh draws position 0 at the bottom by default; invert so the
+        # first row of y_order (main corridor start) reads at the top.
+        self.ax.invert_yaxis()
 
         # Set x-axis (dates) with monthly locator/formatter as requested
         self.ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
