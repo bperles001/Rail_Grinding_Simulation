@@ -723,14 +723,17 @@ def _segment_status_rows(sim: Optional[Simulator]) -> List[Dict[str, Any]]:
             last_maintenance[seg_name] = date_str
     rows: List[Dict[str, Any]] = []
     for seg in getattr(sim, "segments", []) or []:
-        load_value = getattr(seg, "load", 0) or 0
+        load_curva = getattr(seg, "load_curva", 0) or 0
+        load_tangente = getattr(seg, "load_tangente", 0) or 0
         try:
-            load_value = float(load_value)
+            load_curva = float(load_curva)
+            load_tangente = float(load_tangente)
         except Exception:
             pass
         rows.append({
             "Segment": seg.name,
-            "Load": load_value,
+            "Load Curva": load_curva,
+            "Load Tangente": load_tangente,
             "Last Maintenance": last_maintenance.get(seg.name, "—"),
         })
     rows.sort(key=lambda item: item["Segment"])
@@ -743,7 +746,8 @@ def _render_segment_status_table(rows: List[Dict[str, Any]], *, title: str) -> N
         st.info("No segment metrics available yet.")
         return
     df = pd.DataFrame(rows)
-    df["Load"] = df["Load"].map(lambda v: f"{v:,.2f}" if isinstance(v, (int, float)) else v)
+    for col in ("Load Curva", "Load Tangente"):
+        df[col] = df[col].map(lambda v: f"{v:,.2f}" if isinstance(v, (int, float)) else v)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
 

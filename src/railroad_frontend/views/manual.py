@@ -542,6 +542,7 @@ def render_manual_route_page(
         result_steps = manual_result.get("steps", [])
         steps_df = pd.DataFrame(result_steps)
         if not steps_df.empty:
+            steps_df = steps_df.drop(columns=["kld_reading"], errors="ignore")
             steps_df["Leitura KLD"] = [_kld_reading_label(s) for s in result_steps]
             st.dataframe(steps_df, use_container_width=True)
         manual_render = render_timeline(

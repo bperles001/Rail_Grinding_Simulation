@@ -791,3 +791,86 @@ def test_move_to_with_segment_actions_rejects_invalid_token(tmp_path):
             segments, destination, action=ACTION_MOVE,
             segment_actions={"A-B-LD": "tangente"},
         )
+
+
+def test_move_to_with_segment_actions_completa_records_maintenance_action(tmp_path):
+    """Regressao: passo com segment_actions "completa" ficava marcado como
+    step["action"] == "move" (a classificacao so olhava o parametro `action`
+    legado, nunca passado como maintain pelo manual_planner). Isso fazia a
+    tabela de resultados e o timeline mostrarem manutencao real como
+    movimento simples."""
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    sim.machine.second_kld_installed = True
+
+    sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "none", "A-B-LD": "completa"},
+    )
+
+    assert sim.steps[-1]["action"] == "maintenance"
+
+
+def test_move_to_with_segment_actions_curva_only_records_maintenance_curves_action(tmp_path):
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    sim.machine.second_kld_installed = True
+
+    sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "curva", "A-B-LD": "none"},
+    )
+
+    assert sim.steps[-1]["action"] == "maintenance_curves"
+
+
+def test_move_to_reports_mtbt_after_curva_e_tangente(tmp_path):
+    """mtbt_after_curva/tangente devem refletir o estado do segmento (`seg`,
+    a perna mais especifica) DEPOIS da manutencao e do acumulo diario do
+    proprio passo -- pedido do Bruno para substituir a coluna morta
+    "mtbt_before" (sempre None, sobra do turn/wait) por um "MTBT depois"
+    de verdade."""
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    singela, directional = segments
+    directional.add_load(3.0)
+    sim.machine.second_kld_installed = True
+
+    sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "none", "A-B-LD": "completa"},
+    )
+
+    step = sim.steps[-1]
+    # sem daily_map nesta rede de teste -- so o reset da manutencao conta
+    assert step["mtbt_after_curva"] == 0.0
+    assert step["mtbt_after_tangente"] == 0.0
+
+
+def test_move_to_with_segment_actions_all_none_records_move_action(tmp_path):
+    from src.models import ACTION_MOVE
+
+    path = _write_trio_network(tmp_path)
+    sim = Simulator(path)
+    sim.init_machine("A", "B", start_year=2025)
+    segments, destination = sim.get_all_moves_any_direction()[0]
+    sim.machine.second_kld_installed = True
+
+    sim.move_to(
+        segments, destination, action=ACTION_MOVE,
+        segment_actions={"A-B": "none", "A-B-LD": "none"},
+    )
+
+    assert sim.steps[-1]["action"] == "move"

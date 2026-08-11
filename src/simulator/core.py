@@ -210,7 +210,6 @@ class Simulator:
                 "segment": station.name,
                 "action": "turn",
                 "facing": machine.facing,
-                "mtbt_before": None,
                 "days": duration,
                 "start": start.strftime("%Y-%m-%d"),
                 "end": end_time.strftime("%Y-%m-%d"),
@@ -277,7 +276,6 @@ class Simulator:
                 "segment": self.current_station.name if self.current_station else "",
                 "action": "wait",
                 "facing": self.machine.facing if self.machine else None,
-                "mtbt_before": None,
                 "days": days,
                 "start": start.strftime("%Y-%m-%d"),
                 "end": end_time.strftime("%Y-%m-%d"),
@@ -362,6 +360,8 @@ class Simulator:
         maintained: Tuple[Segment, ...] = ()
         performed = False
         kld_reading: Dict[str, bool] = {}
+        segment_actions_had_completa = False
+        segment_actions_had_curva = False
         if segment_actions is not None:
             valid_tokens = ("none", "curva", "completa")
             segment_names = {s.name for s in segments}
@@ -376,6 +376,10 @@ class Simulator:
                 if token == "none":
                     continue
                 component = "curva" if token == "curva" else "both"
+                if component == "both":
+                    segment_actions_had_completa = True
+                else:
+                    segment_actions_had_curva = True
                 seg_edge_dir = _classify_directional_segment(component_seg, current_station.name)
                 kld_reading[component_seg.name] = bool(
                     machine.second_kld_installed or seg_edge_dir == machine.global_direction
@@ -414,6 +418,9 @@ class Simulator:
         if end_time is None:
             raise RuntimeError("Simulation date unavailable after move")
 
+        mtbt_after_curva = getattr(seg, "load_curva", None)
+        mtbt_after_tangente = getattr(seg, "load_tangente", None)
+
         self.steps.append(
             {
                 "segment": seg.name,
@@ -422,6 +429,10 @@ class Simulator:
                 "kld_reading": kld_reading,
                 "action": (
                     "maintenance"
+                    if segment_actions_had_completa
+                    else "maintenance_curves"
+                    if segment_actions_had_curva
+                    else "maintenance"
                     if action == ACTION_MAINTAIN and performed
                     else "maintenance_failed"
                     if action == ACTION_MAINTAIN
@@ -434,6 +445,8 @@ class Simulator:
                 "facing": machine.facing,
                 "mtbt_before_curva": float(mtbt_before_curva) if isinstance(mtbt_before_curva, (int, float)) else mtbt_before_curva,
                 "mtbt_before_tangente": float(mtbt_before_tangente) if isinstance(mtbt_before_tangente, (int, float)) else mtbt_before_tangente,
+                "mtbt_after_curva": float(mtbt_after_curva) if isinstance(mtbt_after_curva, (int, float)) else mtbt_after_curva,
+                "mtbt_after_tangente": float(mtbt_after_tangente) if isinstance(mtbt_after_tangente, (int, float)) else mtbt_after_tangente,
                 "days": duration,
                 "start": start.strftime("%Y-%m-%d"),
                 "end": end_time.strftime("%Y-%m-%d"),

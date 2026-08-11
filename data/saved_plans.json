@@ -402,7 +402,7 @@
           "destination": "ZRX",
           "segment_actions": {
             "ZRX-ZRC": "curva",
-            "ZRX-ZRC-V": "completa"
+            "ZRX-ZRC-V": "curva"
           }
         },
         {
@@ -412,7 +412,7 @@
           ],
           "destination": "ZQX",
           "segment_actions": {
-            "ZQX-ZRX": "completa"
+            "ZQX-ZRX": "curva"
           }
         },
         {
@@ -424,7 +424,7 @@
           "destination": "ZIQ",
           "segment_actions": {
             "ZQX-ZIQ": "curva",
-            "ZQX-ZIQ-LD": "completa"
+            "ZQX-ZIQ-LD": "curva"
           }
         },
         {
@@ -436,7 +436,7 @@
           "destination": "ZTI",
           "segment_actions": {
             "ZIQ-ZTI": "curva",
-            "ZIQ-ZTI-LD": "completa"
+            "ZIQ-ZTI-LD": "curva"
           }
         },
         {
@@ -448,7 +448,7 @@
           "destination": "ZTO",
           "segment_actions": {
             "ZTI-ZTO": "curva",
-            "ZTI-ZTO-LD": "completa"
+            "ZTI-ZTO-LD": "curva"
           }
         }
       ]
