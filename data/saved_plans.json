@@ -450,642 +450,543 @@
             "ZTI-ZTO": "curva",
             "ZTI-ZTO-LD": "curva"
           }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZTO-ZCZ",
+            "ZTO-ZCZ-LD"
+          ],
+          "destination": "ZCZ",
+          "segment_actions": {
+            "ZTO-ZCZ": "completa",
+            "ZTO-ZCZ-LD": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZCZ-ZEB",
+            "ZCZ-ZEB-LD"
+          ],
+          "destination": "ZEB",
+          "segment_actions": {
+            "ZCZ-ZEB": "completa",
+            "ZCZ-ZEB-LD": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZEB-TMI",
+            "ZEB-TMI-LD"
+          ],
+          "destination": "TMI",
+          "segment_actions": {
+            "ZEB-TMI": "completa",
+            "ZEB-TMI-LD": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TMI-TCS",
+            "TMI-TCS-LD"
+          ],
+          "destination": "TCS",
+          "segment_actions": {
+            "TMI-TCS": "none",
+            "TMI-TCS-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TCS-TAG",
+            "TCS-TAG-LD"
+          ],
+          "destination": "TAG",
+          "segment_actions": {
+            "TCS-TAG": "none",
+            "TCS-TAG-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TAG-TRO",
+            "TAG-TRO-LD"
+          ],
+          "destination": "TRO",
+          "segment_actions": {
+            "TAG-TRO": "none",
+            "TAG-TRO-LD": "none"
+          }
+        },
+        {
+          "mode": "turn"
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TAG-TRO",
+            "TAG-TRO-LP"
+          ],
+          "destination": "TAG",
+          "segment_actions": {
+            "TAG-TRO": "curva",
+            "TAG-TRO-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TCS-TAG",
+            "TCS-TAG-LP"
+          ],
+          "destination": "TCS",
+          "segment_actions": {
+            "TCS-TAG": "curva",
+            "TCS-TAG-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TMI-TCS",
+            "TMI-TCS-LP"
+          ],
+          "destination": "TMI",
+          "segment_actions": {
+            "TMI-TCS": "curva",
+            "TMI-TCS-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZEB-TMI",
+            "ZEB-TMI-LP"
+          ],
+          "destination": "ZEB",
+          "segment_actions": {
+            "ZEB-TMI": "completa",
+            "ZEB-TMI-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZCZ-ZEB",
+            "ZCZ-ZEB-LP"
+          ],
+          "destination": "ZCZ",
+          "segment_actions": {
+            "ZCZ-ZEB": "completa",
+            "ZCZ-ZEB-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZTO-ZCZ",
+            "ZTO-ZCZ-LP"
+          ],
+          "destination": "ZTO",
+          "segment_actions": {
+            "ZTO-ZCZ": "completa",
+            "ZTO-ZCZ-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZTI-ZTO",
+            "ZTI-ZTO-LP"
+          ],
+          "destination": "ZTI",
+          "segment_actions": {
+            "ZTI-ZTO": "completa",
+            "ZTI-ZTO-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZIQ-ZTI",
+            "ZIQ-ZTI-LP"
+          ],
+          "destination": "ZIQ",
+          "segment_actions": {
+            "ZIQ-ZTI": "completa",
+            "ZIQ-ZTI-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZQX-ZIQ",
+            "ZQX-ZIQ-LP"
+          ],
+          "destination": "ZQX",
+          "segment_actions": {
+            "ZQX-ZIQ": "completa",
+            "ZQX-ZIQ-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZQX-ZRX"
+          ],
+          "destination": "ZRX",
+          "segment_actions": {
+            "ZQX-ZRX": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZQX-ZRX"
+          ],
+          "destination": "ZQX",
+          "segment_actions": {
+            "ZQX-ZRX": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZQX-ZRX"
+          ],
+          "destination": "ZRX",
+          "segment_actions": {
+            "ZQX-ZRX": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZRX-ZRC",
+            "ZRX-ZRC-C"
+          ],
+          "destination": "ZRC",
+          "segment_actions": {
+            "ZRX-ZRC": "completa",
+            "ZRX-ZRC-C": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZRC-ZBL",
+            "ZRC-ZBL-LP"
+          ],
+          "destination": "ZBL",
+          "segment_actions": {
+            "ZRC-ZBL": "completa",
+            "ZRC-ZBL-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZKE-ZBL-C"
+          ],
+          "destination": "ZKE",
+          "segment_actions": {
+            "ZKE-ZBL-C": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZEV-ZKE-C"
+          ],
+          "destination": "ZEV",
+          "segment_actions": {
+            "ZEV-ZKE-C": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZPT-ZEV-C"
+          ],
+          "destination": "ZPT",
+          "segment_actions": {
+            "ZPT-ZEV-C": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZPG-ZPT-C"
+          ],
+          "destination": "ZPG",
+          "segment_actions": {
+            "ZPG-ZPT-C": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZPG-ZPT-V"
+          ],
+          "destination": "ZPT",
+          "segment_actions": {
+            "ZPG-ZPT-V": "completa"
+          }
+        },
+        {
+          "mode": "turn"
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZPT-ZEV-V"
+          ],
+          "destination": "ZEV",
+          "segment_actions": {
+            "ZPT-ZEV-V": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZEV-ZKE-V"
+          ],
+          "destination": "ZKE",
+          "segment_actions": {
+            "ZEV-ZKE-V": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZKE-ZBL-V"
+          ],
+          "destination": "ZBL",
+          "segment_actions": {
+            "ZKE-ZBL-V": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZRC-ZBL",
+            "ZRC-ZBL-LD"
+          ],
+          "destination": "ZRC",
+          "segment_actions": {
+            "ZRC-ZBL": "completa",
+            "ZRC-ZBL-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZRX-ZRC",
+            "ZRX-ZRC-V"
+          ],
+          "destination": "ZRX",
+          "segment_actions": {
+            "ZRX-ZRC": "completa",
+            "ZRX-ZRC-V": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZQX-ZRX"
+          ],
+          "destination": "ZQX",
+          "segment_actions": {
+            "ZQX-ZRX": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZQX-ZIQ",
+            "ZQX-ZIQ-LD"
+          ],
+          "destination": "ZIQ",
+          "segment_actions": {
+            "ZQX-ZIQ": "completa",
+            "ZQX-ZIQ-LD": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZIQ-ZTI",
+            "ZIQ-ZTI-LD"
+          ],
+          "destination": "ZTI",
+          "segment_actions": {
+            "ZIQ-ZTI": "completa",
+            "ZIQ-ZTI-LD": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZTI-ZTO",
+            "ZTI-ZTO-LD"
+          ],
+          "destination": "ZTO",
+          "segment_actions": {
+            "ZTI-ZTO": "completa",
+            "ZTI-ZTO-LD": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZTO-ZCZ",
+            "ZTO-ZCZ-LD"
+          ],
+          "destination": "ZCZ",
+          "segment_actions": {
+            "ZTO-ZCZ": "none",
+            "ZTO-ZCZ-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZCZ-ZEB",
+            "ZCZ-ZEB-LD"
+          ],
+          "destination": "ZEB",
+          "segment_actions": {
+            "ZCZ-ZEB": "none",
+            "ZCZ-ZEB-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZEB-TMI",
+            "ZEB-TMI-LD"
+          ],
+          "destination": "TMI",
+          "segment_actions": {
+            "ZEB-TMI": "none",
+            "ZEB-TMI-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TMI-TCS",
+            "TMI-TCS-LD"
+          ],
+          "destination": "TCS",
+          "segment_actions": {
+            "TMI-TCS": "none",
+            "TMI-TCS-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TCS-TAG",
+            "TCS-TAG-LD"
+          ],
+          "destination": "TAG",
+          "segment_actions": {
+            "TCS-TAG": "none",
+            "TCS-TAG-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TAG-TRO",
+            "TAG-TRO-LD"
+          ],
+          "destination": "TRO",
+          "segment_actions": {
+            "TAG-TRO": "none",
+            "TAG-TRO-LD": "none"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TAG-TRO",
+            "TAG-TRO-LP"
+          ],
+          "destination": "TAG",
+          "segment_actions": {
+            "TAG-TRO": "completa",
+            "TAG-TRO-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TCS-TAG",
+            "TCS-TAG-LP"
+          ],
+          "destination": "TCS",
+          "segment_actions": {
+            "TCS-TAG": "completa",
+            "TCS-TAG-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "TMI-TCS",
+            "TMI-TCS-LP"
+          ],
+          "destination": "TMI",
+          "segment_actions": {
+            "TMI-TCS": "completa",
+            "TMI-TCS-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZEB-TMI",
+            "ZEB-TMI-LP"
+          ],
+          "destination": "ZEB",
+          "segment_actions": {
+            "ZEB-TMI": "completa",
+            "ZEB-TMI-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZCZ-ZEB",
+            "ZCZ-ZEB-LP"
+          ],
+          "destination": "ZCZ",
+          "segment_actions": {
+            "ZCZ-ZEB": "completa",
+            "ZCZ-ZEB-LP": "completa"
+          }
+        },
+        {
+          "mode": "move",
+          "segments": [
+            "ZTO-ZCZ",
+            "ZTO-ZCZ-LP"
+          ],
+          "destination": "ZTO",
+          "segment_actions": {
+            "ZTO-ZCZ": "completa",
+            "ZTO-ZCZ-LP": "completa"
+          }
         }
       ]
     }
   },
-  "auto": {
-    "teste1": {
-      "config": {
-        "start_station": "TRO",
-        "facing_station": "TMI",
-        "start_year": 2026,
-        "end_year": 2026,
-        "steps": 80,
-        "second_kld": false
-      },
-      "result": {
-        "steps": [
-          {
-            "segment": "TRO-TMI",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 13.0,
-            "days": 8,
-            "start": "2026-01-01",
-            "end": "2026-01-09"
-          },
-          {
-            "segment": "TMI-ZTO",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 8.255483870967737,
-            "days": 6,
-            "start": "2026-01-09",
-            "end": "2026-01-15"
-          },
-          {
-            "segment": "Trecho 2 - Singela",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 6.0238709677419315,
-            "days": 2,
-            "start": "2026-01-15",
-            "end": "2026-01-17"
-          },
-          {
-            "segment": "Trecho 2 - Carregado",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 5.106129032258068,
-            "days": 3,
-            "start": "2026-01-17",
-            "end": "2026-01-20"
-          },
-          {
-            "segment": "ZBV-ZKE Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 111.89387096774183,
-            "days": 6,
-            "start": "2026-01-20",
-            "end": "2026-01-26"
-          },
-          {
-            "segment": "ZKE-ZEV Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 112.49193548387083,
-            "days": 6,
-            "start": "2026-01-26",
-            "end": "2026-02-01"
-          },
-          {
-            "segment": "ZEV-ZPT Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 113.08999999999983,
-            "days": 3,
-            "start": "2026-02-01",
-            "end": "2026-02-04"
-          },
-          {
-            "segment": "ZPT-ZPG Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 114.07749999999992,
-            "days": 1,
-            "start": "2026-02-04",
-            "end": "2026-02-05"
-          },
-          {
-            "segment": "ZPG",
-            "action": "turn",
-            "facing": "Vazio",
-            "mtbt_before": null,
-            "days": 1,
-            "start": "2026-02-05",
-            "end": "2026-02-06"
-          },
-          {
-            "segment": "ZPT-ZPG Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 28.7035714285714,
-            "days": 1,
-            "start": "2026-02-06",
-            "end": "2026-02-07"
-          },
-          {
-            "segment": "ZEV-ZPT Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 28.824999999999967,
-            "days": 3,
-            "start": "2026-02-07",
-            "end": "2026-02-10"
-          },
-          {
-            "segment": "ZKE-ZEV Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 29.10249999999997,
-            "days": 6,
-            "start": "2026-02-10",
-            "end": "2026-02-16"
-          },
-          {
-            "segment": "ZBV-ZKE Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 29.657499999999978,
-            "days": 6,
-            "start": "2026-02-16",
-            "end": "2026-02-22"
-          },
-          {
-            "segment": "Trecho 2 - Vazio",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 3.5449999999999933,
-            "days": 3,
-            "start": "2026-02-22",
-            "end": "2026-02-25"
-          },
-          {
-            "segment": "Trecho 2 - Singela",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 13.688571428571416,
-            "days": 2,
-            "start": "2026-02-25",
-            "end": "2026-02-27"
-          },
-          {
-            "segment": "TMI-ZTO",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 16.455714285714272,
-            "days": 16,
-            "start": "2026-02-27",
-            "end": "2026-03-15"
-          },
-          {
-            "segment": "TMI-PSG",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 27.889677419354836,
-            "days": 13,
-            "start": "2026-03-15",
-            "end": "2026-03-28"
-          },
-          {
-            "segment": "PSG-PPN",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 30.0,
-            "days": 7,
-            "start": "2026-03-28",
-            "end": "2026-04-04"
-          },
-          {
-            "segment": "PPN-VLI",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 100.0,
-            "days": 7,
-            "start": "2026-04-04",
-            "end": "2026-04-11"
-          },
-          {
-            "segment": "VLI",
-            "action": "turn",
-            "facing": "Carregado",
-            "mtbt_before": null,
-            "days": 1,
-            "start": "2026-04-11",
-            "end": "2026-04-12"
-          },
-          {
-            "segment": "PPN-VLI",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 0.0,
-            "days": 7,
-            "start": "2026-04-12",
-            "end": "2026-04-19"
-          },
-          {
-            "segment": "PSG-PPN",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 30.0,
-            "days": 7,
-            "start": "2026-04-19",
-            "end": "2026-04-26"
-          },
-          {
-            "segment": "TMI-PSG",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 2.6553225806451626,
-            "days": 5,
-            "start": "2026-04-26",
-            "end": "2026-05-01"
-          },
-          {
-            "segment": "TMI-ZTO",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 17.43428571428572,
-            "days": 16,
-            "start": "2026-05-01",
-            "end": "2026-05-17"
-          },
-          {
-            "segment": "Trecho 2 - Singela",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 36.68290322580647,
-            "days": 5,
-            "start": "2026-05-17",
-            "end": "2026-05-22"
-          },
-          {
-            "segment": "Trecho 2 - Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 41.050645161290255,
-            "days": 10,
-            "start": "2026-05-22",
-            "end": "2026-06-01"
-          },
-          {
-            "segment": "ZBV-ZKE Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 45.506129032258116,
-            "days": 6,
-            "start": "2026-06-01",
-            "end": "2026-06-07"
-          },
-          {
-            "segment": "ZKE-ZEV Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 47.24606451612907,
-            "days": 6,
-            "start": "2026-06-07",
-            "end": "2026-06-13"
-          },
-          {
-            "segment": "ZEV-ZPT Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 48.986000000000004,
-            "days": 3,
-            "start": "2026-06-13",
-            "end": "2026-06-16"
-          },
-          {
-            "segment": "ZPT-ZPG Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 48.08750000000007,
-            "days": 1,
-            "start": "2026-06-16",
-            "end": "2026-06-17"
-          },
-          {
-            "segment": "ZPG",
-            "action": "turn",
-            "facing": "Vazio",
-            "mtbt_before": null,
-            "days": 1,
-            "start": "2026-06-17",
-            "end": "2026-06-18"
-          },
-          {
-            "segment": "ZPT-ZPG Vazio",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 12.042761904761912,
-            "days": 1,
-            "start": "2026-06-18",
-            "end": "2026-06-19"
-          },
-          {
-            "segment": "ZEV-ZPT Vazio",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 12.277000000000005,
-            "days": 2,
-            "start": "2026-06-19",
-            "end": "2026-06-21"
-          },
-          {
-            "segment": "ZKE-ZEV Vazio",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 12.194166666666668,
-            "days": 3,
-            "start": "2026-06-21",
-            "end": "2026-06-24"
-          },
-          {
-            "segment": "ZBV-ZKE Vazio",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 11.93116666666666,
-            "days": 3,
-            "start": "2026-06-24",
-            "end": "2026-06-27"
-          },
-          {
-            "segment": "Trecho 2 - Vazio",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 13.64866666666663,
-            "days": 3,
-            "start": "2026-06-27",
-            "end": "2026-06-30"
-          },
-          {
-            "segment": "Trecho 2 - Singela",
-            "action": "move",
-            "facing": "Vazio",
-            "mtbt_before": 13.204763440860216,
-            "days": 2,
-            "start": "2026-06-30",
-            "end": "2026-07-02"
-          },
-          {
-            "segment": "TMI-ZTO",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 18.122580645161285,
-            "days": 16,
-            "start": "2026-07-02",
-            "end": "2026-07-18"
-          },
-          {
-            "segment": "TRO-TMI",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 43.29032258064514,
-            "days": 35,
-            "start": "2026-07-18",
-            "end": "2026-08-22"
-          },
-          {
-            "segment": "TRO",
-            "action": "turn",
-            "facing": "Carregado",
-            "mtbt_before": null,
-            "days": 1,
-            "start": "2026-08-22",
-            "end": "2026-08-23"
-          },
-          {
-            "segment": "TRO-TMI",
-            "action": "move",
-            "facing": "Carregado",
-            "mtbt_before": 6.522580645161291,
-            "days": 8,
-            "start": "2026-08-23",
-            "end": "2026-08-31"
-          },
-          {
-            "segment": "TMI-ZTO",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 17.554838709677433,
-            "days": 16,
-            "start": "2026-08-31",
-            "end": "2026-09-16"
-          },
-          {
-            "segment": "Trecho 2 - Singela",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 36.64209677419355,
-            "days": 5,
-            "start": "2026-09-16",
-            "end": "2026-09-21"
-          },
-          {
-            "segment": "Trecho 2 - Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 41.2160215053764,
-            "days": 10,
-            "start": "2026-09-21",
-            "end": "2026-10-01"
-          },
-          {
-            "segment": "ZBV-ZKE Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 46.27000000000003,
-            "days": 6,
-            "start": "2026-10-01",
-            "end": "2026-10-07"
-          },
-          {
-            "segment": "ZKE-ZEV Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 46.16941935483873,
-            "days": 6,
-            "start": "2026-10-07",
-            "end": "2026-10-13"
-          },
-          {
-            "segment": "ZEV-ZPT Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 46.06883870967744,
-            "days": 3,
-            "start": "2026-10-13",
-            "end": "2026-10-16"
-          },
-          {
-            "segment": "ZPT-ZPG Carregado",
-            "action": "maintenance",
-            "facing": "Carregado",
-            "mtbt_before": 45.13209677419353,
-            "days": 1,
-            "start": "2026-10-16",
-            "end": "2026-10-17"
-          },
-          {
-            "segment": "ZPG",
-            "action": "turn",
-            "facing": "Vazio",
-            "mtbt_before": null,
-            "days": 1,
-            "start": "2026-10-17",
-            "end": "2026-10-18"
-          },
-          {
-            "segment": "ZPT-ZPG Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 23.32384792626726,
-            "days": 1,
-            "start": "2026-10-18",
-            "end": "2026-10-19"
-          },
-          {
-            "segment": "ZEV-ZPT Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 23.773064516129086,
-            "days": 3,
-            "start": "2026-10-19",
-            "end": "2026-10-22"
-          },
-          {
-            "segment": "ZKE-ZEV Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 23.775241935483916,
-            "days": 6,
-            "start": "2026-10-22",
-            "end": "2026-10-28"
-          },
-          {
-            "segment": "ZBV-ZKE Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 23.779596774193585,
-            "days": 6,
-            "start": "2026-10-28",
-            "end": "2026-11-03"
-          },
-          {
-            "segment": "Trecho 2 - Vazio",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 24.474000000000004,
-            "days": 10,
-            "start": "2026-11-03",
-            "end": "2026-11-13"
-          },
-          {
-            "segment": "Trecho 2 - Singela",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 16.996999999999996,
-            "days": 5,
-            "start": "2026-11-13",
-            "end": "2026-11-18"
-          },
-          {
-            "segment": "TMI-ZTO",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 22.68558064516127,
-            "days": 16,
-            "start": "2026-11-18",
-            "end": "2026-12-04"
-          },
-          {
-            "segment": "TRO-TMI",
-            "action": "maintenance",
-            "facing": "Vazio",
-            "mtbt_before": 24.716451612903235,
-            "days": 35,
-            "start": "2026-12-04",
-            "end": "2027-01-08"
-          }
-        ],
-        "movement_days_total": 77,
-        "maintenance_days_total": 295,
-        "maintenance_count": 35,
-        "stop_reason": "year_limit",
-        "stop_details": {
-          "limit_date": "2026-12-31",
-          "steps_requested": 80,
-          "steps_completed": 57
-        },
-        "segment_status": [
-          {
-            "Segment": "PPN-VLI",
-            "Load": 0.0,
-            "Last Maintenance": "2026-04-11"
-          },
-          {
-            "Segment": "PSG-PPN",
-            "Load": 30.0,
-            "Last Maintenance": "—"
-          },
-          {
-            "Segment": "TMI-PSG",
-            "Load": 18.210322580645197,
-            "Last Maintenance": "2026-03-28"
-          },
-          {
-            "Segment": "TMI-ZTO",
-            "Load": 10.157000000000002,
-            "Last Maintenance": "2026-12-04"
-          },
-          {
-            "Segment": "TRO-TMI",
-            "Load": 3.7032258064516137,
-            "Last Maintenance": "2027-01-08"
-          },
-          {
-            "Segment": "Trecho 2 - Carregado",
-            "Load": 30.57333333333336,
-            "Last Maintenance": "2026-10-01"
-          },
-          {
-            "Segment": "Trecho 2 - Singela",
-            "Load": 11.727999999999994,
-            "Last Maintenance": "2026-11-18"
-          },
-          {
-            "Segment": "Trecho 2 - Vazio",
-            "Load": 4.086000000000006,
-            "Last Maintenance": "2026-11-13"
-          },
-          {
-            "Segment": "ZBV-ZKE Carregado",
-            "Load": 31.069999999999958,
-            "Last Maintenance": "2026-10-07"
-          },
-          {
-            "Segment": "ZBV-ZKE Vazio",
-            "Load": 5.252903225806449,
-            "Last Maintenance": "2026-11-03"
-          },
-          {
-            "Segment": "ZEV-ZPT Carregado",
-            "Load": 26.595161290322558,
-            "Last Maintenance": "2026-10-16"
-          },
-          {
-            "Segment": "ZEV-ZPT Vazio",
-            "Load": 6.091935483870961,
-            "Last Maintenance": "2026-10-22"
-          },
-          {
-            "Segment": "ZIQ-ZPD",
-            "Load": 6.31999999999997,
-            "Last Maintenance": "—"
-          },
-          {
-            "Segment": "ZKE-ZEV Carregado",
-            "Load": 28.83258064516126,
-            "Last Maintenance": "2026-10-13"
-          },
-          {
-            "Segment": "ZKE-ZEV Vazio",
-            "Load": 5.812258064516124,
-            "Last Maintenance": "2026-10-28"
-          },
-          {
-            "Segment": "ZPT-ZPG Carregado",
-            "Load": 24.922903225806433,
-            "Last Maintenance": "2026-10-17"
-          },
-          {
-            "Segment": "ZPT-ZPG Vazio",
-            "Load": 6.052580645161279,
-            "Last Maintenance": "2026-10-19"
-          }
-        ],
-        "config": {
-          "start_station": "TRO",
-          "facing_station": "TMI",
-          "start_year": 2026,
-          "end_year": 2026,
-          "steps": 80,
-          "second_kld": false
-        }
-      },
-      "saved_at": "2025-11-28T16:36:02"
-    }
-  }
+  "auto": {}
 }
