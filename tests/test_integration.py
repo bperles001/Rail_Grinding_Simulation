@@ -9,8 +9,11 @@ from railroad_backend.domain.schedule import build_daily_map, validate_schedule_
 from railroad_backend.persistence.plan_storage import (
     clone_auto_result,
     import_auto_run_payload,
+    import_manual_plan_payload,
+    load_manual_plan,
     load_plan_storage,
     save_auto_run_entry,
+    save_manual_plan,
 )
 from railroad_backend.services.auto_planner import (
     AutoPlanConfig,
@@ -268,6 +271,58 @@ def test_manual_plan_step_days_override_changes_duration(tmp_path):
         result = replay_manual_plan(config, plan)
         assert result.errors == []
         assert result.simulator.steps[-1]["days"] == 9
+    finally:
+        seg.reset_maintenance()  # segments come from the cached default network, shared across tests
+
+
+def test_manual_plan_survives_save_export_import_replay_roundtrip(tmp_path):
+    """Limitacao de escopo fechada apos a campanha de fuzz de 2026-08-11:
+    persistencia de planos nao tinha sido testada ponta-a-ponta. Gera um
+    plano real (move com segment_actions + days_override, wait, turn),
+    salva, exporta pra JSON de verdade (como o download da UI faz),
+    reimporta (como o upload da UI faz), e confere que o replay do plano
+    reimportado chega no mesmo estado final do original."""
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,2025-01\nTRO-TMI,5.0\n")
+
+    config = ManualPlanConfig(
+        csv_path=csv_path, start_station="TRO", facing_station="TMI",
+        start_year=2025, end_year=2025, second_kld=True,
+    )
+    original = replay_manual_plan(config, [])
+    seg = next(s for s in original.simulator.segments if s.start_station.name == "TRO" and s.end_station.name == "TMI")
+    plan = [
+        {"mode": "move", "segment": seg.name, "destination": "TMI", "segment_actions": {seg.name: "completa"}, "days_override": 12},
+        {"mode": "wait", "days": 20},
+    ]
+    try:
+        original = replay_manual_plan(config, plan)
+        assert original.errors == []
+
+        saved = save_manual_plan({}, "Roundtrip", plan, {
+            "start_station": "TRO", "facing_station": "TMI",
+            "start_year": 2025, "end_year": 2025, "second_kld": True,
+        })
+        export_path = tmp_path / "export.json"
+        export_path.write_text(json.dumps({"manual": saved}, ensure_ascii=False), encoding="utf-8")
+
+        reloaded_payload = json.loads(export_path.read_text(encoding="utf-8"))
+        reimported, imported_count = import_manual_plan_payload({}, reloaded_payload)
+        assert imported_count == 1
+        reloaded_config, reloaded_steps = load_manual_plan(reimported, "Roundtrip")
+        assert reloaded_steps == plan
+
+        replayed_config = ManualPlanConfig(
+            csv_path=csv_path,
+            start_station=reloaded_config["start_station"], facing_station=reloaded_config["facing_station"],
+            start_year=reloaded_config["start_year"], end_year=reloaded_config["end_year"],
+            second_kld=reloaded_config["second_kld"],
+        )
+        replayed = replay_manual_plan(replayed_config, reloaded_steps)
+        assert replayed.errors == []
+        assert len(replayed.simulator.steps) == len(original.simulator.steps)
+        assert replayed.simulator.simulation_date == original.simulator.simulation_date
+        assert replayed.simulator.current_station.name == original.simulator.current_station.name
     finally:
         seg.reset_maintenance()  # segments come from the cached default network, shared across tests
 
