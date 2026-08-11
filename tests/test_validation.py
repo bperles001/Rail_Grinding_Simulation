@@ -146,6 +146,26 @@ def test_validate_manual_plan_step_accepts_wait_at_365_days():
     assert errors == []
 
 
+def test_validate_manual_plan_step_rejects_days_override_out_of_range():
+    """days_override (edicao manual de duracao de um passo "move") nao
+    tinha validacao nenhuma -- 0, negativo e valores gigantes passavam
+    direto pro motor sem erro, so descoberto ao investigar a limitacao
+    de escopo apos a campanha de fuzz de 2026-08-11."""
+    base = {"mode": "move", "segments": ["TRO-TMI"], "destination": "TMI", "segment_actions": {"TRO-TMI": "none"}}
+    for bad_override in (0, -5, 366):
+        step = {**base, "days_override": bad_override}
+        errors = validate_manual_plan_step(step, 1)
+        assert len(errors) == 1
+        assert "days_override must be between 1 and 365" in errors[0]
+
+
+def test_validate_manual_plan_step_accepts_valid_days_override():
+    base = {"mode": "move", "segments": ["TRO-TMI"], "destination": "TMI", "segment_actions": {"TRO-TMI": "none"}}
+    step = {**base, "days_override": 30}
+    errors = validate_manual_plan_step(step, 1)
+    assert errors == []
+
+
 def test_validate_manual_plan_step_rejects_invalid_segment_action_value():
     """Plan step validation rejects an unknown segment_actions token."""
     step = {

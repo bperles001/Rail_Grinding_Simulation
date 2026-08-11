@@ -317,6 +317,11 @@ class Simulator:
             raise TypeError(f"next_station must be Station, got {type(next_station).__name__}")
         if not isinstance(action, str) or action not in VALID_ACTIONS:
             raise ValueError(f"action must be one of {sorted(VALID_ACTIONS)!r}, got {action!r}")
+        if duration_override is not None:
+            if isinstance(duration_override, bool) or not isinstance(duration_override, int):
+                raise TypeError(f"duration_override must be int, got {type(duration_override).__name__}")
+            if not (1 <= duration_override <= 365):
+                raise ValueError(f"duration_override must be between 1 and 365, got {duration_override}")
         # Normalise legacy single-char codes to canonical names
         if action == "m":
             action = ACTION_MAINTAIN

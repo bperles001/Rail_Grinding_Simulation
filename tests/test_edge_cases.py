@@ -497,6 +497,21 @@ def test_move_to_without_duration_override_uses_segment_base():
         seg.reset_maintenance()  # segments come from the cached default network, shared across tests
 
 
+def test_move_to_rejects_duration_override_out_of_range():
+    """Achado ao investigar a limitacao de escopo 'days_override nao
+    fuzzado' apos a campanha de 2026-08-11: duration_override nao tinha
+    NENHUMA validacao -- 0, negativo e valores gigantes (ex. 100000, que
+    empurra a data de simulacao pro ano 2298) eram aceitos em silencio.
+    Mesmo limite ja usado por wait_days (1-365) e pelo widget "Days" da
+    tabela de passos (min_value=1, max_value=365)."""
+    sim = Simulator()
+    sim.init_machine("TRO", "TMI", start_year=2025)
+    seg = next(s for s in sim.segments if s.start_station.name == "TRO" and s.end_station.name == "TMI")
+    for bad_override in (0, -5, 366, 100000):
+        with pytest.raises(ValueError, match="duration_override must be between 1 and 365"):
+            sim.move_to(seg, seg.end_station, action="v", duration_override=bad_override)
+
+
 def test_maintain_curves_action_resets_only_curva_component():
     """ACTION_MAINTAIN_CURVES must not clear the tangente accumulator (regression for the
     latent bug where perform_maintenance() ignored which action triggered it)."""

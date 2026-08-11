@@ -110,6 +110,13 @@ def validate_manual_plan_step(step: Dict[str, Any], step_idx: int) -> List[str]:
                 errors.append(
                     f"Step {step_idx}: 'segment_actions' values must be one of {valid_tokens}, got {invalid!r}"
                 )
+
+        if "days_override" in step:
+            days_override = step["days_override"]
+            if isinstance(days_override, bool) or not isinstance(days_override, int):
+                errors.append(f"Step {step_idx}: days_override must be int, got {type(days_override).__name__}")
+            elif not (1 <= days_override <= 365):
+                errors.append(f"Step {step_idx}: days_override must be between 1 and 365, got {days_override}")
     
     elif mode == "wait":
         if "days" not in step:
