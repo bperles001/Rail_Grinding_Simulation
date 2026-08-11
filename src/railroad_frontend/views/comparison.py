@@ -90,6 +90,46 @@ def _comparison_metrics(auto_result: Dict[str, Any], manual_result: Dict[str, An
     return df
 
 
+def render_auto_strategy_comparison(saved_runs: Dict[str, Any]) -> None:
+    """Compare 2+ saved Auto Planner runs (potentially different strategies) side by side."""
+    if not saved_runs or len(saved_runs) < 2:
+        render_empty_state(
+            icon="🧮",
+            title="Not Enough Saved Auto Runs",
+            description="Save at least 2 Auto Simulation runs (e.g. one Greedy, one Rolling-horizon ILP) to compare strategies here.",
+            action_text="Go to Auto Simulation, run a plan, and save it with a descriptive name.",
+        )
+        return
+
+    st.markdown("### 🧮 Compare saved Auto runs")
+    names = sorted(saved_runs.keys())
+    selected = st.multiselect("Runs to compare", names, default=names[: min(3, len(names))])
+    if len(selected) < 2:
+        st.caption("Select at least 2 runs to compare.")
+        return
+
+    rows = []
+    for name in selected:
+        entry = saved_runs[name]
+        result = entry.get("result", {})
+        idle = result.get("idle_days_total", 0)
+        total_days = result.get("movement_days_total", 0) + result.get("maintenance_days_total", 0) + idle
+        rows.append(
+            {
+                "Run": name,
+                "Strategy": result.get("strategy", "greedy"),
+                "Steps": len(result.get("steps", [])),
+                "Maintenance actions": result.get("maintenance_count", 0),
+                "Movement days": result.get("movement_days_total", 0),
+                "Maintenance days": result.get("maintenance_days_total", 0),
+                "Idle days": idle,
+                "Total days": total_days,
+            }
+        )
+    comparison_df = pd.DataFrame(rows).set_index("Run")
+    st.dataframe(comparison_df, use_container_width=True)
+
+
 def render_comparison_page(
     manual_result: Optional[Dict[str, Any]],
     auto_result: Optional[Dict[str, Any]],
@@ -97,8 +137,41 @@ def render_comparison_page(
     render_schedule_network_alert: Callable[[], None],
     segments: Sequence[Any],
     timeline_order: Optional[Sequence[str]] = None,
+    saved_auto_runs: Optional[Dict[str, Any]] = None,
 ) -> None:
-    """Render the comparison tab showing manual versus auto plans."""
+    """Render the comparison tab showing manual versus auto plans, plus a
+    second tab comparing saved Auto Planner runs/strategies against each other."""
+    render_page_header(
+        title="Plan Comparison",
+        icon="⚖️",
+        description="Compare auto-generated and manual plans to determine the optimal maintenance strategy.",
+        workflow_step="Step 4 of 4: Analyze Results"
+    )
+
+    # ARIA announcement for screen readers
+    render_aria_live_region(
+        "Comparison page loaded. Auto and manual plan metrics are now available.",
+        priority="polite"
+    )
+
+    render_schedule_network_alert()
+
+    tab_auto_manual, tab_auto_strategies = st.tabs(["Auto vs Manual", "Compare Auto strategies"])
+
+    with tab_auto_strategies:
+        render_auto_strategy_comparison(saved_auto_runs or {})
+
+    with tab_auto_manual:
+        _render_auto_vs_manual(manual_result, auto_result, segments=segments, timeline_order=timeline_order)
+
+
+def _render_auto_vs_manual(
+    manual_result: Optional[Dict[str, Any]],
+    auto_result: Optional[Dict[str, Any]],
+    *,
+    segments: Sequence[Any],
+    timeline_order: Optional[Sequence[str]] = None,
+) -> None:
     if not manual_result or not auto_result:
         render_empty_state(
             icon="⚖️",
@@ -107,21 +180,7 @@ def render_comparison_page(
             action_text="Navigate to Auto Simulation or Manual Route to generate plans first."
         )
         return
-    
-    render_page_header(
-        title="Plan Comparison",
-        icon="⚖️",
-        description="Compare auto-generated and manual plans to determine the optimal maintenance strategy.",
-        workflow_step="Step 4 of 4: Analyze Results"
-    )
-    
-    # ARIA announcement for screen readers
-    render_aria_live_region(
-        "Comparison page loaded. Auto and manual plan metrics are now available.",
-        priority="polite"
-    )
-    
-    render_schedule_network_alert()
+
     metrics = _comparison_metrics(auto_result, manual_result)
     
     # Determine winner based on total days (lower is better)

@@ -852,6 +852,7 @@ def _render_comparison() -> None:
         render_schedule_network_alert=_render_schedule_network_alert,
         segments=_network_segments(),
         timeline_order=_current_timeline_order() or None,
+        saved_auto_runs=st.session_state.get(AUTO_SAVED_RUNS_KEY, {}),
     )
 
 
