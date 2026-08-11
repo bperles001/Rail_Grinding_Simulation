@@ -34,6 +34,11 @@ class AutoPlanConfig:
     steps: int = 0
     network_source: Optional[Union[str, Path]] = None
     strategy: str = "greedy"
+    ilp_window_days: int = 60
+    ilp_weight_coverage: float = 10.0
+    ilp_weight_travel: float = 1.0
+    ilp_weight_proximity: float = 0.5
+    ilp_time_limit_s: float = 20.0
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization.
@@ -136,6 +141,7 @@ from .auto_planner_strategies.greedy import days_until_next_threshold as _days_u
 from .auto_planner_strategies.greedy import maintenance_action_for as _maintenance_action_for
 from .auto_planner_strategies.greedy import needs_maintenance as _needs_maintenance
 from .auto_planner_strategies.greedy import segments_already_due as _segments_already_due
+from .auto_planner_strategies.rolling_horizon_ilp import RollingHorizonILPStrategy
 
 # NOTE: _component_due/_needs_maintenance/_maintenance_action_for/
 # _segments_already_due/_days_until_next_threshold are re-exported here
@@ -145,13 +151,22 @@ from .auto_planner_strategies.greedy import segments_already_due as _segments_al
 
 STRATEGY_REGISTRY: Dict[str, "type[AutoPlanStrategy]"] = {
     "greedy": GreedyUrgencyStrategy,
+    "rolling_ilp": RollingHorizonILPStrategy,
 }
 
 
-def _resolve_strategy(name: str) -> AutoPlanStrategy:
-    strategy_cls = STRATEGY_REGISTRY.get(name)
+def _resolve_strategy(config: "AutoPlanConfig") -> AutoPlanStrategy:
+    strategy_cls = STRATEGY_REGISTRY.get(config.strategy)
     if strategy_cls is None:
-        raise ValueError(f"Unknown Auto Planner strategy: {name!r}. Known: {sorted(STRATEGY_REGISTRY)}")
+        raise ValueError(f"Unknown Auto Planner strategy: {config.strategy!r}. Known: {sorted(STRATEGY_REGISTRY)}")
+    if config.strategy == "rolling_ilp":
+        return RollingHorizonILPStrategy(
+            window_days=config.ilp_window_days,
+            weight_coverage=config.ilp_weight_coverage,
+            weight_travel=config.ilp_weight_travel,
+            weight_proximity=config.ilp_weight_proximity,
+            time_limit_s=config.ilp_time_limit_s,
+        )
     return strategy_cls()
 
 
@@ -184,7 +199,7 @@ class AutoPlanResult:
 
 def run_auto_plan(config: AutoPlanConfig) -> AutoPlanResult:
     sim = _init_simulation(config)
-    strategy = _resolve_strategy(config.strategy)
+    strategy = _resolve_strategy(config)
     limit_date = datetime(config.end_year, 12, 31)
     stop_reason = "steps_limit"
     for _ in range(config.steps):
@@ -229,6 +244,11 @@ def run_auto_plan_from_args(
     second_kld: bool,
     network_source: Optional[Union[str, Path]] = None,
     strategy: str = "greedy",
+    ilp_window_days: int = 60,
+    ilp_weight_coverage: float = 10.0,
+    ilp_weight_travel: float = 1.0,
+    ilp_weight_proximity: float = 0.5,
+    ilp_time_limit_s: float = 20.0,
 ) -> AutoPlanResult:
     config = AutoPlanConfig(
         csv_path=Path(csv_path),
@@ -240,6 +260,11 @@ def run_auto_plan_from_args(
         second_kld=second_kld,
         network_source=network_source,
         strategy=strategy,
+        ilp_window_days=ilp_window_days,
+        ilp_weight_coverage=ilp_weight_coverage,
+        ilp_weight_travel=ilp_weight_travel,
+        ilp_weight_proximity=ilp_weight_proximity,
+        ilp_time_limit_s=ilp_time_limit_s,
     )
     return run_auto_plan(config)
 
