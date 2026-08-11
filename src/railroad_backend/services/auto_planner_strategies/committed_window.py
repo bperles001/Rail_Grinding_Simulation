@@ -86,6 +86,18 @@ class CommittedWindowStrategy(AutoPlanStrategy, abc.ABC):
     def _next_real_move_toward(self, sim: "Simulator", graph, target_station: str) -> StepDecision:
         options = sim.get_possible_moves()
         if not options:
+            # The current facing has no valid forward move -- try a turn
+            # first (mirrors GreedyUrgencyStrategy's own dead-end handling),
+            # then fall back to considering every physically adjacent
+            # segment regardless of facing. Giving up on the cached target
+            # here (falling straight to Greedy's unrelated local-priority
+            # logic) is what caused the machine to abandon a still-valid,
+            # still-modeled plan and oscillate between two nearby stations
+            # for dozens of steps on the real network (2026-08-11 diagnostic).
+            if sim.current_station and sim.current_station.can_turn:
+                return StepDecision(kind="turn")
+            options = sim.get_all_moves_any_direction()
+        if not options:
             return self._fallback.decide_next_action(sim)
 
         def remaining_distance(option) -> float:

@@ -122,3 +122,45 @@ def test_replans_when_a_new_already_due_candidate_appears_outside_the_cached_pla
 
     strategy.decide_next_action(sim)
     assert strategy.solve_calls == 2, "a newly-due candidate outside the cached plan must force a replan"
+
+
+def test_falls_back_to_any_direction_moves_instead_of_greedy_when_facing_blocks_progress(tmp_path):
+    """Regression test: when the current facing has no valid moves toward
+    the cached plan's target (get_possible_moves() empty) but the station
+    can't turn either, the strategy must still try to make progress toward
+    the target via get_all_moves_any_direction() instead of abandoning the
+    plan for Greedy's unrelated local-priority logic. Reproduced on the real
+    network: the machine got stuck oscillating between two stations for
+    dozens of steps because it silently gave up on a distant, still-modeled
+    target the moment the current facing had no forward option
+    (2026-08-11 diagnostic)."""
+    sim = _chain_sim(tmp_path, both_due=True)
+    # C is the plan's target. Simulate a facing that makes get_possible_moves()
+    # empty from B (this network's B has no can_turn, matching the real
+    # network's ZQX dead end) by monkeypatching it directly.
+    b_station = next(s for s in sim.stations.values() if s.name == "B")
+    assert b_station.can_turn is False
+
+    plan = WindowPlan(
+        stops=[
+            WindowStop(station_name="B", segment_name="A-B", arrival_day=1),
+            WindowStop(station_name="C", segment_name="B-C", arrival_day=2),
+        ],
+        feasible=True,
+    )
+    strategy = _RecordingStrategy([plan])
+
+    d1 = strategy.decide_next_action(sim)  # A -> B, pops A-B
+    sim.move_to(d1.segments, d1.next_station, action=d1.action)  # actually execute it -- current_station must move
+
+    original_get_possible_moves = sim.get_possible_moves
+    sim.get_possible_moves = lambda: []  # simulate a facing dead end at B
+
+    decision = strategy.decide_next_action(sim)
+    sim.get_possible_moves = original_get_possible_moves
+
+    assert decision.kind == "move", (
+        f"expected the strategy to fall back to get_all_moves_any_direction() and keep heading "
+        f"toward the cached target C, got kind={decision.kind!r}"
+    )
+    assert any(seg.name == "B-C" for seg in decision.segments)
