@@ -306,19 +306,56 @@ def test_timeline_generator_figsize_stretches_with_time_span():
     assert short_plot.figure.get_figwidth() >= 15.0
 
 
-def test_timeline_generator_top_label_placement_moves_toward_smaller_y():
-    """Com o eixo Y invertido (posicao 0 no topo da tela), rotulo "top" tem
-    que ir pra um y_data MENOR que o da barra -- senao a pilha de rotulos
-    de barras pequenas passa a empilhar por cima da linha de baixo (SB
-    seguinte), piorando o embaralhamento em vez de resolver."""
-    from collections import defaultdict
-
+def test_timeline_generator_label_placement_defaults_to_left():
     generator = TimelineGenerator([], y_order=[])
-    placed_above = defaultdict(list)
-    _x_text, y_text, _ha, _va, _conn_x, _conn_y = generator._compute_label_position(
-        'top', bar_left=0.0, duration=0.1, x_center=0.05, y_pos=2.0, placed_above=placed_above,
+    placement = generator._determine_label_placement(
+        duration=0.1, label_text="A 8", seq_idx=0, seq_count=1,
     )
-    assert y_text < 2.0
+    assert placement == 'left'
+
+
+def test_timeline_generator_label_placement_middle_of_triple_goes_bottom():
+    """Sequencia de 3 passos curtos na mesma linha (ex: move + turn + move)
+    -- o do meio vai pra baixo da barra em vez de esquerda, pra nao colidir
+    com os rotulos-esquerda dos vizinhos dos dois lados."""
+    generator = TimelineGenerator([], y_order=[])
+    assert generator._determine_label_placement(0.1, "A 8", seq_idx=1, seq_count=3) == 'bottom'
+    assert generator._determine_label_placement(0.1, "A 8", seq_idx=0, seq_count=3) == 'left'
+    assert generator._determine_label_placement(0.1, "A 8", seq_idx=2, seq_count=3) == 'left'
+
+
+def test_timeline_generator_label_placement_center_for_wide_bar():
+    generator = TimelineGenerator([], y_order=[])
+    assert generator._determine_label_placement(duration=50.0, label_text="A 8", seq_idx=0, seq_count=1) == 'center'
+
+
+def test_timeline_generator_bottom_placement_moves_toward_larger_y():
+    """Com o eixo Y invertido, "embaixo da barra" na tela corresponde a um
+    y_data MAIOR (o oposto do "top", que corrigimos antes pra ir pro y_data
+    menor)."""
+    generator = TimelineGenerator([], y_order=[])
+    _x_text, y_text, _ha, _va, _conn_x, _conn_y = generator._compute_label_position(
+        'bottom', bar_left=0.0, duration=0.1, x_center=0.05, y_pos=2.0,
+    )
+    assert y_text > 2.0
+
+
+def test_timeline_generator_reserves_left_margin_before_first_bar():
+    """A primeira barra do grafico inteiro nao tem vizinho anterior pra
+    "emprestar" espaco -- sem margem reservada, o rotulo empurrado pra
+    esquerda dela colide com os nomes das linhas (eixo Y)."""
+    import matplotlib.dates as mdates
+
+    rows = [{
+        "step": "A-B", "start_time": "2026-01-01", "end_time": "2026-01-02",
+        "status": "move", "direction": None, "mtbt_before": None, "mtbt_threshold": None,
+    }]
+    generator = TimelineGenerator(rows, y_order=["A-B"])
+    generator.process_data()
+    plot = generator.create_timeline_plot()
+    left_limit, _right_limit = plot.axes.get_xlim()
+    first_bar_x = mdates.date2num(pd.Timestamp("2026-01-01"))
+    assert left_limit < first_bar_x
 
 
 def test_timeline_generator_returns_structured_plot():

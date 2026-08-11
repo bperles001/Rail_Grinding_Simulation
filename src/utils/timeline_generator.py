@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, DefaultDict, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import matplotlib.dates as mdates
 import matplotlib.patches as mpatches
@@ -63,49 +62,18 @@ class TimelineGenerator:
         label_text: str,
         seq_idx: int,
         seq_count: int,
-        start_time: pd.Timestamp,
-        end_time: pd.Timestamp,
-        prev_end: Any,
-        next_start: Any,
     ) -> str:
-        """Determine optimal label placement (left/right/top) based on bar size and neighbors."""
+        """Small bars get their label pushed left by default -- consistent
+        reading direction instead of alternating sides. Exception: the
+        middle bar of a tight 3-in-a-row on the same line (typically
+        move+turn+move or move+idle+move) goes below instead, so it
+        doesn't collide with its two left-placed neighbors."""
         small_threshold = 0.5 + 0.3 * len(label_text)
         if duration >= small_threshold:
             return 'center'
-
-        def _gap_days(a: Any, b: Any) -> Optional[float]:
-            try:
-                return (pd.Timestamp(a) - pd.Timestamp(b)).total_seconds() / 86400.0
-            except Exception:
-                return None
-
-        prev_gap = _gap_days(start_time, prev_end) if pd.notna(prev_end) else None
-        next_gap = _gap_days(next_start, end_time) if pd.notna(next_start) else None
-        close_thresh = 2.0
-        has_prev_close = prev_gap is not None and prev_gap <= close_thresh
-        has_next_close = next_gap is not None and next_gap <= close_thresh
-
-        if has_prev_close and has_next_close:
-            return 'top'
-        elif has_next_close and not has_prev_close:
-            return 'left'
-        elif has_prev_close and not has_next_close:
-            return 'right'
-        else:
-            # Fallback sequence-based pattern
-            if seq_count == 1:
-                return 'right'
-            elif seq_count == 2:
-                return 'left' if seq_idx == 0 else 'right'
-            else:
-                if seq_idx == 0:
-                    return 'left'
-                elif seq_idx == 1:
-                    return 'right'
-                elif seq_idx == 2:
-                    return 'top'
-                else:
-                    return 'left' if (seq_idx % 2 == 0) else 'right'
+        if seq_count == 3 and seq_idx == 1:
+            return 'bottom'
+        return 'left'
 
     def _compute_label_position(
         self,
@@ -114,7 +82,6 @@ class TimelineGenerator:
         duration: float,
         x_center: float,
         y_pos: float,
-        placed_above: DefaultDict[int, List[float]],
     ) -> Tuple[float, float, str, str, List[float], List[float]]:
         """Compute label coordinates and connector line based on placement strategy."""
         side_pad = 0.25
@@ -129,28 +96,15 @@ class TimelineGenerator:
             conn_x = [bar_left, x_text]
             conn_y = [y_pos, y_text]
             return x_text, y_text, 'right', 'center', conn_x, conn_y
-        elif placement == 'right':
-            x_text = bar_left + duration + side_pad
-            y_text = float(y_pos)
-            conn_x = [bar_left + duration, x_text]
-            conn_y = [y_pos, y_text]
-            return x_text, y_text, 'left', 'center', conn_x, conn_y
-        else:  # 'top'
+        else:  # 'bottom'
             # Y axis is inverted (position 0 renders at the top of the
-            # screen -- see customize_plot), so "above the bar" on screen
-            # means a SMALLER y_data value, not larger.
+            # screen -- see customize_plot), so "below the bar" on screen
+            # means a LARGER y_data value.
             x_text = x_center
-            idx_row = int(y_pos)
-            base_y = y_pos - bar_half
-            min_dx = 1.2
-            existing = placed_above[idx_row]
-            close_count = sum(1 for xv in existing if abs(x_center - xv) < min_dx)
-            lane_step = 0.18
-            y_text = base_y - (vert_pad + lane_step * (close_count + 1))
-            placed_above[idx_row].append(x_center)
+            y_text = y_pos + bar_half + vert_pad
             conn_x = [x_center, x_text]
             conn_y = [y_pos, y_text]
-            return x_text, y_text, 'center', 'bottom', conn_x, conn_y
+            return x_text, y_text, 'center', 'top', conn_x, conn_y
 
     def _add_bar_label(
         self,
@@ -162,26 +116,19 @@ class TimelineGenerator:
         y_pos: float,
         row: Any,
         interactive_labels: bool,
-        placed_above: DefaultDict[int, List[float]],
     ) -> None:
         """Add text label to a bar with appropriate positioning and interactivity."""
         seq_idx = int(row.get('row_seq_idx', 0))
         seq_count = int(row.get('row_seq_count', 1))
-        start_time = pd.Timestamp(row['start_time'])
-        end_time = pd.Timestamp(row['end_time'])
-        prev_end = row.get('prev_end_time', pd.NaT)
-        next_start = row.get('next_start_time', pd.NaT)
 
-        placement = self._determine_label_placement(
-            duration, label_text, seq_idx, seq_count, start_time, end_time, prev_end, next_start
-        )
+        placement = self._determine_label_placement(duration, label_text, seq_idx, seq_count)
         x_text, y_text, ha, va, conn_x, conn_y = self._compute_label_position(
-            placement, bar_left, duration, x_center, y_pos, placed_above
+            placement, bar_left, duration, x_center, y_pos
         )
 
         clip_on = placement == 'center'
         # Slightly smaller font for labels pushed off small bars (left/
-        # right/top placement) -- reduces overlap when many short steps
+        # bottom placement) -- reduces overlap when many short steps
         # cluster close together in time.
         fontsize = 8 if placement == 'center' else 7
         txt = self.ax.text(
@@ -308,8 +255,6 @@ class TimelineGenerator:
 
         # Create y-position mapping for labels
         step_positions: Dict[str, int] = {label: idx for idx, label in enumerate(labels)}
-        # Track placed labels above each row to reduce overlap
-        placed_above: DefaultDict[int, List[float]] = defaultdict(list)
 
         # Plot each step as a horizontal bar
         for _, row in df.iterrows():
@@ -363,10 +308,22 @@ class TimelineGenerator:
                     label_color = self._get_label_color(status, mtbt_before, row.get('mtbt_threshold'))
                     self._add_bar_label(
                         label_text, label_color, duration, bar_left, x_center, y_pos,
-                        row, interactive_labels, placed_above
+                        row, interactive_labels,
                     )
             except Exception:
                 pass
+
+        # Reserve room to the left of the very first bar in the whole chart:
+        # every other bar can push its label onto the empty time before its
+        # earlier neighbor, but the first one has nothing there -- without
+        # this margin its left-pushed label collides with the y-axis tick
+        # labels (SB names).
+        if not df.empty:
+            data_min = cast(float, mdates.date2num(df['start_time'].min()))
+            data_max = cast(float, mdates.date2num(df['end_time'].max()))
+            span = max(data_max - data_min, 1.0)
+            left_pad = max(span * 0.03, 3.0)
+            self.ax.set_xlim(left=data_min - left_pad)
 
         # Customize the plot
         self.customize_plot(labels)
