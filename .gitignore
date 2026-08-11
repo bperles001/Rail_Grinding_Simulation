@@ -31,6 +31,7 @@ htmlcov/
 # Project outputs
 *.png
 reports/
+scripts/*_findings.jsonl
 
 # Log files
 *.log
