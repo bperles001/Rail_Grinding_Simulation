@@ -52,3 +52,31 @@ def test_solve_window_sa_prioritizes_already_due_candidate_over_cheaper_route():
     assert plan.feasible
     visited = [stop.segment_name for stop in plan.stops]
     assert visited[0] == "D-X", f"expected already-due D-X visited first, got order {visited}"
+
+
+def test_solve_window_sa_prioritizes_more_severely_overdue_candidate_between_two_due_now():
+    """Mirrors the CP-SAT severity regression test: two candidates both
+    already due are otherwise indistinguishable by the lateness term alone.
+    X is loaded at 9x its threshold; Y just crossed (1x). Visiting Y first
+    is cheaper in raw travel, but the far-more-overdue X must still win once
+    severity is priced in (2026-08-12 diagnostic, "due severity blindness")."""
+    d, x, y = Station(name="D"), Station(name="X"), Station(name="Y")
+    seg_dx = Segment(name="D-X", start_station=d, end_station=x, move_time_days=3, maintenance_time_days=1)
+    seg_dy = Segment(name="D-Y", start_station=d, end_station=y, move_time_days=1, maintenance_time_days=1)
+    seg_xy = Segment(name="X-Y", start_station=x, end_station=y, move_time_days=10, maintenance_time_days=1)
+    graph = build_travel_graph([seg_dx, seg_dy, seg_xy], {"D": d, "X": x, "Y": y})
+
+    candidates = [
+        DueCandidate(segment_name="D-X", station_name="X", days_until_due=0, service_days=1, severity=9.0),
+        DueCandidate(segment_name="D-Y", station_name="Y", days_until_due=0, service_days=1, severity=1.0),
+    ]
+    plan = solve_window_sa(
+        candidates, graph, start_station="D",
+        weight_coverage=100.0, weight_travel=1.0, weight_proximity=0.0,
+        seed=7,
+    )
+    assert plan.feasible
+    visited = [stop.segment_name for stop in plan.stops]
+    assert visited[0] == "D-X", (
+        f"expected the more severely overdue D-X (9x threshold) visited first despite cheaper alternative, got {visited}"
+    )

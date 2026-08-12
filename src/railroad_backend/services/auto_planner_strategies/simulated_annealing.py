@@ -45,7 +45,12 @@ def _evaluate_tour(
         total_travel += travel
         lateness = max(0, day - candidate.days_until_due)
         earliness = max(0, candidate.days_until_due - day)
-        penalty += weight_coverage * lateness + weight_proximity * earliness
+        # Weight lateness by severity (how far over threshold the segment
+        # already is) so two already-due candidates aren't treated as
+        # equally urgent just because both have days_until_due == 0 -- same
+        # "due severity blindness" fix applied to the CP-SAT solver
+        # (2026-08-12 diagnostic).
+        penalty += weight_coverage * lateness * candidate.severity + weight_proximity * earliness
         stops.append(WindowStop(station_name=candidate.station_name, segment_name=candidate.segment_name, arrival_day=day))
         current = candidate.station_name
     cost = weight_travel * total_travel + penalty
