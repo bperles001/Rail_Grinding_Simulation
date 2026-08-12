@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from ortools.sat.python import cp_model
 
-from .travel_graph import shortest_travel_days
+from .travel_graph import shortest_travel_days_any_direction
 
 if TYPE_CHECKING:
     import networkx as nx
@@ -46,7 +46,7 @@ def solve_window(
     # Only keep candidates actually reachable from the depot within the graph.
     reachable: List[Tuple[int, "DueCandidate", int]] = []
     for idx, candidate in enumerate(candidates, start=1):
-        travel_days = shortest_travel_days(graph, start_station, candidate.station_name)
+        travel_days = shortest_travel_days_any_direction(graph, start_station, candidate.station_name)
         if travel_days is not None:
             reachable.append((idx, candidate, travel_days))
     if not reachable:
@@ -71,7 +71,7 @@ def solve_window(
                     skip_literal[i] = lit
                     arcs.append((i, i, lit))
                 continue
-            travel = shortest_travel_days(graph, station_by_node[i], station_by_node[j])
+            travel = shortest_travel_days_any_direction(graph, station_by_node[i], station_by_node[j])
             if travel is None:
                 continue
             lit = model.NewBoolVar(f"arc_{i}_{j}")

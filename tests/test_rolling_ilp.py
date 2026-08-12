@@ -9,7 +9,8 @@ def _three_node_graph():
     a, b, c = Station(name="A"), Station(name="B"), Station(name="C")
     seg_ab = Segment(name="A-B", start_station=a, end_station=b, move_time_days=1, maintenance_time_days=1)
     seg_bc = Segment(name="B-C", start_station=b, end_station=c, move_time_days=1, maintenance_time_days=1)
-    return build_travel_graph([seg_ab, seg_bc])
+    stations = {"A": a, "B": b, "C": c}
+    return build_travel_graph([seg_ab, seg_bc], stations)
 
 
 def test_solve_window_visits_both_reachable_candidates_when_cheap():
@@ -24,8 +25,14 @@ def test_solve_window_visits_both_reachable_candidates_when_cheap():
         time_limit_s=5.0,
     )
     assert plan.feasible
-    visited_segments = [stop.segment_name for stop in plan.stops]
-    assert visited_segments == ["A-B", "B-C"]
+    visited_segments = {stop.segment_name for stop in plan.stops}
+    # Order isn't asserted here: with the turn-aware graph, closing the
+    # AddCircuit loop back to the depot may only be physically possible via
+    # one particular visiting order (e.g. this fixture's only return path
+    # to A is the VAZIO leg out of B -- there's no direct return from C).
+    # What this test actually cares about is that both cheap, reachable
+    # candidates get visited, not which order that happens in.
+    assert visited_segments == {"A-B", "B-C"}
 
 
 def test_solve_window_skips_unreachable_candidate_instead_of_failing():
@@ -67,7 +74,8 @@ def test_solve_window_prioritizes_already_due_candidate_over_cheaper_route():
     seg_dx = Segment(name="D-X", start_station=d, end_station=x, move_time_days=3, maintenance_time_days=1)
     seg_dy = Segment(name="D-Y", start_station=d, end_station=y, move_time_days=1, maintenance_time_days=1)
     seg_xy = Segment(name="X-Y", start_station=x, end_station=y, move_time_days=10, maintenance_time_days=1)
-    graph = build_travel_graph([seg_dx, seg_dy, seg_xy])
+    stations = {"D": d, "X": x, "Y": y}
+    graph = build_travel_graph([seg_dx, seg_dy, seg_xy], stations)
 
     candidates = [
         DueCandidate(segment_name="D-X", station_name="X", days_until_due=0, service_days=1),
