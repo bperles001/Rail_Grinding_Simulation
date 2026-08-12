@@ -14,7 +14,7 @@ import random
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from .rolling_ilp import WindowPlan, WindowStop
-from .travel_graph import shortest_travel_days
+from .travel_graph import shortest_travel_days_any_direction
 
 if TYPE_CHECKING:
     import networkx as nx
@@ -38,7 +38,7 @@ def _evaluate_tour(
     stops: List[WindowStop] = []
     for name in order:
         candidate = candidates_by_name[name]
-        travel = shortest_travel_days(graph, current, candidate.station_name)
+        travel = shortest_travel_days_any_direction(graph, current, candidate.station_name)
         if travel is None:
             return math.inf, []
         day += travel
@@ -64,7 +64,7 @@ def _construct_initial_order(
         best_name: Optional[str] = None
         best_key: Optional[Tuple[int, int]] = None
         for name, candidate in remaining.items():
-            travel = shortest_travel_days(graph, current, candidate.station_name)
+            travel = shortest_travel_days_any_direction(graph, current, candidate.station_name)
             if travel is None:
                 continue
             key = (candidate.days_until_due, travel)
@@ -94,7 +94,7 @@ def solve_window_sa(
     if not candidates:
         return WindowPlan(stops=[], feasible=True)
 
-    reachable = [c for c in candidates if shortest_travel_days(graph, start_station, c.station_name) is not None]
+    reachable = [c for c in candidates if shortest_travel_days_any_direction(graph, start_station, c.station_name) is not None]
     if not reachable:
         return WindowPlan(stops=[], feasible=True)
 

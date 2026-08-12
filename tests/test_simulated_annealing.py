@@ -8,7 +8,7 @@ from src.models import Segment, Station
 def test_solve_window_sa_empty_candidates_returns_feasible_empty_plan():
     a = Station(name="A")
     seg = Segment(name="A-A", start_station=a, end_station=a, move_time_days=1, maintenance_time_days=1)
-    graph = build_travel_graph([seg])
+    graph = build_travel_graph([seg], {"A": a})
     plan = solve_window_sa([], graph, start_station="A", weight_coverage=1.0, weight_travel=1.0, weight_proximity=0.1)
     assert plan.feasible
     assert plan.stops == []
@@ -17,7 +17,7 @@ def test_solve_window_sa_empty_candidates_returns_feasible_empty_plan():
 def test_solve_window_sa_skips_unreachable_candidate_instead_of_failing():
     a, b = Station(name="A"), Station(name="B")
     seg_ab = Segment(name="A-B", start_station=a, end_station=b, move_time_days=1, maintenance_time_days=1)
-    graph = build_travel_graph([seg_ab])
+    graph = build_travel_graph([seg_ab], {"A": a, "B": b})
     candidates = [
         DueCandidate(segment_name="A-B", station_name="B", days_until_due=5, service_days=1),
         DueCandidate(segment_name="ghost", station_name="Nowhere", days_until_due=1, service_days=1),
@@ -38,7 +38,7 @@ def test_solve_window_sa_prioritizes_already_due_candidate_over_cheaper_route():
     seg_dx = Segment(name="D-X", start_station=d, end_station=x, move_time_days=3, maintenance_time_days=1)
     seg_dy = Segment(name="D-Y", start_station=d, end_station=y, move_time_days=1, maintenance_time_days=1)
     seg_xy = Segment(name="X-Y", start_station=x, end_station=y, move_time_days=10, maintenance_time_days=1)
-    graph = build_travel_graph([seg_dx, seg_dy, seg_xy])
+    graph = build_travel_graph([seg_dx, seg_dy, seg_xy], {"D": d, "X": x, "Y": y})
 
     candidates = [
         DueCandidate(segment_name="D-X", station_name="X", days_until_due=0, service_days=1),
