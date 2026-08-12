@@ -223,12 +223,31 @@ def run_auto_plan(config: AutoPlanConfig) -> AutoPlanResult:
     strategy = _resolve_strategy(config)
     limit_date = datetime(config.end_year, 12, 31)
     stop_reason = "steps_limit"
+    # Some real segments have move_time_days == 0 (e.g. ZQX-ZRX in the real
+    # network) -- a strategy that ends up repeatedly executing a
+    # zero-duration move never advances sim.simulation_date, so "progressed"
+    # (a step was executed) is not the same thing as "real progress was
+    # made". Without this check the loop burns through the entire step
+    # budget at a single frozen calendar date, reporting a near-zero total
+    # duration that looks like a fast, efficient run but is actually a
+    # silent infinite loop (confirmed on the real network: a 400-step run
+    # reported only 41 total days -- 2026-08-12 diagnostic).
+    zero_progress_streak = 0
+    zero_progress_limit = max(10, len(sim.stations) * 2)
     for _ in range(config.steps):
+        date_before = sim.simulation_date
         decision = strategy.decide_next_action(sim)
         progressed = _execute_decision(sim, decision)
         if not progressed:
             stop_reason = "stalled"
             break
+        if sim.simulation_date == date_before:
+            zero_progress_streak += 1
+            if zero_progress_streak >= zero_progress_limit:
+                stop_reason = "stalled"
+                break
+        else:
+            zero_progress_streak = 0
         if sim.simulation_date and sim.simulation_date.date() > limit_date.date():
             stop_reason = "year_limit"
             break

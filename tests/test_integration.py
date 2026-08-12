@@ -139,6 +139,75 @@ def test_auto_plan_simulated_annealing_strategy_runs_end_to_end(tmp_path):
     assert isinstance(result, AutoPlanResult)
 
 
+def test_auto_plan_stops_as_stalled_on_a_zero_duration_move_loop(tmp_path, monkeypatch):
+    """Regression test: the real network has at least one segment with
+    `move_time_days: 0` (ZQX-ZRX). If a strategy ever ends up repeatedly
+    executing a zero-duration move (e.g. bouncing back and forth on it),
+    the simulator's calendar date never advances, so the run loop must
+    detect the lack of real progress and stop early (stop_reason=
+    "stalled") instead of silently burning the entire step budget while
+    reporting a near-zero total duration -- confirmed on the real network:
+    a 400-step run with `ilp_window_days=180` reported only 41 total days,
+    which is impossible given every real move takes >= 1 day
+    (2026-08-12 diagnostic)."""
+    from railroad_backend.services import auto_planner as auto_planner_module
+    from railroad_backend.services.auto_planner_strategies.base import AutoPlanStrategy, StepDecision
+
+    network_path = tmp_path / "zero_duration_network.json"
+    network_path.write_text(
+        json.dumps(
+            {
+                "name": "ZeroDurationLoop",
+                "stations": [
+                    {"name": "A", "can_turn": False},
+                    {"name": "B", "can_turn": False},
+                ],
+                "segments": [
+                    {
+                        "name": "A-B", "start": "A", "end": "B", "length_km": 1.0,
+                        "mtbt_threshold_curva": 1000.0, "mtbt_threshold_tangente": 1000.0,
+                        "move_time_days": 0, "maintenance_time_days": 1,
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,2025-01\nA-B,0.0\n")
+
+    class _AlwaysBounceStrategy(AutoPlanStrategy):
+        """Always moves across the only (zero-duration) segment available."""
+
+        def decide_next_action(self, sim):
+            segments, next_station = sim.get_all_moves_any_direction()[0]
+            return StepDecision(kind="move", segments=segments, next_station=next_station, action="move")
+
+    monkeypatch.setitem(auto_planner_module.STRATEGY_REGISTRY, "always_bounce", _AlwaysBounceStrategy)
+    monkeypatch.setattr(
+        auto_planner_module,
+        "_resolve_strategy",
+        lambda config: _AlwaysBounceStrategy() if config.strategy == "always_bounce" else auto_planner_module.STRATEGY_REGISTRY[config.strategy](),
+    )
+
+    config = AutoPlanConfig(
+        csv_path=csv_path,
+        start_station="A",
+        facing_station="B",
+        start_year=2025,
+        end_year=2026,
+        second_kld=False,
+        steps=400,
+        network_source=network_path,
+        strategy="always_bounce",
+    )
+    result = run_auto_plan(config)
+    assert result.stop_reason == "stalled"
+    assert len(result.simulator.steps) < 400, (
+        "a zero-progress loop must be caught well before exhausting the full step budget"
+    )
+
+
 def test_auto_plan_with_persistence(tmp_path):
     """Test auto planning with result persistence and retrieval."""
     # Setup
