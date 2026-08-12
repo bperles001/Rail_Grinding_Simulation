@@ -5,16 +5,20 @@ single real step suffer from "nervousness" -- a documented phenomenon in
 rolling-horizon/MRP scheduling (Jensen 1993, "Nervousness and Reorder
 Policies in Rolling Horizon Environments"; Heisig 2002, "Nervousness in
 Material Requirements Planning Systems"; Kimms 1997, "Rolling Planning
-Horizon") where near-tied solutions flip between consecutive replans,
-causing the machine to oscillate between two targets instead of ever
-committing to either. Confirmed on the real network: `RollingHorizonILPStrategy`
-looped between two adjacent stations for dozens of steps after servicing
-both, because every step re-solved from scratch with no memory of the
-previous plan (2026-08-11 diagnostic).
+Horizon") where near-tied solutions flip between consecutive replans.
 
 This base class caches the resolved `WindowPlan` and keeps executing it
 until either the plan is exhausted, or a candidate that's due *right now*
-turns up outside the set the cached plan was built from.
+turns up outside the set the cached plan was built from, or the cached
+target becomes unreachable from wherever the machine actually is.
+
+Real execution follows the exact shortest path (turn-aware, via
+`shortest_path_first_step`) instead of picking whichever immediately
+adjacent option looks closest -- the greedy nearest-neighbor heuristic
+could wander into a pocket the target wasn't reachable from without an
+un-modeled turn, and then had no signal left to prefer forward progress
+over backtracking (confirmed on the real network as an indefinite
+2-station oscillation -- 2026-08-11/12 diagnostic).
 """
 from __future__ import annotations
 
@@ -27,7 +31,7 @@ from .base import AutoPlanStrategy, StepDecision
 from .greedy import GreedyUrgencyStrategy, maintenance_action_for, needs_maintenance
 from .horizon import DueCandidate, project_due_candidates
 from .rolling_ilp import WindowPlan
-from .travel_graph import build_travel_graph, shortest_travel_days
+from .travel_graph import State, build_travel_graph, shortest_path_first_step, shortest_travel_days
 
 if TYPE_CHECKING:
     import networkx as nx
@@ -54,13 +58,14 @@ class CommittedWindowStrategy(AutoPlanStrategy, abc.ABC):
 
     def decide_next_action(self, sim: "Simulator") -> StepDecision:
         station = sim.current_station
-        if station is None:
+        if station is None or sim.machine is None:
             return self._fallback.decide_next_action(sim)
+        current_state: State = (station.name, sim.machine.global_direction)
 
         candidates = project_due_candidates(sim, self.window_days)
-        graph = build_travel_graph(sim.segments)
+        graph = build_travel_graph(sim.segments, sim.stations)
 
-        if self._should_replan(candidates, graph, station.name):
+        if self._should_replan(candidates, graph, current_state):
             plan = self._solve_window(candidates, graph, station.name)
             self._cached_plan = plan
             self._cached_candidate_names = {c.segment_name for c in candidates}
@@ -72,53 +77,36 @@ class CommittedWindowStrategy(AutoPlanStrategy, abc.ABC):
 
         target_station = plan.stops[0].station_name
         target_segment_name = plan.stops[0].segment_name
-        decision = self._next_real_move_toward(sim, graph, target_station)
+        decision = self._next_real_move_toward(sim, graph, current_state, target_station)
         if decision.kind == "move" and any(seg.name == target_segment_name for seg in (decision.segments or ())):
             plan.stops.pop(0)
         return decision
 
-    def _should_replan(self, candidates: List[DueCandidate], graph: "nx.DiGraph", current_station: str) -> bool:
+    def _should_replan(self, candidates: List[DueCandidate], graph: "nx.DiGraph", current_state: State) -> bool:
         if self._cached_plan is None or not self._cached_plan.stops:
             return True
         newly_due = {c.segment_name for c in candidates if c.days_until_due == 0}
         if not newly_due.issubset(self._cached_candidate_names):
             return True
-        # The travel graph is directed (CARREGADO/VAZIO facing is baked into
-        # segment direction) -- the machine's own hop-by-hop execution can
-        # wander into a pocket the cached target is no longer reachable
-        # from, even though it was reachable when the plan was solved. Once
-        # that happens every real option ties at "infinitely far" in
-        # _next_real_move_toward, which has no signal left to prefer
-        # forward progress over backtracking and just oscillates between
-        # whatever two stations connect that pocket (2026-08-11 diagnostic).
         target_station = self._cached_plan.stops[0].station_name
-        if shortest_travel_days(graph, current_station, target_station) is None:
+        if shortest_travel_days(graph, current_state, target_station) is None:
             return True
         return False
 
-    def _next_real_move_toward(self, sim: "Simulator", graph, target_station: str) -> StepDecision:
-        options = sim.get_possible_moves()
-        if not options:
-            # The current facing has no valid forward move -- try a turn
-            # first (mirrors GreedyUrgencyStrategy's own dead-end handling),
-            # then fall back to considering every physically adjacent
-            # segment regardless of facing. Giving up on the cached target
-            # here (falling straight to Greedy's unrelated local-priority
-            # logic) is what caused the machine to abandon a still-valid,
-            # still-modeled plan and oscillate between two nearby stations
-            # for dozens of steps on the real network (2026-08-11 diagnostic).
-            if sim.current_station and sim.current_station.can_turn:
-                return StepDecision(kind="turn")
-            options = sim.get_all_moves_any_direction()
-        if not options:
+    def _next_real_move_toward(
+        self, sim: "Simulator", graph: "nx.DiGraph", current_state: State, target_station: str
+    ) -> StepDecision:
+        step = shortest_path_first_step(graph, current_state, target_station)
+        if step is None:
             return self._fallback.decide_next_action(sim)
+        if step.kind == "turn":
+            return StepDecision(kind="turn")
 
-        def remaining_distance(option) -> float:
-            segments, next_station = option
-            distance = shortest_travel_days(graph, next_station.name, target_station)
-            return float("inf") if distance is None else distance
-
-        segments, next_station = min(options, key=remaining_distance)
+        options = sim.get_possible_moves() or sim.get_all_moves_any_direction()
+        match = next((opt for opt in options if opt[1].name == step.next_station), None)
+        if match is None:
+            return self._fallback.decide_next_action(sim)
+        segments, next_station = match
         if needs_maintenance(segments):
             action = maintenance_action_for(segments)
         else:
