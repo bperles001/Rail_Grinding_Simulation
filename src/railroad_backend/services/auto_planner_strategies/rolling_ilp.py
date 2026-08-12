@@ -112,7 +112,17 @@ def solve_window(
         lateness = model.NewIntVar(0, _BIG_HORIZON, f"lateness_{j}")
         model.Add(lateness >= arrival_day[j] - due_day).OnlyEnforceIf(lit)
         model.Add(lateness >= 0)
-        lateness_terms.append(lateness)
+        # Weight lateness by how severely overdue the candidate already is
+        # (DueCandidate.severity: 1.0 = just crossed, 9.0 = loaded at 9x
+        # threshold). Without this, two already-due candidates are
+        # indistinguishable to the lateness term (both have due_day == 0),
+        # so the solver picks whichever is cheaper to reach first regardless
+        # of how much worse the other one is — confirmed on the real
+        # network: a segment left at ~9x its threshold while the planner
+        # kept re-servicing nearby segments that had only just crossed
+        # (2026-08-12 diagnostic, "due severity blindness").
+        severity_scaled = max(1, round(by_node[j].severity * 10))
+        lateness_terms.append(severity_scaled * lateness)
 
     coverage_term = sum(skip_literal.values())
     travel_term = sum(
@@ -127,12 +137,13 @@ def solve_window(
     # option the solver could pick. It must never be cheaper than the worst
     # lateness achievable by actually visiting: bound it above the largest
     # due_day plus the longest possible tour (all nodes, each hop at the most
-    # expensive edge in the graph), so skipping a reachable candidate is
-    # never the minimizing choice.
+    # expensive edge in the graph), scaled by the worst severity present, so
+    # skipping a reachable candidate is never the minimizing choice.
     max_edge_weight = max(arc_travel_days.values()) if arc_travel_days else 1
     worst_case_tour_length = len(nodes) * max_edge_weight
     max_due_day = max((c.days_until_due for c in candidates), default=0)
-    skip_penalty_bound = max(1, max_due_day + worst_case_tour_length)
+    max_severity_scaled = max((max(1, round(c.severity * 10)) for c in candidates), default=1)
+    skip_penalty_bound = max(1, (max_due_day + worst_case_tour_length) * max_severity_scaled)
 
     scale = 1000  # CP-SAT objective coefficients must be integers
     model.Minimize(

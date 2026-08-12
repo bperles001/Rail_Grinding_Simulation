@@ -91,3 +91,35 @@ def test_solve_window_prioritizes_already_due_candidate_over_cheaper_route():
     assert visited_segments[0] == "D-X", (
         f"expected already-due D-X visited first despite higher travel cost, got order {visited_segments}"
     )
+
+
+def test_solve_window_prioritizes_more_severely_overdue_candidate_between_two_due_now():
+    """Regression test for "due severity blindness": two candidates both
+    already due (days_until_due=0) are otherwise indistinguishable by the
+    lateness term alone. X is loaded at 9x its threshold; Y just crossed
+    (1x). Visiting Y first is 2 days cheaper in raw travel, but leaving the
+    far-more-overdue X unvisited longer must cost more once severity is
+    priced in -- confirmed on the real network as a segment left at ~9x its
+    threshold while the planner kept re-servicing nearby segments that had
+    only just crossed (2026-08-12 diagnostic)."""
+    d, x, y = Station(name="D"), Station(name="X"), Station(name="Y")
+    seg_dx = Segment(name="D-X", start_station=d, end_station=x, move_time_days=3, maintenance_time_days=1)
+    seg_dy = Segment(name="D-Y", start_station=d, end_station=y, move_time_days=1, maintenance_time_days=1)
+    seg_xy = Segment(name="X-Y", start_station=x, end_station=y, move_time_days=10, maintenance_time_days=1)
+    stations = {"D": d, "X": x, "Y": y}
+    graph = build_travel_graph([seg_dx, seg_dy, seg_xy], stations)
+
+    candidates = [
+        DueCandidate(segment_name="D-X", station_name="X", days_until_due=0, service_days=1, severity=9.0),
+        DueCandidate(segment_name="D-Y", station_name="Y", days_until_due=0, service_days=1, severity=1.0),
+    ]
+    plan = solve_window(
+        candidates, graph, start_station="D",
+        weight_coverage=100.0, weight_travel=1.0, weight_proximity=0.0,
+        time_limit_s=5.0,
+    )
+    assert plan.feasible
+    visited_segments = [stop.segment_name for stop in plan.stops]
+    assert visited_segments[0] == "D-X", (
+        f"expected the more severely overdue D-X (9x threshold) visited first despite cheaper alternative, got {visited_segments}"
+    )
