@@ -6,27 +6,27 @@ Real network: `network_20251223_115340.json`, ZTO→ZCZ, 2026–2027, 2º KLD, 4
 
 | Strategy | stop_reason | steps | maint. actions | movement days | maint. days | idle days | total days | segments over threshold |
 |---|---|---|---|---|---|---|---|---|
-| Greedy | year_limit | 344 | 26 | 630 | 101 | 0 | 731 | 92 |
-| Rolling ILP (window=60d) | stalled | 256 | 92 | 203 | 358 | 0 | 561 | 15 |
-| Simulated Annealing (window=60d, seed=1) | stalled | 312 | 105 | 221 | 366 | 0 | 587 | 48 |
-| Simulated Annealing (window=60d, seed=2) | stalled | 114 | 33 | 68 | 163 | 0 | 231 | 28 |
-| Simulated Annealing (window=60d, seed=3) | stalled | 254 | 77 | 186 | 285 | 0 | 471 | 50 |
-| Simulated Annealing (window=60d) min/avg/max | - | - | 33/71.7/105 | - | - | - | 231/429.7/587 | - |
-| Rolling ILP (window=90d) | year_limit | 221 | 81 | 246 | 488 | 0 | 734 | 62 |
-| Simulated Annealing (window=90d, seed=1) | stalled | 156 | 54 | 112 | 289 | 0 | 401 | 18 |
-| Simulated Annealing (window=90d, seed=2) | stalled | 160 | 65 | 94 | 358 | 0 | 452 | 27 |
-| Simulated Annealing (window=90d, seed=3) | stalled | 170 | 56 | 135 | 319 | 0 | 454 | 24 |
-| Simulated Annealing (window=90d) min/avg/max | - | - | 54/58.3/65 | - | - | - | 401/435.7/454 | - |
-| Rolling ILP (window=120d) | stalled | 268 | 96 | 219 | 380 | 0 | 599 | 17 |
-| Simulated Annealing (window=120d, seed=1) | year_limit | 214 | 109 | 198 | 532 | 0 | 730 | 20 |
-| Simulated Annealing (window=120d, seed=2) | year_limit | 338 | 133 | 264 | 466 | 0 | 730 | 36 |
-| Simulated Annealing (window=120d, seed=3) | year_limit | 204 | 109 | 175 | 555 | 0 | 730 | 25 |
-| Simulated Annealing (window=120d) min/avg/max | - | - | 109/117.0/133 | - | - | - | 730/730.0/730 | - |
-| Rolling ILP (window=180d) | year_limit | 217 | 86 | 247 | 483 | 0 | 730 | 52 |
-| Simulated Annealing (window=180d, seed=1) | stalled | 156 | 49 | 121 | 250 | 0 | 371 | 22 |
-| Simulated Annealing (window=180d, seed=2) | stalled | 216 | 81 | 176 | 413 | 0 | 589 | 20 |
-| Simulated Annealing (window=180d, seed=3) | stalled | 114 | 36 | 64 | 184 | 0 | 248 | 19 |
-| Simulated Annealing (window=180d) min/avg/max | - | - | 36/55.3/81 | - | - | - | 248/402.7/589 | - |
+| Greedy | year_limit | 342 | 27 | 628 | 103 | 0 | 731 | 92 |
+| Rolling ILP (window=60d) | year_limit | 253 | 101 | 274 | 456 | 0 | 730 | 42 |
+| Simulated Annealing (window=60d, seed=1) | year_limit | 226 | 104 | 229 | 501 | 0 | 730 | 46 |
+| Simulated Annealing (window=60d, seed=2) | year_limit | 204 | 98 | 201 | 529 | 0 | 730 | 28 |
+| Simulated Annealing (window=60d, seed=3) | year_limit | 297 | 128 | 308 | 423 | 0 | 731 | 60 |
+| Simulated Annealing (window=60d) min/avg/max | - | - | 98/110.0/128 | - | - | - | 730/730.3/731 | - |
+| Rolling ILP (window=90d) | year_limit | 290 | 101 | 313 | 418 | 0 | 731 | 45 |
+| Simulated Annealing (window=90d, seed=1) | year_limit | 288 | 129 | 290 | 442 | 0 | 732 | 42 |
+| Simulated Annealing (window=90d, seed=2) | year_limit | 189 | 94 | 182 | 548 | 0 | 730 | 21 |
+| Simulated Annealing (window=90d, seed=3) | year_limit | 297 | 128 | 308 | 423 | 0 | 731 | 60 |
+| Simulated Annealing (window=90d) min/avg/max | - | - | 94/117.0/129 | - | - | - | 730/731.0/732 | - |
+| Rolling ILP (window=120d) | year_limit | 313 | 99 | 303 | 430 | 0 | 733 | 51 |
+| Simulated Annealing (window=120d, seed=1) | year_limit | 286 | 131 | 281 | 451 | 0 | 732 | 44 |
+| Simulated Annealing (window=120d, seed=2) | year_limit | 308 | 111 | 306 | 425 | 0 | 731 | 66 |
+| Simulated Annealing (window=120d, seed=3) | year_limit | 248 | 100 | 262 | 469 | 0 | 731 | 46 |
+| Simulated Annealing (window=120d) min/avg/max | - | - | 100/114.0/131 | - | - | - | 731/731.3/732 | - |
+| Rolling ILP (window=180d) | year_limit | 154 | 77 | 151 | 589 | 0 | 740 | 54 |
+| Simulated Annealing (window=180d, seed=1) | year_limit | 260 | 111 | 241 | 491 | 0 | 732 | 37 |
+| Simulated Annealing (window=180d, seed=2) | year_limit | 258 | 95 | 271 | 460 | 0 | 731 | 40 |
+| Simulated Annealing (window=180d, seed=3) | year_limit | 260 | 100 | 264 | 466 | 0 | 730 | 36 |
+| Simulated Annealing (window=180d) min/avg/max | - | - | 95/102.0/111 | - | - | - | 730/731.0/732 | - |
 
 ## Notes
 
