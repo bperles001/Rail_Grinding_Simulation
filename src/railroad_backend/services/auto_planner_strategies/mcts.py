@@ -165,6 +165,146 @@ def evaluate_rollout_outcome(
     return bonus - cost
 
 
+import math
+import time
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
+from .greedy import maintenance_action_for
+
+DecisionKey = tuple
+
+
+def decision_key(decision: StepDecision) -> DecisionKey:
+    if decision.kind == "move":
+        return ("move", tuple(seg.name for seg in decision.segments), decision.next_station.name, decision.action)
+    if decision.kind == "wait":
+        return ("wait", decision.wait_days)
+    if decision.kind == "turn":
+        return ("turn",)
+    return ("none",)
+
+
+def resolve_decision(sim: "Simulator", key: DecisionKey) -> StepDecision:
+    """Reconstructs a real, executable StepDecision against `sim`'s own
+    Segment/Station objects. Never reuse a StepDecision's object
+    references across a different simulator instance -- see the
+    object-identity gotcha in the plan's Global Constraints."""
+    kind = key[0]
+    if kind == "move":
+        _, seg_names, next_station_name, action = key
+        by_name = {seg.name: seg for seg in sim.segments}
+        segments = tuple(by_name[name] for name in seg_names)
+        next_station = sim.stations[next_station_name]
+        return StepDecision(kind="move", segments=segments, next_station=next_station, action=action)
+    if kind == "wait":
+        return StepDecision(kind="wait", wait_days=key[1])
+    if kind == "turn":
+        return StepDecision(kind="turn")
+    return StepDecision(kind="none")
+
+
+def enumerate_decision_keys(sim: "Simulator") -> List[DecisionKey]:
+    """Every real decision reachable from `sim`'s current state, one per
+    move (plus turn/wait). The maintenance action on a move uses the same
+    proximity rule as the rollout policy (due first, else opportunistic,
+    else plain move) -- per spec, real execution (the root child MCTS
+    finally returns) must be consistent with what the tree actually
+    searched, not a stricter binary check applied only at the end."""
+    keys: List[DecisionKey] = []
+    moves = sim.get_possible_moves() or sim.get_all_moves_any_direction()
+    for segments, next_station in moves:
+        if needs_maintenance(segments):
+            action = maintenance_action_for(segments)
+        elif opportunistic_needs_maintenance(segments):
+            action = opportunistic_maintenance_action_for(segments)
+        else:
+            action = ACTION_MOVE
+        keys.append(("move", tuple(seg.name for seg in segments), next_station.name, action))
+    if sim.current_station and sim.current_station.can_turn:
+        keys.append(("turn",))
+    if not keys:
+        wait_days = days_until_next_threshold(sim)
+        if wait_days > 0:
+            keys.append(("wait", wait_days))
+    return keys
+
+
+@dataclass
+class MCTSNode:
+    decision_key: Optional[DecisionKey]
+    parent: Optional["MCTSNode"]
+    children: Dict[DecisionKey, "MCTSNode"] = field(default_factory=dict)
+    visits: int = 0
+    total_value: float = 0.0
+    untried_keys: Optional[List[DecisionKey]] = None
+
+    @property
+    def mean_value(self) -> float:
+        return self.total_value / self.visits if self.visits else 0.0
+
+    def ucb1(self, exploration_constant: float) -> float:
+        if self.visits == 0:
+            return math.inf
+        parent_visits = self.parent.visits if self.parent else 1
+        return self.mean_value + exploration_constant * math.sqrt(math.log(max(1, parent_visits)) / self.visits)
+
+
+def search(
+    root_sim: "Simulator",
+    root: Optional[MCTSNode] = None,
+    *,
+    time_budget_s: Optional[float] = None,
+    max_iterations: Optional[int] = None,
+    exploration_constant: float = math.sqrt(2),
+    rollout_max_days: int = ROLLOUT_MAX_DAYS,
+    proximity_ratio: float = PROXIMITY_RATIO,
+) -> Tuple[StepDecision, MCTSNode]:
+    from ..auto_planner import _execute_decision  # local import -- see note in run_rollout
+
+    if (time_budget_s is None) == (max_iterations is None):
+        raise ValueError("search() requires exactly one of time_budget_s or max_iterations")
+    if root is None:
+        root = MCTSNode(decision_key=None, parent=None)
+
+    deadline = time.monotonic() + time_budget_s if time_budget_s is not None else None
+    iterations = 0
+    while (deadline is None or time.monotonic() < deadline) and (max_iterations is None or iterations < max_iterations):
+        iterations += 1
+        node = root
+        sim = clone_simulator(root_sim)
+
+        # Selection: descend while every child has been tried at least once.
+        while node.untried_keys is not None and not node.untried_keys and node.children:
+            best_child = max(node.children.values(), key=lambda c: c.ucb1(exploration_constant))
+            _execute_decision(sim, resolve_decision(sim, best_child.decision_key))
+            node = best_child
+
+        # Expansion.
+        if node.untried_keys is None:
+            node.untried_keys = enumerate_decision_keys(sim)
+        if node.untried_keys:
+            key = node.untried_keys.pop()
+            _execute_decision(sim, resolve_decision(sim, key))
+            child = MCTSNode(decision_key=key, parent=node)
+            node.children[key] = child
+            node = child
+
+        # Rollout + backpropagation.
+        rollout_sim, opportunistic_count = run_rollout(sim, max_days=rollout_max_days, proximity_ratio=proximity_ratio)
+        value = evaluate_rollout_outcome(root_sim, rollout_sim, opportunistic_count)
+        while node is not None:
+            node.visits += 1
+            node.total_value += value
+            node = node.parent
+
+    if not root.children:
+        return StepDecision(kind="none"), root
+    best = max(root.children.values(), key=lambda c: c.visits)
+    best.parent = None
+    return resolve_decision(root_sim, best.decision_key), best
+
+
 __all__ = [
     "clone_simulator",
     "opportunistic_needs_maintenance",
@@ -172,4 +312,9 @@ __all__ = [
     "opportunistic_rollout_decision",
     "run_rollout",
     "evaluate_rollout_outcome",
+    "decision_key",
+    "resolve_decision",
+    "enumerate_decision_keys",
+    "MCTSNode",
+    "search",
 ]

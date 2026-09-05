@@ -1,17 +1,24 @@
 """Tests for the MCTS Auto Planner strategy: cloning, opportunistic rollout
 policy, tree search, and the public MCTSStrategy."""
 import json
+import math
 import time
 from pathlib import Path
 
 from railroad_backend.services.auto_planner import AutoPlanConfig, _init_simulation
+from railroad_backend.services.auto_planner_strategies.base import StepDecision
 from railroad_backend.services.auto_planner_strategies.mcts import (
+    MCTSNode,
     clone_simulator,
+    decision_key,
+    enumerate_decision_keys,
     evaluate_rollout_outcome,
     opportunistic_maintenance_action_for,
     opportunistic_needs_maintenance,
     opportunistic_rollout_decision,
+    resolve_decision,
     run_rollout,
+    search,
 )
 from src.simulator import Simulator
 from src.utils.network_loader import load_network
@@ -162,3 +169,52 @@ def test_evaluate_rollout_outcome_rewards_more_opportunistic_maintenance(tmp_pat
     value_more = evaluate_rollout_outcome(before, after_more, opportunistic_count=3)
     value_fewer = evaluate_rollout_outcome(before, after_fewer, opportunistic_count=0)
     assert value_more > value_fewer
+
+
+def test_decision_key_and_resolve_decision_round_trip_across_clones(tmp_path):
+    """The core object-identity guard: a key computed against one clone
+    must resolve correctly against a *different* clone's own objects."""
+    sim_a = _chain_network_sim(tmp_path)
+    options = sim_a.get_possible_moves() or sim_a.get_all_moves_any_direction()
+    segments, next_station = options[0]
+    original = StepDecision(kind="move", segments=segments, next_station=next_station, action="move")
+    key = decision_key(original)
+
+    sim_b = clone_simulator(sim_a)
+    resolved = resolve_decision(sim_b, key)
+    assert resolved.kind == "move"
+    # The resolved segments/station must belong to sim_b, not sim_a.
+    assert all(seg in sim_b.segments for seg in resolved.segments)
+    assert resolved.next_station in sim_b.stations.values()
+    assert resolved.next_station is not next_station
+
+
+def test_enumerate_decision_keys_includes_maintenance_action_when_due(tmp_path):
+    sim = _chain_network_sim(tmp_path)
+    a_b = next(s for s in sim.segments if s.name == "A-B")
+    a_b.load_curva = 10.0  # already due
+    keys = enumerate_decision_keys(sim)
+    move_keys = [k for k in keys if k[0] == "move" and k[1] == ("A-B",)]
+    assert move_keys
+    assert move_keys[0][3] in {"maintain", "maintain_curves"}
+
+
+def test_search_converges_to_visiting_the_only_due_segment_first(tmp_path):
+    """Deterministic scenario: A-B is already due, B-C is not. With a
+    reasonable iteration budget, the root's most-visited child must be
+    the move toward B (the due segment)."""
+    sim = _chain_network_sim(tmp_path)
+    decision, _ = search(sim, max_iterations=200, exploration_constant=math.sqrt(2))
+    assert decision.kind == "move"
+    assert any(seg.name == "A-B" for seg in decision.segments)
+
+
+def test_search_reuses_the_provided_root_without_error(tmp_path):
+    sim = _chain_network_sim(tmp_path)
+    decision, new_root = search(sim, max_iterations=50)
+    assert isinstance(new_root, MCTSNode)
+    assert new_root.parent is None
+    # Feed the reused root back into a second search on the same state --
+    # must not raise and must still return a valid decision.
+    decision2, new_root2 = search(sim, new_root, max_iterations=50)
+    assert decision2.kind in {"move", "wait", "turn", "none"}
