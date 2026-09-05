@@ -139,6 +139,30 @@ def test_auto_plan_simulated_annealing_strategy_runs_end_to_end(tmp_path):
     assert isinstance(result, AutoPlanResult)
 
 
+def test_auto_plan_mcts_strategy_runs_end_to_end(tmp_path):
+    """MCTS strategy produces a valid result on a tiny network. Uses the
+    real 10s-per-decision default budget (no config override exists, per
+    spec's no-new-config-field constraint) with a single step, so this
+    test costs ~10s of real wall-clock time -- an accepted one-off cost,
+    not a pattern to repeat elsewhere in the suite."""
+    csv_path = tmp_path / "schedule.csv"
+    csv_path.write_text("Segment Name,2025-01\nTRO-TMI,8.0\n")
+
+    config = AutoPlanConfig(
+        csv_path=csv_path,
+        start_station="TRO",
+        facing_station="TMI",
+        start_year=2025,
+        end_year=2025,
+        second_kld=False,
+        steps=1,
+        strategy="mcts",
+    )
+    result = run_auto_plan(config)
+    assert result.strategy_name == "mcts"
+    assert isinstance(result, AutoPlanResult)
+
+
 def test_auto_plan_stops_as_stalled_on_a_zero_duration_move_loop(tmp_path, monkeypatch):
     """Regression test: the real network has at least one segment with
     `move_time_days: 0` (ZQX-ZRX). If a strategy ever ends up repeatedly

@@ -149,6 +149,7 @@ from .auto_planner_strategies.greedy import days_until_next_threshold as _days_u
 from .auto_planner_strategies.greedy import maintenance_action_for as _maintenance_action_for
 from .auto_planner_strategies.greedy import needs_maintenance as _needs_maintenance
 from .auto_planner_strategies.greedy import segments_already_due as _segments_already_due
+from .auto_planner_strategies.mcts_strategy import MCTSStrategy
 from .auto_planner_strategies.rolling_horizon_ilp import RollingHorizonILPStrategy
 from .auto_planner_strategies.simulated_annealing_strategy import SimulatedAnnealingStrategy
 
@@ -162,6 +163,7 @@ STRATEGY_REGISTRY: Dict[str, "type[AutoPlanStrategy]"] = {
     "greedy": GreedyUrgencyStrategy,
     "rolling_ilp": RollingHorizonILPStrategy,
     "simulated_annealing": SimulatedAnnealingStrategy,
+    "mcts": MCTSStrategy,
 }
 
 
