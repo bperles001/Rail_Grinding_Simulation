@@ -154,7 +154,40 @@ def _batch2() -> List[Candidate]:
 
 BATCH_2: List[Candidate] = _batch2()
 
+def _batch3() -> List[Candidate]:
+    """Variance check. batch2 showed a surprising result: the tb=10.0
+    budget-robustness run scored WORSE (31 segments over) than tb=2.0/5.0
+    (14 each) on the exact same hyperparameters -- counter-intuitive for
+    "more search time", and a strong signal of run-to-run noise, since
+    search()'s loop is wall-clock-timed (time.monotonic()), so the real
+    number of MCTS iterations completed varies with machine load between
+    separate process runs even at a "fixed" time budget. Repeat the top
+    two batch2 candidates 3x each (same params, fresh process each time)
+    to see how much segments_over_threshold_at_end actually varies before
+    trusting any single-run ranking."""
+    candidates: List[Candidate] = []
+    repeat_configs = {
+        "leader_rd45_pr0.85": dict(time_budget_s=2.0, rollout_max_days=45, proximity_ratio=0.85, exploration_constant=1.41),
+        "control_rd45_pr1.0": dict(time_budget_s=2.0, rollout_max_days=45, proximity_ratio=1.0, exploration_constant=1.41),
+    }
+    for name, params in repeat_configs.items():
+        for trial in range(1, 4):
+            cid = f"variance_{name}_trial{trial}"
+            candidates.append(
+                {
+                    "id": cid,
+                    "category": "variance_check",
+                    "params": params,
+                    "make_strategy": lambda _p=params: MCTSStrategy(**_p),
+                }
+            )
+    return candidates
+
+
+BATCH_3: List[Candidate] = _batch3()
+
 BATCHES: Dict[str, List[Candidate]] = {
     "batch1": BATCH_1,
     "batch2": BATCH_2,
+    "batch3": BATCH_3,
 }
