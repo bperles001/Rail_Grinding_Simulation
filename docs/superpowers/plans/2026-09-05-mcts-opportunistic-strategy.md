@@ -289,7 +289,6 @@ from typing import Tuple
 
 from src.models import ACTION_MAINTAIN, ACTION_MAINTAIN_CURVES, ACTION_MOVE
 
-from ...services.auto_planner import _execute_decision
 from .base import StepDecision
 from .greedy import (
     _move_priority,
@@ -297,6 +296,15 @@ from .greedy import (
     needs_maintenance,
     segments_already_due,
 )
+
+# NOTE: _execute_decision is imported lazily (inside run_rollout/search, not
+# here at module level) -- Task 4 registers MCTSStrategy in auto_planner.py's
+# STRATEGY_REGISTRY dict, which is defined *before* _execute_decision in that
+# file; a module-level `from ..auto_planner import _execute_decision` here
+# would make auto_planner.py's own import of mcts_strategy.py (which imports
+# this module) circular back into itself before _execute_decision exists,
+# raising ImportError. Deferring the import until call time sidesteps it
+# entirely, since by then the whole module graph is fully loaded.
 
 PROXIMITY_RATIO = 0.7
 ROLLOUT_MAX_DAYS = 45
@@ -369,6 +377,8 @@ def run_rollout(
     using the opportunistic rollout policy. Returns the mutated simulator
     and a count of segments maintained opportunistically (near threshold
     but not strictly due at the moment the maintenance decision was made)."""
+    from ..auto_planner import _execute_decision  # local import -- see note above
+
     start_date = sim.simulation_date
     opportunistic_count = 0
     while True:
@@ -611,6 +621,8 @@ def search(
     rollout_max_days: int = ROLLOUT_MAX_DAYS,
     proximity_ratio: float = PROXIMITY_RATIO,
 ) -> Tuple[StepDecision, MCTSNode]:
+    from ..auto_planner import _execute_decision  # local import -- see note in run_rollout
+
     if (time_budget_s is None) == (max_iterations is None):
         raise ValueError("search() requires exactly one of time_budget_s or max_iterations")
     if root is None:
