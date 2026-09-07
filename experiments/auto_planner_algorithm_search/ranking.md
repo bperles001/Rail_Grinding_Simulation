@@ -6,6 +6,37 @@ calendar-day horizon), with `pct_maintenance` as a secondary
 efficiency stat. See the note in run_batch.py for why
 `pct_maintenance` alone is NOT used as the primary ranking key.
 
+## FINAL VALIDATED WINNER (full year_limit run, real time budget -- not the cheap search proxy)
+
+`MCTSStrategy(time_budget_s=3.0, rollout_max_days=45, proximity_ratio=0.85, exploration_constant=1.41)`,
+run to the real `year_limit` (2027-12-31) exactly like every Task 6 reference row -- this is the
+number that matters, not the 180-day proxy used to search.
+
+| Strategy | pct_maintenance | segments_over_threshold_at_end | total_days | steps |
+|---|---|---|---|---|
+| Manual plan (real, own 359-day horizon) | 92.8% | 25 | 359 | 88 |
+| Greedy | 14.1% | 92 | 731 | 342 |
+| Rolling ILP best (window=90d) | 56.0% | 41 | 730 | 328 |
+| Simulated Annealing best (window=90d, seed=2) | 75.1% | 21 | 730 | 189 |
+| MCTS production default (unfair, stopped early) | 58.9% | 26 | 701 | 400 |
+| MCTS control, same rollout depth, NO opportunism (pr=1.0) | 70.4% | 26 | 734 | 326 |
+| **MCTS tuned (rd45, pr0.85, ec1.41) -- winner** | **67.1%** | **14** | 730 | 340 |
+
+**Headline finding**: the tuned MCTS ends with fewer segments still over threshold (14) than
+every other automated strategy tested to date -- including its own no-opportunism control (26)
+-- and fewer than the real manual plan (25), despite covering roughly double the manual plan's
+calendar time. It did not match the human's `pct_maintenance` (67.1% vs 92.8%), so the original
+target metric from the MCTS spec was not achieved -- but on the metric that actually reflects
+network health (`segments_over_threshold_at_end`, at matched conditions this time), it is the
+best result found across this entire two-night effort, human plan included. The opportunism
+control's full-scale result (26, nearly double the tuned winner's 14) confirms the proximity-
+based opportunistic bias is doing real, substantial work, not just noise -- consistent with the
+smaller-scale 180-day proxy finding (12-14 vs 14-31) but with a much clearer margin at full scale.
+
+Trade-off to flag honestly: the tuned winner took ~17 minutes of wall-clock compute for 340
+real decisions at time_budget_s=3.0 (`.venv\Scripts\python.exe experiments\auto_planner_algorithm_search\run_full_validation.py`,
+1020.5s measured) -- this is real production compute cost per full 2-year plan, not free.
+
 ## Fixed reference points (from the Task 6 study, not recomputed here)
 
 | Reference | pct_maintenance | segments_over_threshold_at_end | total_days | note |

@@ -1,0 +1,42 @@
+{
+  "mcts_tuned_full_validation": {
+    "params": {
+      "time_budget_s": 3.0,
+      "rollout_max_days": 45,
+      "proximity_ratio": 0.85,
+      "exploration_constant": 1.41
+    },
+    "metrics": {
+      "stop_reason": "year_limit",
+      "steps_used": 340,
+      "maintenance_count": 128,
+      "movement_days": 240,
+      "maintenance_days": 490,
+      "idle_days": 0,
+      "total_days": 730,
+      "pct_maintenance": 0.6712328767123288,
+      "segments_over_threshold_at_end": 14
+    },
+    "elapsed_s": 1020.5
+  },
+  "mcts_control_no_opportunism_full_validation": {
+    "params": {
+      "time_budget_s": 3.0,
+      "rollout_max_days": 45,
+      "proximity_ratio": 1.0,
+      "exploration_constant": 1.41
+    },
+    "metrics": {
+      "stop_reason": "year_limit",
+      "steps_used": 326,
+      "maintenance_count": 132,
+      "movement_days": 217,
+      "maintenance_days": 517,
+      "idle_days": 0,
+      "total_days": 734,
+      "pct_maintenance": 0.7043596730245232,
+      "segments_over_threshold_at_end": 26
+    },
+    "elapsed_s": 978.4
+  }
+}
