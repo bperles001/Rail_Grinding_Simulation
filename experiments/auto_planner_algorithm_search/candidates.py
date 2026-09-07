@@ -81,6 +81,80 @@ def _heuristics() -> List[Candidate]:
 
 BATCH_1: List[Candidate] = _mcts_grid() + _heuristics()
 
+
+def _batch2() -> List[Candidate]:
+    """Informed by batch1: the standout region was rollout_max_days=45,
+    proximity_ratio=0.85 (14 segments over threshold at the 180-day
+    horizon, vs. 21-92 for everything else tried) -- exploration_constant
+    made zero difference anywhere in batch1's grid, so it's fixed at
+    sqrt(2) here. rollout_max_days=90 catastrophically collapsed (64
+    segments over, worse than baseline) at every proximity_ratio, most
+    likely because longer rollouts leave far fewer total simulations
+    inside the same 2s search budget -- not chased further here, just
+    avoided in this refined grid.
+
+    This batch: (a) a finer proximity_ratio x rollout_max_days grid
+    around the winning region, (b) a proximity_ratio=1.0 control (pure
+    "only maintain when truly due", isolating whether the opportunistic
+    bias itself is even helping at this budget), (c) a time_budget_s
+    robustness check on the current best config, (d) a longer (365-day)
+    horizon robustness check on the current best config, since the
+    180-day result could in principle be a lucky early-window artifact.
+    """
+    candidates: List[Candidate] = []
+
+    for rollout_max_days, proximity_ratio in itertools.product((30, 45, 60), (0.8, 0.85, 0.9, 0.95)):
+        cid = f"mcts_refine_rd{rollout_max_days}_pr{proximity_ratio}"
+        params = dict(time_budget_s=2.0, rollout_max_days=rollout_max_days, proximity_ratio=proximity_ratio, exploration_constant=1.41)
+
+        def make_strategy(_params=params) -> MCTSStrategy:
+            return MCTSStrategy(**_params)
+
+        candidates.append({"id": cid, "category": "mcts_refined_grid", "params": params, "make_strategy": make_strategy})
+
+    # Control: proximity_ratio=1.0 == only maintain when strictly due (no
+    # opportunistic bias at all), same rollout depth as the batch1 winner.
+    control_params = dict(time_budget_s=2.0, rollout_max_days=45, proximity_ratio=1.0, exploration_constant=1.41)
+    candidates.append(
+        {
+            "id": "mcts_control_no_opportunism_rd45_pr1.0",
+            "category": "mcts_control",
+            "params": control_params,
+            "make_strategy": lambda _p=control_params: MCTSStrategy(**_p),
+        }
+    )
+
+    # Time-budget robustness on the batch1 winner.
+    for time_budget_s in (1.0, 5.0, 10.0):
+        params = dict(time_budget_s=time_budget_s, rollout_max_days=45, proximity_ratio=0.85, exploration_constant=1.41)
+        candidates.append(
+            {
+                "id": f"mcts_budget_robustness_tb{time_budget_s}",
+                "category": "mcts_budget_robustness",
+                "params": params,
+                "make_strategy": lambda _p=params: MCTSStrategy(**_p),
+            }
+        )
+
+    # Longer-horizon robustness check on the batch1 winner (365 days
+    # instead of 180) -- more steps needed, so a generous max_steps.
+    winner_params = dict(time_budget_s=2.0, rollout_max_days=45, proximity_ratio=0.85, exploration_constant=1.41)
+    candidates.append(
+        {
+            "id": "mcts_winner_horizon365",
+            "category": "mcts_horizon_robustness",
+            "params": winner_params,
+            "make_strategy": lambda _p=winner_params: MCTSStrategy(**_p),
+            "max_days": 365,
+            "max_steps": 500,
+        }
+    )
+    return candidates
+
+
+BATCH_2: List[Candidate] = _batch2()
+
 BATCHES: Dict[str, List[Candidate]] = {
     "batch1": BATCH_1,
+    "batch2": BATCH_2,
 }

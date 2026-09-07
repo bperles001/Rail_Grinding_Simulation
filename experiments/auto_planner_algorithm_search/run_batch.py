@@ -104,7 +104,9 @@ def main() -> None:
         start = time.monotonic()
         row: dict
         try:
-            metrics = run_fast(candidate["make_strategy"], max_days=180, max_steps=250)
+            max_days = candidate.get("max_days", 180)
+            max_steps = candidate.get("max_steps", 250)
+            metrics = run_fast(candidate["make_strategy"], max_days=max_days, max_steps=max_steps)
             elapsed = time.monotonic() - start
             row = {
                 "ok": True,
